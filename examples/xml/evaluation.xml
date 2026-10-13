@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<ns4:evaluation id="00000000-0000-0000-0000-000000000003" revision="1" xmlns="urn:cloudmigration:competition:v1" xmlns:ns5="urn:cloudmigration:decision:v1" xmlns:ns2="urn:cloudmigration:common:v1" xmlns:ns4="urn:cloudmigration:evaluation:v1" xmlns:ns3="urn:cloudmigration:application:v1">
+    <ns4:applicationId>00000000-0000-0000-0000-000000000002</ns4:applicationId>
+    <ns4:state>DRAFT</ns4:state>
+    <ns4:reviewer>Jan Nowak</ns4:reviewer>
+    <ns4:date>2026-10-12</ns4:date>
+    <ns4:eligible>true</ns4:eligible>
+    <ns4:reason>Spełnia kryteria</ns4:reason>
+    <ns4:scores>
+        <ns2:code>technical</ns2:code>
+        <ns2:points>20</ns2:points>
+        <ns2:comment>Wykonalny</ns2:comment>
+    </ns4:scores>
+    <ns4:scores>
+        <ns2:code>security</ns2:code>
+        <ns2:points>20</ns2:points>
+        <ns2:comment>Bezpieczny</ns2:comment>
+    </ns4:scores>
+    <ns4:scores>
+        <ns2:code>benefits</ns2:code>
+        <ns2:points>15</ns2:points>
+        <ns2:comment>Korzyści</ns2:comment>
+    </ns4:scores>
+    <ns4:scores>
+        <ns2:code>team</ns2:code>
+        <ns2:points>15</ns2:points>
+        <ns2:comment>Realny harmonogram</ns2:comment>
+    </ns4:scores>
+    <ns4:scores>
+        <ns2:code>budget</ns2:code>
+        <ns2:points>10</ns2:points>
+        <ns2:comment>Uzasadniony</ns2:comment>
+    </ns4:scores>
+    <ns4:total>80</ns4:total>
+</ns4:evaluation>

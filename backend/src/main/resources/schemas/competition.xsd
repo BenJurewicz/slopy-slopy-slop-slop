@@ -1,0 +1,14 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:c="urn:cloudmigration:common:v1" xmlns:t="urn:cloudmigration:competition:v1" targetNamespace="urn:cloudmigration:competition:v1" elementFormDefault="qualified">
+<xs:import namespace="urn:cloudmigration:common:v1" schemaLocation="common.xsd"/>
+<xs:element name="competition"><xs:complexType><xs:sequence>
+<xs:element name="name" type="c:Text" minOccurs="1" maxOccurs="1"/>
+<xs:element name="description" type="c:Text" minOccurs="1" maxOccurs="1"/>
+<xs:element name="eligibilityRules" type="c:Text"/>
+<xs:element name="currency" type="c:Currency" minOccurs="1" maxOccurs="1"/>
+<xs:element name="budget" type="c:Money" minOccurs="1" maxOccurs="1"/>
+<xs:element name="maxGrant" type="c:Money" minOccurs="1" maxOccurs="1"/>
+<xs:element name="threshold" type="xs:nonNegativeInteger" minOccurs="1" maxOccurs="1"/>
+<xs:element name="stage" type="c:Stage" minOccurs="1" maxOccurs="1"/>
+<xs:element name="criteria" type="c:Criterion" minOccurs="1" maxOccurs="unbounded"/>
+</xs:sequence><xs:attribute name="id" type="c:Id" use="required"/><xs:attribute name="revision" type="xs:positiveInteger" use="required"/></xs:complexType><xs:unique name="uniqueCodes"><xs:selector xpath="t:criteria"/><xs:field xpath="c:code"/></xs:unique></xs:element>
+</xs:schema>

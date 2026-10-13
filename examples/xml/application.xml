@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<ns3:application id="00000000-0000-0000-0000-000000000002" revision="1" xmlns="urn:cloudmigration:competition:v1" xmlns:ns5="urn:cloudmigration:decision:v1" xmlns:ns2="urn:cloudmigration:common:v1" xmlns:ns4="urn:cloudmigration:evaluation:v1" xmlns:ns3="urn:cloudmigration:application:v1">
+    <ns3:competitionId>00000000-0000-0000-0000-000000000001</ns3:competitionId>
+    <ns3:state>DRAFT</ns3:state>
+    <ns3:company>
+        <ns2:name>Biuro Rachunkowe Żółw</ns2:name>
+        <ns2:legalId>1234567890</ns2:legalId>
+        <ns2:size>MICRO</ns2:size>
+        <ns2:contact>Anna Kowalska</ns2:contact>
+        <ns2:email>anna@example.org</ns2:email>
+    </ns3:company>
+    <ns3:title>Bezpieczna księgowość w chmurze</ns3:title>
+    <ns3:description>Migracja bazy danych i oprogramowania.
+Automatyczne kopie zapasowe.</ns3:description>
+    <ns3:objectives>Ograniczenie przestojów</ns3:objectives>
+    <ns3:benefits>Bezpieczny dostęp zdalny</ns3:benefits>
+    <ns3:currentInfrastructure>
+        <ns2:name>Serwer księgowy</ns2:name>
+        <ns2:provider>Lokalny</ns2:provider>
+        <ns2:description>Serwer legacy</ns2:description>
+    </ns3:currentInfrastructure>
+    <ns3:targetInfrastructure>
+        <ns2:name>Baza danych</ns2:name>
+        <ns2:provider>Azure</ns2:provider>
+        <ns2:description>Zarządzana baza i backup</ns2:description>
+    </ns3:targetInfrastructure>
+    <ns3:tasks>
+        <ns2:name>Migracja</ns2:name>
+        <ns2:start>2026-11-01</ns2:start>
+        <ns2:end>2026-12-31</ns2:end>
+        <ns2:milestone>Odbiór systemu</ns2:milestone>
+    </ns3:tasks>
+    <ns3:budget>
+        <ns2:description>Migracja i konfiguracja</ns2:description>
+        <ns2:category>Usługi</ns2:category>
+        <ns2:quantity>1</ns2:quantity>
+        <ns2:unit>projekt</ns2:unit>
+        <ns2:unitCost>50000.00</ns2:unitCost>
+        <ns2:total>50000.00</ns2:total>
+    </ns3:budget>
+    <ns3:team>
+        <ns2:name>Anna Kowalska</ns2:name>
+        <ns2:role>Koordynator</ns2:role>
+    </ns3:team>
+    <ns3:requestedAmount>50000.00</ns3:requestedAmount>
+</ns3:application>

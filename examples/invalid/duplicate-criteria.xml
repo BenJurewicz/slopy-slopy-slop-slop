@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<competition id="00000000-0000-0000-0000-000000000001" revision="1" xmlns="urn:cloudmigration:competition:v1" xmlns:ns5="urn:cloudmigration:decision:v1" xmlns:ns2="urn:cloudmigration:common:v1" xmlns:ns4="urn:cloudmigration:evaluation:v1" xmlns:ns3="urn:cloudmigration:application:v1">
+    <name>CloudMigration 2026</name>
+    <description>Chmura dla Lokalnych Biznesów</description>
+    <eligibilityRules>Mikro- i małe przedsiębiorstwa; projekt migracji istniejących systemów do chmury. Kwoty netto w PLN.</eligibilityRules>
+    <currency>PLN</currency>
+    <budget>250000.00</budget>
+    <maxGrant>150000.00</maxGrant>
+    <threshold>60</threshold>
+    <stage>OPEN</stage>
+    <criteria>
+        <ns2:code>technical</ns2:code>
+        <ns2:name>Wykonalność techniczna</ns2:name>
+        <ns2:maximum>25</ns2:maximum>
+    </criteria>
+    <criteria>
+        <ns2:code>technical</ns2:code>
+        <ns2:name>Bezpieczeństwo</ns2:name>
+        <ns2:maximum>25</ns2:maximum>
+    </criteria>
+    <criteria>
+        <ns2:code>benefits</ns2:code>
+        <ns2:name>Korzyści biznesowe</ns2:name>
+        <ns2:maximum>20</ns2:maximum>
+    </criteria>
+    <criteria>
+        <ns2:code>team</ns2:code>
+        <ns2:name>Harmonogram i zespół</ns2:name>
+        <ns2:maximum>20</ns2:maximum>
+    </criteria>
+    <criteria>
+        <ns2:code>budget</ns2:code>
+        <ns2:name>Uzasadnienie budżetu</ns2:name>
+        <ns2:maximum>10</ns2:maximum>
+    </criteria>
+</competition>

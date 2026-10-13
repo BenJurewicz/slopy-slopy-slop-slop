@@ -30,3 +30,12 @@ container preserves them; `docker compose down -v` deletes them.
 
 `BASEX_PASSWORD` sets the admin password on first startup only. To change an
 existing password, use BaseX's user management interface.
+
+## Application database
+
+From the project root, run `python3 infra/scripts/init-db.py`. This non-destructive,
+idempotent setup creates the application and isolated test databases and a
+restricted account. It generates `backend/.env` with private credentials; do not
+commit or share that file. The backend does not use the administrator account.
+
+See `../docs/walkthrough.md` for the explicit destructive demo reset procedure.

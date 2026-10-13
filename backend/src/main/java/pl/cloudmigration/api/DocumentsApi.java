@@ -1,0 +1,49 @@
+package pl.cloudmigration.api;
+
+import java.util.*;
+import org.springframework.http.*;
+import org.springframework.web.bind.annotation.*;
+import io.swagger.v3.oas.annotations.Operation;
+import org.springframework.web.multipart.MultipartFile;
+import pl.cloudmigration.documents.*;
+import pl.cloudmigration.documents.DocumentCodec.Type;
+import pl.cloudmigration.documents.Models.Application;
+import pl.cloudmigration.docx.DocxDocuments;
+import pl.cloudmigration.storage.DocumentRepository;
+import pl.cloudmigration.workflow.Workflow;
+
+@io.swagger.v3.oas.annotations.responses.ApiResponses({
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode="400",description="Nieprawidłowe żądanie",content=@io.swagger.v3.oas.annotations.media.Content(mediaType="application/json",schema=@io.swagger.v3.oas.annotations.media.Schema(implementation=pl.cloudmigration.api.Errors.Error.class))),
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode="404",description="Brak zasobu",content=@io.swagger.v3.oas.annotations.media.Content(mediaType="application/json",schema=@io.swagger.v3.oas.annotations.media.Schema(implementation=pl.cloudmigration.api.Errors.Error.class))),
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode="409",description="Konflikt rewizji lub procesu",content=@io.swagger.v3.oas.annotations.media.Content(mediaType="application/json",schema=@io.swagger.v3.oas.annotations.media.Schema(implementation=pl.cloudmigration.api.Errors.Error.class))),
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode="413",description="Za duży plik",content=@io.swagger.v3.oas.annotations.media.Content(mediaType="application/json",schema=@io.swagger.v3.oas.annotations.media.Schema(implementation=pl.cloudmigration.api.Errors.Error.class))),
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode="422",description="Błąd walidacji",content=@io.swagger.v3.oas.annotations.media.Content(mediaType="application/json",schema=@io.swagger.v3.oas.annotations.media.Schema(implementation=pl.cloudmigration.api.Errors.Error.class))),
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode="503",description="Baza niedostępna",content=@io.swagger.v3.oas.annotations.media.Content(mediaType="application/json",schema=@io.swagger.v3.oas.annotations.media.Schema(implementation=pl.cloudmigration.api.Errors.Error.class)))
+})
+@RestController
+@RequestMapping("/api/documents")
+public class DocumentsApi {
+    public record ImportPreview(Application application,List<String> diagnostics) {}
+    private final DocumentCodec codec;private final DocxDocuments docx;private final DocumentRepository repo;private final Workflow workflow;
+    public DocumentsApi(DocumentCodec codec,DocxDocuments docx,DocumentRepository repo,Workflow workflow){this.codec=codec;this.docx=docx;this.repo=repo;this.workflow=workflow;}
+    @Operation(operationId="downloadTemplate")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode="200",description="Plik do pobrania",content=@io.swagger.v3.oas.annotations.media.Content(mediaType="application/vnd.openxmlformats-officedocument.wordprocessingml.document",schema=@io.swagger.v3.oas.annotations.media.Schema(type="string",format="binary")))
+    @GetMapping("/template") public ResponseEntity<byte[]> template(@RequestParam(required=false) String competitionId){
+        var example=pl.cloudmigration.demo.Examples.application();
+        if(competitionId!=null){repo.get(Type.competition,competitionId);example=Records.with(example,Map.of("competitionId",competitionId));}
+        return download(docx.export(Type.application,example),"wniosek-szablon.docx",false);
+    }
+    @PostMapping(value="/import",consumes=MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(operationId="importApplication")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode="200",description="Operacja wykonana",useReturnTypeSchema=true)
+    public ImportPreview preview(@RequestPart("file") MultipartFile file) throws java.io.IOException{
+        var application=docx.importApplication(file.getBytes());workflow.validate(Type.application,application);return new ImportPreview(application,List.of("Dokument odczytany i zweryfikowany. Zapisz podgląd jako nowy szkic."));
+    }
+    @Operation(operationId="downloadXml")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode="200",description="Plik do pobrania",content=@io.swagger.v3.oas.annotations.media.Content(mediaType="application/xml",schema=@io.swagger.v3.oas.annotations.media.Schema(type="string",format="binary")))
+    @GetMapping("/{type}/{id}/xml") public ResponseEntity<byte[]> xml(@PathVariable Type type,@PathVariable String id){return download(codec.encode(type,repo.get(type,id)).getBytes(java.nio.charset.StandardCharsets.UTF_8),type+"-"+id+".xml",true);}
+    @Operation(operationId="downloadDocx")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode="200",description="Plik do pobrania",content=@io.swagger.v3.oas.annotations.media.Content(mediaType="application/vnd.openxmlformats-officedocument.wordprocessingml.document",schema=@io.swagger.v3.oas.annotations.media.Schema(type="string",format="binary")))
+    @GetMapping("/{type}/{id}/docx") public ResponseEntity<byte[]> word(@PathVariable Type type,@PathVariable String id){return download(docx.export(type,repo.get(type,id)),type+"-"+id+".docx",false);}
+    private ResponseEntity<byte[]> download(byte[] value,String name,boolean xml){return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION,ContentDisposition.attachment().filename(name).build().toString()).contentType(MediaType.parseMediaType(xml?"application/xml":"application/vnd.openxmlformats-officedocument.wordprocessingml.document")).body(value);}
+}

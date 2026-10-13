@@ -24,3 +24,11 @@ Start the server at `http://localhost:8080`:
 ```
 
 The executable JAR is written to `build/libs/`.
+
+Build the frontend with `cd ../frontend && pnpm build` before `bootJar`.
+The executable JAR includes its static assets. Start it from `backend/` so that
+`.env` is loaded. Initialize the database with `python3 ../infra/scripts/init-db.py`.
+
+`./gradlew --offline integrationTest` exercises real BaseX and resets only
+`cloudmigration_tests`. `generateExamples` writes XML/DOCX fixtures to `../examples`.
+Use `../scripts/build.sh` for a clean combined build with frontend checks.

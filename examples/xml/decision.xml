@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<ns5:decision id="00000000-0000-0000-0000-000000000004" revision="1" xmlns="urn:cloudmigration:competition:v1" xmlns:ns5="urn:cloudmigration:decision:v1" xmlns:ns2="urn:cloudmigration:common:v1" xmlns:ns4="urn:cloudmigration:evaluation:v1" xmlns:ns3="urn:cloudmigration:application:v1">
+    <ns5:applicationId>00000000-0000-0000-0000-000000000002</ns5:applicationId>
+    <ns5:evaluationId>00000000-0000-0000-0000-000000000003</ns5:evaluationId>
+    <ns5:state>DRAFT</ns5:state>
+    <ns5:date>2026-10-12</ns5:date>
+    <ns5:outcome>AWARD</ns5:outcome>
+    <ns5:amount>50000.00</ns5:amount>
+    <ns5:currency>PLN</ns5:currency>
+    <ns5:reason>Projekt zakwalifikowany do finansowania</ns5:reason>
+</ns5:decision>
