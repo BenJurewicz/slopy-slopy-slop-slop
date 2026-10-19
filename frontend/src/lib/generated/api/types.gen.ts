@@ -1033,7 +1033,9 @@ export type ImportApplicationData = {
         file: Blob | File;
     };
     path?: never;
-    query?: never;
+    query: {
+        competitionId: string;
+    };
     url: '/api/documents/import';
 };
 
@@ -1716,3 +1718,50 @@ export type DownloadTemplateResponses = {
 };
 
 export type DownloadTemplateResponse = DownloadTemplateResponses[keyof DownloadTemplateResponses];
+
+export type DownloadApplicationExampleData = {
+    body?: never;
+    path?: never;
+    query?: {
+        competitionId?: string;
+    };
+    url: '/api/documents/example';
+};
+
+export type DownloadApplicationExampleErrors = {
+    /**
+     * Nieprawidłowe żądanie
+     */
+    400: Error;
+    /**
+     * Brak zasobu
+     */
+    404: Error;
+    /**
+     * Konflikt rewizji lub procesu
+     */
+    409: Error;
+    /**
+     * Za duży plik
+     */
+    413: Error;
+    /**
+     * Błąd walidacji
+     */
+    422: Error;
+    /**
+     * Baza niedostępna
+     */
+    503: Error;
+};
+
+export type DownloadApplicationExampleError = DownloadApplicationExampleErrors[keyof DownloadApplicationExampleErrors];
+
+export type DownloadApplicationExampleResponses = {
+    /**
+     * Wypełniony przykład, nie pusty formularz
+     */
+    200: Blob | File;
+};
+
+export type DownloadApplicationExampleResponse = DownloadApplicationExampleResponses[keyof DownloadApplicationExampleResponses];

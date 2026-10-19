@@ -31,8 +31,14 @@ class ApiContractTest {
     }
     @Test void openApiDocumentsSuccessAndErrorResponseSchemas() throws Exception {
         var response=get("/v3/api-docs");assertEquals(200,response.statusCode());
-        assertTrue(response.body().contains("listCompetitions"));assertTrue(response.body().contains("#/components/schemas/Competition"));
+        assertTrue(response.body().contains("downloadApplicationExample"));assertTrue(response.body().contains("listCompetitions"));assertTrue(response.body().contains("#/components/schemas/Competition"));
         assertTrue(response.body().contains("\"503\""));assertTrue(response.body().contains("currency"));
+    }
+
+    @Test void importRequiresExplicitCompetitionBeforeAccessingDatabase() throws Exception {
+        String body="--docx-boundary\r\nContent-Disposition: form-data; name=\"file\"; filename=\"wniosek.docx\"\r\nContent-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document\r\n\r\nnot-a-docx\r\n--docx-boundary--\r\n";
+        var response=client.send(HttpRequest.newBuilder(URI.create("http://127.0.0.1:"+port+"/api/documents/import")).header("Content-Type","multipart/form-data; boundary=docx-boundary").POST(HttpRequest.BodyPublishers.ofString(body)).build(),HttpResponse.BodyHandlers.ofString());
+        assertEquals(400,response.statusCode());assertTrue(response.body().contains("REQUEST"));
     }
 
 }

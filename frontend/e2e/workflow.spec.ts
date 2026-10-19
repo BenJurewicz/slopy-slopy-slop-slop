@@ -4,7 +4,7 @@ import { writeFile } from 'node:fs/promises';
 test('DOCX upload → edit → submit → evaluate → issue → export', async ({ page, request }, info) => {
     const c=await request.post('/api/competitions',{data:{revision:0,name:'Próba przeglądarkowa',description:'Migracja mikrofirm do chmury',currency:'PLN',budget:'250000.00',maxGrant:'150000.00',threshold:60,stage:'OPEN',criteria:[{code:'technical',name:'Wykonalność',maximum:100}]}});
     expect(c.status()).toBe(201);const competition=await c.json();
-    const template=await request.get(`/api/documents/template?competitionId=${competition.id}`);
+    const template=await request.get(`/api/documents/example?competitionId=${competition.id}`);
     expect(template.ok()).toBeTruthy();const input=info.outputPath('application.docx');await writeFile(input,await template.body());
     page.on('dialog',dialog=>dialog.accept());
     await page.goto('/');await page.getByRole('button',{name:'Wnioski',exact:true}).click();
@@ -44,7 +44,7 @@ test('HTTP failures stay JSON/404 and bad uploads are actionable',async({page,re
 
 test('draft validation and stale revisions leave saved data unchanged',async({page,request},info)=>{
     const competitions=await (await request.get('/api/competitions')).json();const competition=competitions[0];
-    const template=await request.get(`/api/documents/template?competitionId=${competition.id}`);const input=info.outputPath('draft.docx');await writeFile(input,await template.body());
+    const template=await request.get(`/api/documents/example?competitionId=${competition.id}`);const input=info.outputPath('draft.docx');await writeFile(input,await template.body());
     await page.goto('/');await page.getByRole('button',{name:'Wnioski',exact:true}).click();await page.getByLabel('Importuj DOCX').setInputFiles(input);
     await expect(page.getByLabel('Tytuł projektu')).toBeVisible();await page.getByLabel('Tytuł projektu').fill('Sprawdzanie konfliktu');
     await page.getByRole('button',{name:'Zapisz szkic'}).click();await expect(page.getByRole('status').filter({hasText:'Dokument zapisany'})).toBeVisible();
@@ -73,4 +73,27 @@ test('known SPA routes render correctly without swallowing API or asset paths',a
     for(const [route,heading] of [['applications','Wnioski'],['evaluations','Oceny'],['funding','Ranking i dotacje'],['decisions','Decyzje'],['reports','Raporty XQuery'],['competitions','Konkursy']]){
         await page.goto('/'+route);await expect(page.getByRole('heading',{name:heading,exact:true,level:1})).toBeVisible();
     }
+});
+
+test('blank DOCX and example are separate; import uses the actively selected competition',async({page,request},info)=>{
+    const all=await(await request.get('/api/competitions')).json();const original=all[0];
+    const created=await request.post('/api/competitions',{data:{revision:0,name:'Konkurs wybrany podczas importu',description:'Nabór do sprawdzenia formularza',currency:'PLN',budget:'250000.00',maxGrant:'150000.00',threshold:60,stage:'OPEN',criteria:[{code:'quality',name:'Jakość projektu',maximum:100}]}});
+    expect(created.status()).toBe(201);const selected=await created.json();
+    const template=await request.get(`/api/documents/template?competitionId=${selected.id}`);
+    expect(template.headers()['content-disposition']).toContain('wniosek-formularz.docx');
+    const blank=await request.post(`/api/documents/import?competitionId=${selected.id}`,{multipart:{file:{name:'pusty.docx',mimeType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',buffer:await template.body()}}});
+    expect(blank.status()).toBe(422);expect((await blank.json()).message).toContain('Nazwa firmy');
+    const example=await request.get(`/api/documents/example?competitionId=${original.id}`);expect(example.headers()['content-disposition']).toContain('wniosek-przyklad.docx');
+    const input=info.outputPath('filled-example.docx');await writeFile(input,await example.body());
+    await page.goto('/applications');await page.getByLabel('Aktywny konkurs').selectOption(selected.id);
+    await expect(page.getByRole('link',{name:'Pobierz pusty formularz DOCX'})).toHaveAttribute('href',`/api/documents/template?competitionId=${selected.id}`);
+    await expect(page.getByRole('link',{name:'Zobacz wypełniony przykład'})).toHaveAttribute('href',`/api/documents/example?competitionId=${selected.id}`);
+    const upload=page.waitForRequest(r=>r.url().includes('/api/documents/import'));
+    await page.getByLabel('Importuj DOCX').setInputFiles(input);
+    expect(new URL((await upload).url()).searchParams.get('competitionId')).toBe(selected.id);
+    await expect(page.getByRole('status').filter({hasText:selected.name})).toBeVisible();
+    await expect(page.getByLabel('Nazwa firmy')).toHaveValue('Biuro Rachunkowe Żółw');
+    const before=await(await request.get('/api/applications')).json();expect(before.filter((a:{competitionId:string})=>a.competitionId===selected.id)).toHaveLength(0);
+    await page.getByRole('button',{name:'Zapisz szkic'}).click();await expect(page.getByRole('status').filter({hasText:'Dokument zapisany'})).toBeVisible();
+    const saved=await(await request.get('/api/applications')).json();expect(saved.filter((a:{competitionId:string})=>a.competitionId===selected.id)).toHaveLength(1);
 });

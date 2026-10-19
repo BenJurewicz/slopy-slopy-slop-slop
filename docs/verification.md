@@ -2,16 +2,21 @@
 
 ## Wyniki
 
-- Backend: **23 testy jednostkowe/HTTP** i **7 testów integracyjnych z BaseX**, bez błędów.
+- Backend: **33 testy jednostkowe/HTTP** i **8 testów integracyjnych z BaseX**, bez błędów.
 - Frontend: **9 testów**, sprawdzanie Svelte/TypeScript bez błędów i ostrzeżeń.
-- Przeglądarka: **5 testów** na pakiecie JAR, bez błędów.
+- Przeglądarka: **6 testów** na pakiecie JAR, bez błędów.
 - `pnpm peers check`: brak konfliktów; TypeScript 6.0.3, Hey API 0.99.0.
 - Czysty build przez `scripts/build.sh`: frontend i wykonywalny JAR z zasobami.
 - Ponowna inicjalizacja bazy: dwa udane wywołania bez utraty dokumentów.
 - Restart kontenera BaseX: dokumenty testowe zachowały identyczny skrót treści.
-- Microsoft Word **16.92**: szablon otwarty, tytuł zmieniony, plik zapisany do DOCX;
-  test importera sprawdził nowy tytuł, polskie znaki, opis wielowierszowy, budżet
-  i harmonogram. Fixture: `examples/docx/word-edited-application.docx`.
+- Microsoft Word **16.92**: pusty formularz wypełniony w Wordzie oraz osobny
+  wypełniony wniosek z tytułem zmienionym w Wordzie; oba zapisane do DOCX
+  i odczytane przez importer. Testy porównują wszystkie odpowiedzi, polskie znaki,
+  opis wielowierszowy, budżet, harmonogram i zespół. Fixtures:
+  `examples/docx/word-filled-template.docx`, `examples/docx/word-edited-application.docx`.
+- Układ wydruku: aplikacyjny formularz i trzy eksporty otwarte w Wordzie i zapisane
+  do PDF do sprawdzenia czytelności. Domyślny formularz jest pusty, przykład osobny;
+  ocena i decyzja pobierają rzeczywiste powiązane dane z BaseX.
 - Pages: wyłączone z zakresu weryfikacji zgodnie z ustalonym zakresem.
 
 ## Pokrycie wymagań
@@ -42,7 +47,11 @@ czyszczą wyłącznie wydzieloną bazę testową; nie uruchamiają resetu bazy u
 Sprawdzone: błędne XML, DTD/XXE, zła liczba miejsc dziesiętnych, ujemne kwoty,
 nieprawidłowe sumy, punkty poza zakresem, duplikaty kryteriów, brak oceny końcowej,
 niekwalifikowalna firma, błędny DOCX, limit pliku i limit rozpakowanego ZIP,
-zewnętrzne relacje, podzielone fragmenty tekstu Word oraz powtórzone wiersze.
+zewnętrzne relacje, makra, nadmierna głębokość XML, niejednoznaczne ścieżki ZIP,
+podzielone fragmenty tekstu Word, powtórzone wiersze, brak lub duplikaty kontrolek,
+pusty formularz i niezgodne sumy wydatków. Testy sprawdzają także przypisanie do
+aktywnego konkursu zamiast konkursu opisanego w pliku oraz odrzucenie starego
+formatu z technicznymi oznaczeniami sekcji.
 Parametry XQuery są wiązane; interfejs nie przyjmuje dowolnego kodu zapytania.
 
 ## Ograniczenia

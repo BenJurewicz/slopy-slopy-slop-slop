@@ -17,3 +17,14 @@ Tabele przewijają się we własnym kontenerze na małych ekranach.
 Test `frontend/e2e/workflow.spec.ts` przechodzi pełną ścieżkę w zbudowanym JAR,
 pobiera XML/DOCX, wykonuje raport i zapisuje obrazy 1280×720 oraz 390×844.
 Brak poziomego przepełnienia całej strony jest sprawdzany automatycznie.
+
+## Formularze Word
+
+Domyślny plik do pobrania jest pustym formularzem, nie gotowym przykładem. Obok
+znajduje się osobny wypełniony wzór. Dokumenty mają polskie etykiety, czytelne
+tabele i format A4; identyfikatory XML nie są częścią treści do wypełnienia.
+Import używa konkursu aktywnego w aplikacji, co jest wyjaśnione przy przyciskach
+i potwierdzane w podglądzie. Brak odpowiedzi wskazuje konkretne polskie pole.
+Oceny i decyzje prezentują dane rzeczywiście powiązanych dokumentów oraz
+rozróżniają szkic, ocenę końcową i wydaną decyzję. Podgląd wydruku sprawdzono
+w Microsoft Word, razem z wypełnieniem pustego formularza i ponownym importem.

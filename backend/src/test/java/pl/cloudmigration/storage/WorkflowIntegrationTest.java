@@ -21,6 +21,7 @@ class WorkflowIntegrationTest {
     @Autowired Funding funding;
     @Autowired Reports reports;
     @Autowired DemoApi demo;
+    @Autowired pl.cloudmigration.api.DocumentsApi documents;
     @BeforeEach void resetIsolatedTestDatabase() throws Exception {
         var props=new Properties();try(var in=Files.newInputStream(Path.of("../infra/.env"))){props.load(in);}
         var admin=new BaseXClient("http://127.0.0.1:8984/rest","admin",props.getProperty("BASEX_PASSWORD"),"cloudmigration_tests");
@@ -107,6 +108,21 @@ class WorkflowIntegrationTest {
         String expected=a.id().compareTo(b.id())<0?a.id():b.id();
         assertEquals(expected,funding.preview(c.id()).rows().getFirst().applicationId());
         assertEquals(expected,reports.run("ranking",new Reports.Parameters(c.id(),"0",0,100)).rows().getFirst().get("applicationId"));
+    }
+
+    @Test void readableExportsResolveActualLinkedDocumentsFromBaseX() throws Exception {
+        var base=Examples.competition();var criteria=new ArrayList<>(base.criteria());criteria.set(0,new Criterion("technical","Rzeczywiste kryterium konkursu",25));
+        var c=(Competition)workflow.create(Type.competition,Records.with(base,Map.of("name","Konkurs z bazy danych","criteria",criteria)));
+        var a=(Application)workflow.create(Type.application,Records.with(Examples.application(),Map.of("competitionId",c.id(),"title","Projekt odczytany z bazy","company",new Company("Firma z rzeczywistego wniosku","9876543210","SMALL","Maria Testowa","maria@example.org"))));a=workflow.submit(a.id(),a.revision());
+        var e=(Evaluation)workflow.create(Type.evaluation,Records.with(Examples.evaluation(),Map.of("applicationId",a.id(),"reviewer","Rzeczywisty recenzent")));e=workflow.finalizeEvaluation(e.id(),e.revision());
+        var d=(Decision)workflow.create(Type.decision,Records.with(Examples.decision(),Map.of("applicationId",a.id(),"evaluationId",e.id(),"reason","Uzasadnienie zapisane w bazie")));d=funding.issue(List.of(new Funding.IssueEntry(d.id(),d.revision()))).getFirst();
+        for(var entry:Map.of(Type.application,a.id(),Type.evaluation,e.id(),Type.decision,d.id()).entrySet()){
+            var bytes=documents.word(entry.getKey(),entry.getValue()).getBody();String text="";
+            try(var zip=new java.util.zip.ZipInputStream(new java.io.ByteArrayInputStream(bytes))){java.util.zip.ZipEntry part;while((part=zip.getNextEntry())!=null)if(part.getName().equals("word/document.xml")){var xml=DocumentCodec.parse(zip.readAllBytes());var nodes=xml.getElementsByTagNameNS("http://schemas.openxmlformats.org/wordprocessingml/2006/main","t");var visible=new StringBuilder();for(int i=0;i<nodes.getLength();i++)visible.append(nodes.item(i).getTextContent()).append('\n');text=visible.toString();}}
+            assertTrue(text.contains(c.name()));assertTrue(text.contains(a.title()));assertTrue(text.contains(a.company().name()));assertFalse(text.contains(Examples.application().company().name()));
+            if(entry.getKey()==Type.evaluation){assertTrue(text.contains("Rzeczywiste kryterium konkursu"));assertTrue(text.contains("Rzeczywisty recenzent"));assertTrue(text.contains("Ocena końcowa"));}
+            if(entry.getKey()==Type.decision){assertTrue(text.contains("Rzeczywisty recenzent"));assertTrue(text.contains("Uzasadnienie zapisane w bazie"));assertTrue(text.contains("Decyzja została wydana"));}
+        }
     }
 
 }

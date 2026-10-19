@@ -26,7 +26,10 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
-tasks.test { useJUnitPlatform { excludeTags("integration") } }
+tasks.test {
+    useJUnitPlatform { excludeTags("integration") }
+    inputs.files("../examples/docx/word-edited-application.docx", "../examples/docx/word-filled-template.docx")
+}
 val integrationTest by tasks.registering(Test::class) {
     description = "Run tests against the local BaseX container"
     group = "verification"

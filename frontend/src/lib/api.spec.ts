@@ -39,8 +39,8 @@ describe('generated API integration', () => {
 	});
 	it('serializes DOCX uploads as multipart form data', async () => {
 		fetcher.mockResolvedValue(json({ application: { id: 'preview-1' }, diagnostics: [] }));
-		await api.importApplication(new File(['docx'], 'wniosek.docx'));
-		expect(sent().url).toContain('/api/documents/import');
+		await api.importApplication(new File(['docx'], 'wniosek.docx'), 'competition-1');
+		expect(sent().url).toContain('/api/documents/import?competitionId=competition-1');
 		expect(sent().headers.get('Content-Type')).toMatch(/^multipart\/form-data; boundary=/);
 		const form = await sent().formData();
 		expect((form.get('file') as File).name).toBe('wniosek.docx');

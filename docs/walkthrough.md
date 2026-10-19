@@ -18,12 +18,17 @@ aktualizującym XQuery. Błąd dowolnej decyzji wycofuje całą transakcję.
 ## Pełna ścieżka w interfejsie
 
 1. Utwórz konkurs (np. budżet 250 000 PLN, limit 150 000 PLN, próg 60).
-2. W **Wnioski** pobierz szablon DOCX dla tego konkursu. Oznaczenia pól i sekcji
-   muszą pozostać niezmienione. Edytuj wartości; kopiuj wiersze tabel, aby dodać
-   zadania, budżet i zespół. Wielkość firmy: `MICRO` lub `SMALL`. Kwoty i ilości
-   zapisuj z kropką. Nie wstawiaj makr ani zewnętrznych odwołań.
-3. Zaimportuj DOCX. Sprawdź komunikat, pola firmy, projekt, harmonogram i budżet.
-   Podgląd nie jest jeszcze zapisany. Kliknij **Zapisz szkic**.
+2. W **Wnioski** pobierz **pusty formularz DOCX**; osobny **wypełniony przykład**
+   pokazuje sposób udzielenia odpowiedzi. W Wordzie zastąp polskie podpowiedzi
+   własnymi danymi; kopiuj całe wiersze tabel, aby dodać zadania, wydatki i zespół.
+   Wielkość firmy: `Mikroprzedsiębiorstwo` lub `Małe przedsiębiorstwo`. Kwoty netto
+   można zapisywać jako `1 000,00`, daty jako `2026-11-01` lub `01.11.2026`.
+   Wartości wydatków można zostawić puste — aplikacja je wyliczy. Nie usuwaj
+   kontrolek odpowiedzi, nie wstawiaj makr ani zewnętrznych odwołań.
+3. Wybierz właściwy **aktywny konkurs** i zaimportuj DOCX. Wniosek zostanie
+   przypisany do wybranego konkursu; nie trzeba wpisywać identyfikatorów w Wordzie.
+   Sprawdź komunikat, pola firmy, projekt, harmonogram i budżet. Podgląd nie jest
+   jeszcze zapisany. Kliknij **Zapisz szkic**.
 4. Otwórz szkic, zmień tytuł lub koszty. Po zmianie kosztów kliknij **Przelicz
    budżet** i zapisz. Pobierz XML i DOCX.
 5. Kliknij **Złóż wniosek** i potwierdź nieodwracalność. Wniosek staje się tylko
@@ -80,13 +85,17 @@ zgodność z podglądem finansowania jest testowana na rzeczywistej BaseX.
 `examples/xml/` zawiera cztery XSD-poprawne dokumenty. Ich stałe identyfikatory
 ilustrują powiązania; fixture wniosku jest szkicem, więc nie jest gotowym stanem
 procesu do wydania decyzji. `examples/invalid/` pokazuje ujemny budżet, brak pól i powtórzone kody kryteriów.
-W `examples/docx/` są szablon oraz eksporty wszystkich typów. Szablon pobrany
-z aplikacji ma ID aktywnego konkursu; samodzielny fixture ma przykładowe ID.
+W `examples/docx/` są pusty formularz, osobny wypełniony przykład i czytelne eksporty
+wszystkich typów. DOCX nie wymaga identyfikatora konkursu: przypisanie następuje
+przy imporcie na podstawie wyboru w aplikacji. Ocena i decyzja pokazują rzeczywiste
+nazwy projektu i firmy oraz kontekst powiązanej oceny, odczytane z bazy.
 
 `generateXmlModels` wywołuje XJC przy kompilacji. Testy `DocumentCodecTest`
 sprawdzają odczyt, edycję i utworzenie nowego obiektu JAXB oraz ponowną serializację.
-Import DOCX odczytuje widoczne wartości tabel, nie ukryte XML. Ochrona obejmuje
-DTD/XXE, zewnętrzne relacje, makra, limity ZIP i powtórzone ścieżki.
+Import DOCX rozpoznaje pola po niewidocznych znacznikach kontrolek Word i odczytuje
+ich widoczne odpowiedzi. Nie korzysta z ukrytej kopii danych. Stary format z
+technicznymi oznaczeniami sekcji nie jest obsługiwany. Ochrona obejmuje DTD/XXE,
+zewnętrzne relacje, makra, limity ZIP, głębokość XML i powtórzone ścieżki.
 
 ## Reset i trwałość
 
