@@ -47,6 +47,8 @@ public class DocumentCodec {
         factory.setFeature("http://xml.org/sax/features/external-general-entities",false);
         factory.setFeature("http://xml.org/sax/features/external-parameter-entities",false);
         factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD,""); factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA,"");
+        factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING,true);
+        factory.setAttribute("jdk.xml.maxElementDepth",128);
         return factory.newDocumentBuilder().parse(new ByteArrayInputStream(xml));
     }
     private void validate(Type type,Document document) throws Exception {
