@@ -16,6 +16,13 @@ public class Errors {
     ResponseEntity<Error> input(){return ResponseEntity.badRequest().body(new Error("REQUEST","Nieprawidłowy format danych żądania.",List.of()));}
     @ExceptionHandler({org.springframework.web.servlet.resource.NoResourceFoundException.class,org.springframework.web.servlet.NoHandlerFoundException.class})
     ResponseEntity<Error> missing(){return ResponseEntity.status(404).body(new Error("NOT_FOUND","Zasób nie istnieje.",List.of()));}
+    @ExceptionHandler(org.springframework.web.bind.MissingServletRequestParameterException.class)
+    ResponseEntity<Error> missingRequestParameter(org.springframework.web.bind.MissingServletRequestParameterException e){
+        String message="competitionId".equals(e.getParameterName())
+            ? "Nie przesłano wybranego konkursu. Odśwież całą stronę w przeglądarce, wybierz konkurs i ponownie zaimportuj plik DOCX."
+            : "Brak wymaganego parametru. Odśwież stronę i spróbuj ponownie.";
+        return ResponseEntity.badRequest().body(new Error("REQUEST",message,List.of()));
+    }
     @ExceptionHandler(org.springframework.web.bind.ServletRequestBindingException.class)
     ResponseEntity<Error> missingParameter(){return ResponseEntity.badRequest().body(new Error("REQUEST","Brak wymaganego parametru lub pliku.",List.of()));}
     @ExceptionHandler(org.springframework.web.HttpRequestMethodNotSupportedException.class)
