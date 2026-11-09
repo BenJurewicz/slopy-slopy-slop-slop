@@ -15,6 +15,7 @@ export type Evaluation = {
     reason?: string;
     scores?: Array<Score>;
     total?: number;
+    number?: string;
 };
 
 export type Score = {
@@ -40,6 +41,8 @@ export type Decision = {
     amount?: string;
     currency?: string;
     reason?: string;
+    number?: string;
+    budgetAllows?: boolean;
 };
 
 export type Competition = {
@@ -79,6 +82,12 @@ export type Application = {
     budget?: Array<BudgetLine>;
     team?: Array<Member>;
     requestedAmount?: string;
+    number?: string;
+    projectNumber?: string;
+    implementationStart?: string;
+    implementationEnd?: string;
+    projectCost?: string;
+    ownContribution?: string;
 };
 
 export type BudgetLine = {
@@ -96,6 +105,9 @@ export type Company = {
     size?: string;
     contact?: string;
     email?: string;
+    address?: string;
+    regon?: string;
+    representative?: string;
 };
 
 export type Infrastructure = {
@@ -152,6 +164,7 @@ export type DemoResult = {
 export type Calculated = {
     lines?: Array<BudgetLine>;
     total?: string;
+    ownContribution?: string;
 };
 
 export type Query = {
@@ -172,6 +185,7 @@ export type Allocation = {
     outcome?: string;
     reason?: string;
     existingDecisionId?: string;
+    budgetAllows?: boolean;
 };
 
 export type Preview = {
@@ -1305,7 +1319,9 @@ export type CreateCompetitionResponse = CreateCompetitionResponses[keyof CreateC
 export type CalculateBudgetData = {
     body: Array<BudgetLine>;
     path?: never;
-    query?: never;
+    query?: {
+        requestedAmount?: string;
+    };
     url: '/api/budget/calculate';
 };
 
@@ -1627,7 +1643,7 @@ export type DownloadXmlResponse = DownloadXmlResponses[keyof DownloadXmlResponse
 export type DownloadDocxData = {
     body?: never;
     path: {
-        type: 'competition' | 'application' | 'evaluation' | 'decision';
+        type: 'application' | 'evaluation' | 'decision';
         id: string;
     };
     query?: never;

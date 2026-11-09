@@ -1,5 +1,5 @@
-<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:c="urn:cloudmigration:common:v1" xmlns:t="urn:cloudmigration:evaluation:v1" targetNamespace="urn:cloudmigration:evaluation:v1" elementFormDefault="qualified">
-<xs:import namespace="urn:cloudmigration:common:v1" schemaLocation="common.xsd"/>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:c="urn:cloudmigration:common:v2" xmlns:t="urn:cloudmigration:evaluation:v2" targetNamespace="urn:cloudmigration:evaluation:v2" elementFormDefault="qualified">
+<xs:import namespace="urn:cloudmigration:common:v2" schemaLocation="common.xsd"/>
 <xs:element name="evaluation"><xs:complexType><xs:sequence>
 <xs:element name="applicationId" type="c:Id" minOccurs="1" maxOccurs="1"/>
 <xs:element name="state" type="c:EvaluationState" minOccurs="1" maxOccurs="1"/>
@@ -9,5 +9,6 @@
 <xs:element name="reason" type="c:Text" minOccurs="1" maxOccurs="1"/>
 <xs:element name="scores" type="c:Score" minOccurs="1" maxOccurs="unbounded"/>
 <xs:element name="total" type="xs:nonNegativeInteger" minOccurs="1" maxOccurs="1"/>
+<xs:element name="number" type="c:Text"/>
 </xs:sequence><xs:attribute name="id" type="c:Id" use="required"/><xs:attribute name="revision" type="xs:positiveInteger" use="required"/></xs:complexType><xs:unique name="uniqueCodes"><xs:selector xpath="t:scores"/><xs:field xpath="c:code"/></xs:unique></xs:element>
 </xs:schema>

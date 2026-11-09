@@ -1,5 +1,5 @@
-<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:c="urn:cloudmigration:common:v1" targetNamespace="urn:cloudmigration:application:v1" elementFormDefault="qualified">
-<xs:import namespace="urn:cloudmigration:common:v1" schemaLocation="common.xsd"/>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:c="urn:cloudmigration:common:v2" targetNamespace="urn:cloudmigration:application:v2" elementFormDefault="qualified">
+<xs:import namespace="urn:cloudmigration:common:v2" schemaLocation="common.xsd"/>
 <xs:element name="application"><xs:complexType><xs:sequence>
 <xs:element name="competitionId" type="c:Id" minOccurs="1" maxOccurs="1"/>
 <xs:element name="state" type="c:ApplicationState" minOccurs="1" maxOccurs="1"/>
@@ -15,5 +15,11 @@
 <xs:element name="budget" type="c:BudgetLine" minOccurs="1" maxOccurs="unbounded"/>
 <xs:element name="team" type="c:Member" minOccurs="1" maxOccurs="unbounded"/>
 <xs:element name="requestedAmount" type="c:Money" minOccurs="1" maxOccurs="1"/>
+<xs:element name="number" type="c:Text"/>
+<xs:element name="projectNumber" type="c:Text"/>
+<xs:element name="implementationStart" type="xs:date"/>
+<xs:element name="implementationEnd" type="xs:date"/>
+<xs:element name="projectCost" type="c:Money"/>
+<xs:element name="ownContribution" type="c:Money"/>
 </xs:sequence><xs:attribute name="id" type="c:Id" use="required"/><xs:attribute name="revision" type="xs:positiveInteger" use="required"/></xs:complexType></xs:element>
 </xs:schema>

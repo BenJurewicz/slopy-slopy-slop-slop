@@ -18,10 +18,10 @@ import pl.cloudmigration.workflow.Rules;
 @RestController
 @RequestMapping("/api/budget")
 public class BudgetApi {
-    public record Calculated(List<BudgetLine> lines,String total) {}
+    public record Calculated(List<BudgetLine> lines,String total,String ownContribution) {}
     @Operation(operationId="calculateBudget")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode="200",description="Operacja wykonana",useReturnTypeSchema=true)
-    @PostMapping("/calculate") public Calculated calculate(@RequestBody List<BudgetLine> lines){
+    @PostMapping("/calculate") public Calculated calculate(@RequestBody List<BudgetLine> lines,@RequestParam(required=false) String requestedAmount){
         if(lines==null||lines.isEmpty())throw AppException.invalid("Dodaj pozycje budżetu.");
         var calculated=lines.stream().map(line->{
             try {
@@ -30,6 +30,9 @@ public class BudgetApi {
                 return new BudgetLine(line.description(),line.category(),line.quantity(),line.unit(),line.unitCost(),total.toPlainString());
             }catch(AppException e){throw e;}catch(Exception e){throw AppException.invalid("Nieprawidłowa ilość lub koszt jednostkowy.");}
         }).toList();
-        return new Calculated(calculated,calculated.stream().map(l->new BigDecimal(l.total())).reduce(BigDecimal.ZERO,BigDecimal::add).toPlainString());
+        var total=calculated.stream().map(l->new BigDecimal(l.total())).reduce(BigDecimal.ZERO,BigDecimal::add).setScale(2);
+        var own=requestedAmount==null?null:total.subtract(Rules.money(requestedAmount));
+        Rules.require(own==null||own.signum()>=0,"Dotacja przekracza koszty projektu.");
+        return new Calculated(calculated,total.toPlainString(),own==null?null:own.toPlainString());
     }
 }

@@ -1,8 +1,10 @@
-<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:c="urn:cloudmigration:common:v1" targetNamespace="urn:cloudmigration:common:v1" elementFormDefault="qualified">
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:c="urn:cloudmigration:common:v2" targetNamespace="urn:cloudmigration:common:v2" elementFormDefault="qualified">
 <xs:simpleType name="Text"><xs:restriction base="xs:string"><xs:minLength value="1"/><xs:pattern value="[\s\S]*\S[\s\S]*"/><xs:maxLength value="10000"/></xs:restriction></xs:simpleType>
 <xs:simpleType name="Money"><xs:restriction base="xs:decimal"><xs:minInclusive value="0"/><xs:fractionDigits value="2"/><xs:totalDigits value="14"/></xs:restriction></xs:simpleType>
 <xs:simpleType name="Quantity"><xs:restriction base="xs:decimal"><xs:minExclusive value="0"/><xs:fractionDigits value="3"/></xs:restriction></xs:simpleType>
 <xs:simpleType name="Id"><xs:restriction base="xs:string"><xs:pattern value="[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"/></xs:restriction></xs:simpleType>
+<xs:simpleType name="Nip"><xs:restriction base="xs:string"><xs:pattern value="[0-9]{10}"/></xs:restriction></xs:simpleType>
+<xs:simpleType name="Regon"><xs:restriction base="xs:string"><xs:pattern value="[0-9]{9}|[0-9]{14}"/></xs:restriction></xs:simpleType>
 <xs:simpleType name="Currency"><xs:restriction base="xs:string"><xs:enumeration value="PLN"/></xs:restriction></xs:simpleType>
 <xs:simpleType name="ApplicationState"><xs:restriction base="xs:string"><xs:enumeration value="DRAFT"/><xs:enumeration value="SUBMITTED"/></xs:restriction></xs:simpleType>
 <xs:simpleType name="EvaluationState"><xs:restriction base="xs:string"><xs:enumeration value="DRAFT"/><xs:enumeration value="FINAL"/></xs:restriction></xs:simpleType>
@@ -15,10 +17,13 @@
 <xs:element name="maximum" type="xs:positiveInteger" minOccurs="1" maxOccurs="1"/>
 </xs:sequence></xs:complexType>
 <xs:complexType name="Company"><xs:sequence><xs:element name="name" type="c:Text" minOccurs="1" maxOccurs="1"/>
-<xs:element name="legalId" type="c:Text" minOccurs="1" maxOccurs="1"/>
+<xs:element name="legalId" type="c:Nip" minOccurs="1" maxOccurs="1"/>
 <xs:element name="size" type="c:Size" minOccurs="1" maxOccurs="1"/>
 <xs:element name="contact" type="c:Text" minOccurs="1" maxOccurs="1"/>
 <xs:element name="email" type="c:Text" minOccurs="1" maxOccurs="1"/>
+<xs:element name="address" type="c:Text"/>
+<xs:element name="regon" type="c:Regon"/>
+<xs:element name="representative" type="c:Text"/>
 </xs:sequence></xs:complexType>
 <xs:complexType name="Infrastructure"><xs:sequence><xs:element name="name" type="c:Text" minOccurs="1" maxOccurs="1"/>
 <xs:element name="provider" type="c:Text" minOccurs="1" maxOccurs="1"/>

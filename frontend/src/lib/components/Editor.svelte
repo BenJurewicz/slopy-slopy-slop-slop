@@ -10,7 +10,7 @@
 	const readonly = $derived(value.state && value.state !== 'DRAFT');
 	async function calculate() {
 		calculating=true;error='';
-		try { const result=await api.calculateBudget(draft.budget as import('../generated/api/types.gen').BudgetLine[]);draft={...draft,budget:result.lines}; }
+		try { const result=await api.calculateBudget(draft.budget as import('../generated/api/types.gen').BudgetLine[],String(draft.requestedAmount??'0.00'));draft={...draft,budget:result.lines,projectCost:result.total,ownContribution:result.ownContribution}; }
 		catch(e){error=(e as Error).message;}finally{calculating=false;}
 	}
 	async function submit(event:SubmitEvent) {
@@ -25,7 +25,7 @@
 	{#if error}<p class="error" role="alert">{error}</p>{/if}
 	<form onsubmit={submit}>
 		<Fields bind:value={draft} spec={fields[kind]} disabled={Boolean(readonly)||busy}/>
-		{#if kind==='application'&&!readonly}<div class="notice">Kwoty netto w PLN. Po zmianie ilości lub kosztów przelicz pozycje budżetu. <button type="button" class="secondary" disabled={calculating||busy} onclick={calculate}>{calculating?'Przeliczanie…':'Przelicz budżet'}</button></div>{/if}
+		{#if kind==='application'&&!readonly}<div class="notice">Kwoty netto w PLN. Po zmianie ilości, ceny lub wnioskowanej dotacji przelicz budżet. Koszt projektu i wkład własny oblicza serwer. <button type="button" class="secondary" disabled={calculating||busy} onclick={calculate}>{calculating?'Przeliczanie…':'Przelicz budżet'}</button></div>{/if}
 		{#if !readonly}<div class="form-actions"><button class="primary" disabled={busy||calculating} type="submit">{busy?'Zapisywanie…':'Zapisz szkic'}</button><button class="secondary" type="button" onclick={close}>Anuluj</button></div>{/if}
 	</form>
 </section>

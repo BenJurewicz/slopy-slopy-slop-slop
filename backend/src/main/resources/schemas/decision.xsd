@@ -1,5 +1,5 @@
-<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:c="urn:cloudmigration:common:v1" targetNamespace="urn:cloudmigration:decision:v1" elementFormDefault="qualified">
-<xs:import namespace="urn:cloudmigration:common:v1" schemaLocation="common.xsd"/>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:c="urn:cloudmigration:common:v2" targetNamespace="urn:cloudmigration:decision:v2" elementFormDefault="qualified">
+<xs:import namespace="urn:cloudmigration:common:v2" schemaLocation="common.xsd"/>
 <xs:element name="decision"><xs:complexType><xs:sequence>
 <xs:element name="applicationId" type="c:Id" minOccurs="1" maxOccurs="1"/>
 <xs:element name="evaluationId" type="c:Id" minOccurs="1" maxOccurs="1"/>
@@ -9,5 +9,7 @@
 <xs:element name="amount" type="c:Money" minOccurs="1" maxOccurs="1"/>
 <xs:element name="currency" type="c:Currency"/>
 <xs:element name="reason" type="c:Text" minOccurs="1" maxOccurs="1"/>
+<xs:element name="number" type="c:Text"/>
+<xs:element name="budgetAllows" type="xs:boolean"/>
 </xs:sequence><xs:attribute name="id" type="c:Id" use="required"/><xs:attribute name="revision" type="xs:positiveInteger" use="required"/></xs:complexType></xs:element>
 </xs:schema>

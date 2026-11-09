@@ -1,39 +1,41 @@
 # Przykładowe dokumenty
 
-- `xml/`: dokumenty poprawne względem XSD, ze stałymi przykładowymi powiązaniami.
+- `new-docx/`: trzy dostarczone oryginały Word i lista znaczników.
+- `generated-docx/application-template.docx`: pusty formularz na podstawie oryginału.
+- `generated-docx/application.docx`: osobny wypełniony przykład.
+- `generated-docx/evaluation.docx`, `generated-docx/decision.docx`: przykładowa
+  karta oceny i decyzja. To szkice; eksport z aplikacji pokazuje rzeczywisty status.
+- `xml/`: cztery dokumenty zgodne z XSD v2, z przykładowymi powiązaniami.
 - `invalid/`: celowo błędne XML do demonstracji walidacji.
-- `docx/application-template.docx`: **pusty formularz** wniosku z polskimi podpowiedziami.
-- `docx/application.docx` i `docx/wniosek-przyklad-czytelny.docx`: osobny, **wypełniony przykład** wniosku.
-- `docx/evaluation.docx`, `docx/decision.docx` oraz odpowiedniki `*-przyklad-czytelny.docx`:
-  czytelne przykłady karty oceny i decyzji, z nazwą projektu, firmy i powiązanej oceny.
-  Przykłady są szkicami; eksport z aplikacji odzwierciedla rzeczywisty status dokumentu.
-- `docx/competition.docx`: informacja o konkursie i kryteriach oceny.
 
 Odtworzenie: `cd ../backend && ./gradlew --offline generateExamples`.
-Pliki DOCX używają tego samego generatora co aplikacja, nie są oddzielnymi makietami.
+Generator nie nadpisuje oryginałów ani plików zapisanych w Wordzie do testów.
+Nie ma osobnego formularza DOCX konkursu; konkurs eksportuje się do XML.
 
 ## Wypełnianie i import
 
-W aplikacji wybierz konkurs i pobierz **pusty formularz DOCX**. W Wordzie zastąp
-podpowiedzi własnymi odpowiedziami. Aby dodać pozycję, skopiuj cały wiersz tabeli;
-nie twórz nowej tabeli ani nie usuwaj kontrolek odpowiedzi. Kwoty netto w PLN można
-zapisywać jako `1 000,00`, daty jako `2026-11-01` lub `01.11.2026`. Wielkość firmy:
-`Mikroprzedsiębiorstwo` albo `Małe przedsiębiorstwo`. Kolumnę wartości wydatku można
-pozostawić pustą — aplikacja przeliczy ją z ilości i ceny. Wpisana wartość musi się zgadzać.
+Wybierz konkurs w aplikacji i pobierz **pusty formularz DOCX**. W Wordzie zastąp
+wykropkowane pola odpowiedziami, nie usuwając kontrolek. Uzupełnij oba wystąpienia
+tytułu projektu jednakowo. Wpisz adres, dziesięciocyfrowy NIP, dziewięcio- lub
+czternastocyfrowy REGON oraz osobę reprezentującą beneficjenta. Wielkość firmy:
+`Mikroprzedsiębiorstwo` albo `Małe przedsiębiorstwo`.
 
-Import przypisuje wniosek do **konkursu aktywnego w aplikacji**, niezależnie od nazwy
-naboru wydrukowanej w pliku. Identyfikatory, rewizję i status szkicu nadaje aplikacja.
-Zapis następuje dopiero po sprawdzeniu podglądu i wybraniu **Zapisz szkic**.
+Aby dodać infrastrukturę, zadanie, wydatek lub osobę, skopiuj cały oznaczony blok
+razem z kontrolkami, nie pojedynczą linię tekstu. Co najmniej jeden blok każdej
+sekcji musi być wypełniony. Kwoty netto w PLN można zapisywać jako `1 000,00`,
+daty jako `2026-11-01` lub `01.11.2026`. Zadania muszą mieścić się w okresie
+realizacji projektu. Wartości wydatków, koszt całkowity i wkład własny można
+pozostawić puste do obliczenia. Wpisane podsumowania muszą się zgadzać.
 
-Formularz nie pokazuje kluczy XML. Niewidoczne znaczniki kontrolek Word służą wyłącznie
-do rozpoznania pól; importer odczytuje widoczne odpowiedzi, nie ukrytą kopię danych.
-Stare formularze z technicznymi oznaczeniami sekcji nie są już obsługiwane.
+Import przypisuje wniosek do **konkursu wybranego w aplikacji**, nie nazwy naboru
+wydrukowanej w pliku. System nadaje nową tożsamość, numer wniosku, rewizję i stan
+szkicu. Numer projektu można podać; pusty numer również zostanie nadany.
+Po imporcie sprawdź podgląd i wybierz **Zapisz szkic**.
 
 ## Microsoft Word
 
-`word-edited-application.docx` został otwarty w Microsoft Word 16.92, jego tytuł
-zmieniono w Wordzie, a dokument ponownie zapisano. `word-filled-template.docx`
-powstał przez wypełnienie pustego formularza w Wordzie. Testy porównują odpowiedzi,
-polskie znaki, opis wielowierszowy, budżet, harmonogram i zespół z oczekiwanym modelem.
-Metadane autora usunięto; pliki te nie są nadpisywane przez `generateExamples`.
-Pages nie jest częścią weryfikacji.
+W `backend/src/test/resources/docx/` są aktualne formularze otwarte i zapisane
+w Microsoft Word 16.92: pusty, wypełniony oraz wypełniony z tytułem zmienionym
+w Wordzie. Testy sprawdzają zachowanie kontrolek, odpowiedzi, polskich znaków,
+opisu wielowierszowego, budżetu, harmonogramu i danych beneficjenta. Metadane
+autora usunięto. Pages nie jest częścią weryfikacji.

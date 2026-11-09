@@ -39,8 +39,14 @@ class RulesTest {
         }
         var duplicate=Records.with(Examples.evaluation(),Map.of("scores",List.of(new Score("technical",20,"Test"),new Score("technical",20,"Test"))));
         assertThrows(AppException.class,()->Rules.evaluation(duplicate,a,Examples.competition()));
-        var ineligible=Records.with(a,Map.of("company",new Company("Firma","123","OTHER","Anna","anna@example.org")));
+        var ineligible=Records.with(a,Map.of("company",new Company("Firma","123","OTHER","Anna","anna@example.org","ul. Testowa 1, Gdańsk","123456785","Anna Testowa")));
         assertThrows(AppException.class,()->Rules.evaluation(Examples.evaluation(),ineligible,Examples.competition()));
+    }
+
+    @Test void rejectsInvalidProjectPeriodAndInconsistentContribution(){
+        for(var changes:List.of(Map.of("implementationEnd","2026-10-01"),Map.of("implementationStart","2026-12-01"),Map.of("projectCost","1.00"),Map.of("ownContribution","1.00"))){
+            var app=Records.with(Examples.application(),new HashMap<String,Object>(changes));assertThrows(AppException.class,()->Rules.application(app,Examples.competition()));
+        }
     }
 
     @Test void rejectsUnboundedExponentAndOversizedNumericInputBeforeCalculations(){

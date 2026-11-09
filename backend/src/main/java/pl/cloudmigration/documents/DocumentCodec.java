@@ -21,7 +21,7 @@ public class DocumentCodec {
         evaluation(Models.Evaluation.class), decision(Models.Decision.class);
         public final Class<?> dto;
         Type(Class<?> dto) { this.dto=dto; }
-        public String namespace() { return "urn:cloudmigration:"+name()+":v1"; }
+        public String namespace() { return "urn:cloudmigration:"+name()+":v2"; }
         public String path(String id) { return name()+"s/"+id+".xml"; }
     }
     private final JAXBContext context;
@@ -96,7 +96,7 @@ public class DocumentCodec {
             for(var item:values) {
                 if(item==null) throw AppException.invalid("Lista zawiera pusty element.");
                 var child=doc.createElementNS(ns,field.getName()); parent.appendChild(child);
-                if(item.getClass().isRecord()) append(doc,child,item,"urn:cloudmigration:common:v1",false);
+                if(item.getClass().isRecord()) append(doc,child,item,"urn:cloudmigration:common:v2",false);
                 else child.setTextContent(item.toString());
             }
         }

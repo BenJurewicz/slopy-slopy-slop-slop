@@ -32,14 +32,14 @@ public class DemoApi {
         String[] names={"Migracja księgowości","E-commerce bezserwerowy","Backup małej firmy","Chmurowy system magazynowy","Projekt poniżej progu","Duże przedsiębiorstwo","Wniosek oczekujący na ocenę"};
         int[] scores={90,85,85,84,55,80,0};
         for(int i=0;i<amounts.length;i++){
-            var changes=new HashMap<String,Object>();changes.put("competitionId",c.id());changes.put("title",names[i]);changes.put("requestedAmount",amounts[i]);
-            changes.put("company",new Company("Firma "+(i+1),"123456789"+i,i==5?"OTHER":"MICRO","Anna Kowalska","firma"+i+"@example.org"));
+            var changes=new HashMap<String,Object>();changes.put("competitionId",c.id());changes.put("title",names[i]);changes.put("requestedAmount",amounts[i]);changes.put("projectNumber",null);
+            changes.put("company",new Company("Firma "+(i+1),"123456789"+i,i==5?"OTHER":"MICRO","Anna Kowalska","firma"+i+"@example.org","ul. Demonstracyjna "+(i+1)+", 80-001 Gdańsk",String.format("%09d",100000000+i),"Anna Kowalska – właścicielka"));
             changes.put("budget",List.of(new BudgetLine("Migracja i konfiguracja","Usługi","1","projekt",amounts[i],amounts[i])));
             var a=(Application)workflow.create(Type.application,Records.with(Examples.application(),changes));a=workflow.submit(a.id(),a.revision());
             if(i==6)continue;
             var points=new ArrayList<Score>();int remaining=scores[i];
             for(var criterion:c.criteria()){int score=Math.min(criterion.maximum(),remaining);remaining-=score;points.add(new Score(criterion.code(),score,"Ocena demonstracyjna"));}
-            var e=(Evaluation)workflow.create(Type.evaluation,new Evaluation(null,0,a.id(),"DRAFT","Jan Nowak",java.time.LocalDate.now().toString(),i!=5,i==5?"Firma nie jest mikro ani małym przedsiębiorstwem.":"Warunki spełnione.",points,scores[i]));
+            var e=(Evaluation)workflow.create(Type.evaluation,new Evaluation(null,0,a.id(),"DRAFT","Jan Nowak",java.time.LocalDate.now().toString(),i!=5,i==5?"Firma nie jest mikro ani małym przedsiębiorstwem.":"Warunki spełnione.",points,scores[i],null));
             workflow.finalizeEvaluation(e.id(),e.revision());
         }
         return new DemoResult(c.id(),7);

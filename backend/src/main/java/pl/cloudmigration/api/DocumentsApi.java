@@ -29,13 +29,13 @@ public class DocumentsApi {
     @Operation(operationId="downloadTemplate")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode="200",description="Plik do pobrania",content=@io.swagger.v3.oas.annotations.media.Content(mediaType="application/vnd.openxmlformats-officedocument.wordprocessingml.document",schema=@io.swagger.v3.oas.annotations.media.Schema(type="string",format="binary")))
     @GetMapping("/template") public ResponseEntity<byte[]> template(@RequestParam(required=false) String competitionId){
-        var competition=competitionId==null?null:repo.get(Type.competition,competitionId,Competition.class);
+        var competition=competitionId==null||competitionId.isBlank()?null:repo.get(Type.competition,competitionId,Competition.class);
         return download(docx.template(competition),"wniosek-formularz.docx",false);
     }
     @Operation(operationId="downloadApplicationExample")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode="200",description="Wypełniony przykład, nie pusty formularz",content=@io.swagger.v3.oas.annotations.media.Content(mediaType="application/vnd.openxmlformats-officedocument.wordprocessingml.document",schema=@io.swagger.v3.oas.annotations.media.Schema(type="string",format="binary")))
     @GetMapping("/example") public ResponseEntity<byte[]> example(@RequestParam(required=false) String competitionId){
-        var competition=competitionId==null?null:repo.get(Type.competition,competitionId,Competition.class);
+        var competition=competitionId==null||competitionId.isBlank()?null:repo.get(Type.competition,competitionId,Competition.class);
         return download(docx.example(competition),"wniosek-przyklad.docx",false);
     }
     @PostMapping(value="/import",consumes=MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -48,9 +48,10 @@ public class DocumentsApi {
     @Operation(operationId="downloadXml")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode="200",description="Plik do pobrania",content=@io.swagger.v3.oas.annotations.media.Content(mediaType="application/xml",schema=@io.swagger.v3.oas.annotations.media.Schema(type="string",format="binary")))
     @GetMapping("/{type}/{id}/xml") public ResponseEntity<byte[]> xml(@PathVariable Type type,@PathVariable String id){return download(codec.encode(type,repo.get(type,id)).getBytes(java.nio.charset.StandardCharsets.UTF_8),type+"-"+id+".xml",true);}
+    public enum WordType { application, evaluation, decision }
     @Operation(operationId="downloadDocx")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode="200",description="Plik do pobrania",content=@io.swagger.v3.oas.annotations.media.Content(mediaType="application/vnd.openxmlformats-officedocument.wordprocessingml.document",schema=@io.swagger.v3.oas.annotations.media.Schema(type="string",format="binary")))
-    @GetMapping("/{type}/{id}/docx") public ResponseEntity<byte[]> word(@PathVariable Type type,@PathVariable String id){var document=repo.get(type,id);return download(docx.export(type,document,context(type,document)),type+"-"+id+".docx",false);}
+    @GetMapping("/{type}/{id}/docx") public ResponseEntity<byte[]> word(@PathVariable WordType type,@PathVariable String id){var kind=Type.valueOf(type.name());var document=repo.get(kind,id);return download(docx.export(kind,document,context(kind,document)),type+"-"+id+".docx",false);}
     private DocxDocuments.Context context(Type type,Object document){
         if(type==Type.competition)return new DocxDocuments.Context((Competition)document,null,null);
         var application=type==Type.application?(Application)document:repo.get(Type.application,type==Type.evaluation?((Evaluation)document).applicationId():((Decision)document).applicationId(),Application.class);

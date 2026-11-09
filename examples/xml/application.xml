@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<ns3:application id="00000000-0000-0000-0000-000000000002" revision="1" xmlns="urn:cloudmigration:competition:v1" xmlns:ns5="urn:cloudmigration:decision:v1" xmlns:ns2="urn:cloudmigration:common:v1" xmlns:ns4="urn:cloudmigration:evaluation:v1" xmlns:ns3="urn:cloudmigration:application:v1">
+<ns3:application id="00000000-0000-0000-0000-000000000002" revision="1" xmlns="urn:cloudmigration:competition:v2" xmlns:ns5="urn:cloudmigration:decision:v2" xmlns:ns2="urn:cloudmigration:common:v2" xmlns:ns4="urn:cloudmigration:evaluation:v2" xmlns:ns3="urn:cloudmigration:application:v2">
     <ns3:competitionId>00000000-0000-0000-0000-000000000001</ns3:competitionId>
     <ns3:state>DRAFT</ns3:state>
     <ns3:company>
@@ -8,6 +8,9 @@
         <ns2:size>MICRO</ns2:size>
         <ns2:contact>Anna Kowalska</ns2:contact>
         <ns2:email>anna@example.org</ns2:email>
+        <ns2:address>ul. Przykładowa 12, 80-001 Gdańsk</ns2:address>
+        <ns2:regon>123456785</ns2:regon>
+        <ns2:representative>Anna Kowalska – właścicielka</ns2:representative>
     </ns3:company>
     <ns3:title>Bezpieczna księgowość w chmurze</ns3:title>
     <ns3:description>Migracja bazy danych i oprogramowania.
@@ -43,4 +46,10 @@ Automatyczne kopie zapasowe.</ns3:description>
         <ns2:role>Koordynator</ns2:role>
     </ns3:team>
     <ns3:requestedAmount>50000.00</ns3:requestedAmount>
+    <ns3:number>WN/2026/DEMO01</ns3:number>
+    <ns3:projectNumber>PR/2026/DEMO01</ns3:projectNumber>
+    <ns3:implementationStart>2026-11-01</ns3:implementationStart>
+    <ns3:implementationEnd>2026-12-31</ns3:implementationEnd>
+    <ns3:projectCost>50000.00</ns3:projectCost>
+    <ns3:ownContribution>0.00</ns3:ownContribution>
 </ns3:application>

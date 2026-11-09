@@ -29,12 +29,26 @@ class ApiContractTest {
         var response=client.send(HttpRequest.newBuilder(URI.create("http://127.0.0.1:"+port+"/api/budget/calculate")).header("Content-Type","application/json").POST(HttpRequest.BodyPublishers.ofString(body)).build(),HttpResponse.BodyHandlers.ofString());
         assertEquals(200,response.statusCode());assertTrue(response.body().contains("15.02"));
     }
+    @Test void projectContributionIsCalculatedOnServerAndOverRequestedFundingRejected() throws Exception {
+        var body="[{\"description\":\"Test\",\"category\":\"Usługi\",\"quantity\":\"1.5\",\"unit\":\"h\",\"unitCost\":\"10.01\",\"total\":\"0.00\"}]";
+        var response=client.send(HttpRequest.newBuilder(URI.create("http://127.0.0.1:"+port+"/api/budget/calculate?requestedAmount=10.00")).header("Content-Type","application/json").POST(HttpRequest.BodyPublishers.ofString(body)).build(),HttpResponse.BodyHandlers.ofString());
+        assertEquals(200,response.statusCode());assertTrue(response.body().contains("\"ownContribution\":\"5.02\""));
+        var invalid=client.send(HttpRequest.newBuilder(URI.create("http://127.0.0.1:"+port+"/api/budget/calculate?requestedAmount=20.00")).header("Content-Type","application/json").POST(HttpRequest.BodyPublishers.ofString(body)).build(),HttpResponse.BodyHandlers.ofString());assertEquals(422,invalid.statusCode());
+    }
     @Test void openApiDocumentsSuccessAndErrorResponseSchemas() throws Exception {
         var response=get("/v3/api-docs");assertEquals(200,response.statusCode());
         assertTrue(response.body().contains("downloadApplicationExample"));assertTrue(response.body().contains("listCompetitions"));assertTrue(response.body().contains("#/components/schemas/Competition"));
         assertTrue(response.body().contains("\"503\""));assertTrue(response.body().contains("currency"));
     }
 
+    @Test void missingApplicationBudgetIs422AndCompetitionWordIsUnsupported() throws Exception {
+        var response=client.send(HttpRequest.newBuilder(URI.create("http://127.0.0.1:"+port+"/api/applications")).header("Content-Type","application/json").POST(HttpRequest.BodyPublishers.ofString("{\"revision\":0}")).build(),HttpResponse.BodyHandlers.ofString());assertEquals(422,response.statusCode());
+        assertEquals(400,get("/api/documents/competition/00000000-0000-0000-0000-000000000001/docx").statusCode());
+    }
+    @Test void templateAndExampleCanBeDownloadedBeforeChoosingCompetition() throws Exception {
+        assertEquals(200,get("/api/documents/template?competitionId=").statusCode());
+        assertEquals(200,get("/api/documents/example?competitionId=").statusCode());
+    }
     @Test void importRequiresExplicitCompetitionBeforeAccessingDatabase() throws Exception {
         String body="--docx-boundary\r\nContent-Disposition: form-data; name=\"file\"; filename=\"wniosek.docx\"\r\nContent-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document\r\n\r\nnot-a-docx\r\n--docx-boundary--\r\n";
         var response=client.send(HttpRequest.newBuilder(URI.create("http://127.0.0.1:"+port+"/api/documents/import")).header("Content-Type","multipart/form-data; boundary=docx-boundary").POST(HttpRequest.BodyPublishers.ofString(body)).build(),HttpResponse.BodyHandlers.ofString());

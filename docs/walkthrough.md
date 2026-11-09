@@ -19,8 +19,10 @@ aktualizującym XQuery. Błąd dowolnej decyzji wycofuje całą transakcję.
 
 1. Utwórz konkurs (np. budżet 250 000 PLN, limit 150 000 PLN, próg 60).
 2. W **Wnioski** pobierz **pusty formularz DOCX**; osobny **wypełniony przykład**
-   pokazuje sposób udzielenia odpowiedzi. W Wordzie zastąp polskie podpowiedzi
-   własnymi danymi; kopiuj całe wiersze tabel, aby dodać zadania, wydatki i zespół.
+   pokazuje sposób udzielenia odpowiedzi. W Wordzie zastąp wykropkowane pola
+   własnymi danymi; kopiuj całe oznaczone bloki, aby dodać pozycje infrastruktury,
+   zadania, wydatki i zespół. Uzupełnij adres, NIP, REGON i reprezentanta oraz okres
+   realizacji projektu. Oba pola tytułu powinny zawierać ten sam tekst.
    Wielkość firmy: `Mikroprzedsiębiorstwo` lub `Małe przedsiębiorstwo`. Kwoty netto
    można zapisywać jako `1 000,00`, daty jako `2026-11-01` lub `01.11.2026`.
    Wartości wydatków można zostawić puste — aplikacja je wyliczy. Nie usuwaj
@@ -85,8 +87,9 @@ zgodność z podglądem finansowania jest testowana na rzeczywistej BaseX.
 `examples/xml/` zawiera cztery XSD-poprawne dokumenty. Ich stałe identyfikatory
 ilustrują powiązania; fixture wniosku jest szkicem, więc nie jest gotowym stanem
 procesu do wydania decyzji. `examples/invalid/` pokazuje ujemny budżet, brak pól i powtórzone kody kryteriów.
-W `examples/docx/` są pusty formularz, osobny wypełniony przykład i czytelne eksporty
-wszystkich typów. DOCX nie wymaga identyfikatora konkursu: przypisanie następuje
+W `examples/new-docx/` są oryginały trzech szablonów; `examples/generated-docx/`
+zawiera pusty formularz, osobny przykład oraz eksporty oceny i decyzji. Konkurs
+ma eksport XML. DOCX nie wymaga identyfikatora konkursu: przypisanie następuje
 przy imporcie na podstawie wyboru w aplikacji. Ocena i decyzja pokazują rzeczywiste
 nazwy projektu i firmy oraz kontekst powiązanej oceny, odczytane z bazy.
 
@@ -103,8 +106,8 @@ Zatrzymanie aplikacji ani `docker compose down` nie usuwa dokumentów. Dane i
 użytkownicy są w nazwanym wolumenie. Nie używaj `docker compose down -v`, jeżeli
 chcesz je zachować.
 
-**Reset usuwa wszystkie dokumenty aplikacji.** Po wykonaniu kopii bazy można
-świadomie uruchomić z katalogu projektu:
+**Reset usuwa wszystkie dokumenty aplikacji.** Używaj go wyłącznie wtedy, gdy
+chcesz odtworzyć fikcyjne dane demonstracyjne. Z katalogu projektu:
 
 ```sh
 python3 infra/scripts/reset-demo.py --confirm cloudmigration

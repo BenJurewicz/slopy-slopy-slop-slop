@@ -53,4 +53,14 @@ class DocumentCodecTest {
         assertThrows(AppException.class,()->codec.readGenerated(DocumentCodec.Type.competition,xml.replace("CloudMigration 2026","   ").getBytes(StandardCharsets.UTF_8)));
     }
 
+    @Test void v2RequiresBeneficiaryIdentityAndProjectInformation(){
+        var company=Examples.application().company();
+        for(var changes:java.util.List.of(java.util.Map.of("regon","123"),java.util.Map.of("legalId","123"),java.util.Map.of("address"," "),java.util.Map.of("representative"," "))){
+            var invalid=Records.with(Examples.application(),java.util.Map.of("company",Records.with(company,new java.util.HashMap<String,Object>(changes))));
+            assertThrows(AppException.class,()->codec.encode(DocumentCodec.Type.application,invalid));
+        }
+        var xml=codec.encode(DocumentCodec.Type.application,Examples.application());
+        assertThrows(AppException.class,()->codec.readGenerated(DocumentCodec.Type.application,xml.replace(":v2",":v1").getBytes(StandardCharsets.UTF_8)));
+    }
+
 }

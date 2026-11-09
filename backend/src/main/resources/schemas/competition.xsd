@@ -1,5 +1,5 @@
-<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:c="urn:cloudmigration:common:v1" xmlns:t="urn:cloudmigration:competition:v1" targetNamespace="urn:cloudmigration:competition:v1" elementFormDefault="qualified">
-<xs:import namespace="urn:cloudmigration:common:v1" schemaLocation="common.xsd"/>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:c="urn:cloudmigration:common:v2" xmlns:t="urn:cloudmigration:competition:v2" targetNamespace="urn:cloudmigration:competition:v2" elementFormDefault="qualified">
+<xs:import namespace="urn:cloudmigration:common:v2" schemaLocation="common.xsd"/>
 <xs:element name="competition"><xs:complexType><xs:sequence>
 <xs:element name="name" type="c:Text" minOccurs="1" maxOccurs="1"/>
 <xs:element name="description" type="c:Text" minOccurs="1" maxOccurs="1"/>

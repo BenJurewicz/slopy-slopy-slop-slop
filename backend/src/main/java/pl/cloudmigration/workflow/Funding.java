@@ -12,7 +12,7 @@ import pl.cloudmigration.api.AppException;
 @Service
 public class Funding {
     public record Allocation(String applicationId,String evaluationId,String title,int score,boolean eligible,boolean qualified,
-        String requestedAmount,String outcome,String reason,String existingDecisionId) {}
+        String requestedAmount,String outcome,String reason,String existingDecisionId,boolean budgetAllows) {}
     public record Preview(String competitionId,String available,List<Allocation> rows) {}
     public record IssueEntry(String id,int revision) {}
     private final DocumentRepository repo;
@@ -32,10 +32,11 @@ public class Funding {
             var a=appById.get(e.applicationId());var existing=decisions.stream().filter(d->d.applicationId().equals(a.id())).findFirst().orElse(null);
             if(existing!=null&&"ISSUED".equals(existing.state()))continue;
             boolean qualified=e.eligible()&&e.total()>=c.threshold();
-            boolean award=qualified&&Rules.money(a.requestedAmount()).compareTo(remaining)<=0;
+            boolean budgetAllows=Rules.money(a.requestedAmount()).compareTo(remaining)<=0;
+            boolean award=qualified&&budgetAllows;
             String reason=!e.eligible()?"Wniosek nie spełnia warunków kwalifikacji.":!qualified?"Wynik poniżej progu kwalifikacji.":!award?"Brak wystarczających środków.":"Projekt zakwalifikowany w kolejności rankingu.";
             if(award)remaining=remaining.subtract(Rules.money(a.requestedAmount()));
-            rows.add(new Allocation(a.id(),e.id(),a.title(),e.total(),e.eligible(),qualified,a.requestedAmount(),award?"AWARD":"REJECT",reason,existing==null?null:existing.id()));
+            rows.add(new Allocation(a.id(),e.id(),a.title(),e.total(),e.eligible(),qualified,a.requestedAmount(),award?"AWARD":"REJECT",reason,existing==null?null:existing.id(),budgetAllows));
         }
         return new Preview(competitionId,initial.toPlainString(),List.copyOf(rows));
     }
@@ -43,7 +44,7 @@ public class Funding {
         var rows=preview(competitionId).rows();var results=new ArrayList<Decision>();
         for(var row:rows) {
             if(row.existingDecisionId()!=null){results.add(repo.get(Type.decision,row.existingDecisionId(),Decision.class));continue;}
-            results.add((Decision)workflow.create(Type.decision,new Decision(null,0,row.applicationId(),row.evaluationId(),"DRAFT",java.time.LocalDate.now().toString(),row.outcome(),"AWARD".equals(row.outcome())?row.requestedAmount():"0.00", "PLN",row.reason())));
+            results.add((Decision)workflow.create(Type.decision,new Decision(null,0,row.applicationId(),row.evaluationId(),"DRAFT",java.time.LocalDate.now().toString(),row.outcome(),"AWARD".equals(row.outcome())?row.requestedAmount():"0.00", "PLN",row.reason(),null,row.budgetAllows())));
         }
         return results;
     }

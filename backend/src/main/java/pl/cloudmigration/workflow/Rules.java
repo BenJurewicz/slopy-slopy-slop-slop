@@ -17,6 +17,7 @@ public final class Rules {
         catch(Exception e){throw AppException.invalid("Ilość musi być dodatnią liczbą z maksymalnie trzema miejscami po przecinku.");}
     }
     public static BigDecimal total(Application application) {
+        require(application.budget()!=null&&!application.budget().isEmpty(),"Dodaj pozycje budżetu.");
         return application.budget().stream().map(line->{
             try {
                 var quantity=quantity(line.quantity());
@@ -34,12 +35,19 @@ public final class Rules {
         require(c.threshold()>=0 && c.threshold()<=maximum,"Nieprawidłowy próg kwalifikacji.");
     }
     public static void application(Application a,Competition c) {
+        require(a.company().legalId().matches("[0-9]{10}"),"NIP musi zawierać 10 cyfr.");
+        require(a.company().regon().matches("(?:[0-9]{9}|[0-9]{14})"),"company.regon","REGON musi składać się z 9 lub 14 cyfr.");
+        var start=date(a.implementationStart());var end=date(a.implementationEnd());
+        require(!end.isBefore(start),"implementationEnd","Koniec realizacji projektu jest wcześniejszy niż początek.");
+        for(var task:a.tasks())require(!date(task.start()).isBefore(start)&&!date(task.end()).isAfter(end),"tasks","Zadania muszą mieścić się w okresie realizacji projektu.");
         require(money(a.requestedAmount()).signum()>0,"requestedAmount","Wnioskowana kwota musi być dodatnia.");
         require(money(a.requestedAmount()).compareTo(total(a))<=0,"requestedAmount","Dotacja przekracza koszty projektu.");
         require(money(a.requestedAmount()).compareTo(money(c.maxGrant()))<=0,"requestedAmount","Dotacja przekracza limit konkursu.");
+        require(money(a.projectCost()).compareTo(total(a))==0,"projectCost","Całkowity koszt projektu nie odpowiada budżetowi.");
+        require(money(a.ownContribution()).compareTo(total(a).subtract(money(a.requestedAmount())))==0,"ownContribution","Wkład własny nie odpowiada kosztom projektu i wnioskowanej dotacji.");
         require(a.company().email().matches("[^\\s@]+@[^\\s@]+\\.[^\\s@]+"),"company.email","Nieprawidłowy adres e-mail.");
         for(var task:a.tasks()) {
-            try {require(!LocalDate.parse(task.end()).isBefore(LocalDate.parse(task.start())),"tasks.end","Termin końcowy zadania jest wcześniejszy niż początkowy.");}
+            try {require(!date(task.end()).isBefore(date(task.start())),"tasks.end","Termin końcowy zadania jest wcześniejszy niż początkowy.");}
             catch(java.time.format.DateTimeParseException e){throw AppException.invalid("Nieprawidłowa data zadania.");}
         }
         if("SUBMITTED".equals(a.state())) require(a.submittedAt()!=null,"Brak daty złożenia wniosku.");
@@ -56,10 +64,12 @@ public final class Rules {
     public static void decision(Decision d,Application a,Evaluation e,Competition c) {
         require(e.applicationId().equals(a.id()) && "FINAL".equals(e.state()),"Decyzja wymaga końcowej oceny tego wniosku.");
         if("AWARD".equals(d.outcome())){
+            require(d.budgetAllows(),"Przyznanie dotacji wymaga potwierdzenia dostępnego budżetu.");
             require(e.eligible()&&e.total()>=c.threshold(),"Projekt nie kwalifikuje się do finansowania.");
             require(money(d.amount()).compareTo(money(a.requestedAmount()))==0,"Dotacja musi odpowiadać całej wnioskowanej kwocie.");
         } else require(money(d.amount()).signum()==0,"Odmowa finansowania musi mieć kwotę zero.");
     }
+    private static LocalDate date(String value){try{return LocalDate.parse(value);}catch(java.time.DateTimeException e){throw AppException.invalid("Nieprawidłowa data projektu lub zadania. Użyj RRRR-MM-DD.");}}
     public static void require(boolean condition,String field,String message){if(!condition)throw AppException.invalid(field,message);}
     public static void require(boolean condition,String message){if(!condition)throw AppException.invalid(message);}
 }

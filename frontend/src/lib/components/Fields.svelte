@@ -23,9 +23,9 @@
 		<label class:check={f.type === 'boolean'}><span>{f.label}</span>
 			{#if f.type === 'textarea'}<textarea rows="3" required {disabled} value={String(value[f.key]??'')} oninput={(e)=>set(f.key,e.currentTarget.value)}></textarea>
 			{:else if f.type === 'select'}<select {disabled} value={String(value[f.key]??f.options![0])} onchange={(e)=>set(f.key,e.currentTarget.value)}>{#each f.options! as option}<option value={option}>{captions[option]??option}</option>{/each}</select>
-			{:else if f.type === 'boolean'}<input type="checkbox" {disabled} checked={Boolean(value[f.key])} onchange={(e)=>set(f.key,e.currentTarget.checked)}/>
+			{:else if f.type === 'boolean'}<input type="checkbox" disabled={disabled||f.readonly} checked={Boolean(value[f.key])} onchange={(e)=>set(f.key,e.currentTarget.checked)}/>
 			{:else if f.type === 'number'}<input type="number" min="0" step="1" required disabled={disabled||f.readonly} value={Number(value[f.key]??0)} oninput={(e)=>set(f.key,Number(e.currentTarget.value))}/>
-			{:else}<input type={f.type==='date'?'date':f.type==='email'?'email':'text'} required readonly={f.readonly} {disabled} value={String(value[f.key]??'')} oninput={(e)=>set(f.key,e.currentTarget.value)}/>{/if}
+			{:else}<input type={f.type==='date'?'date':f.type==='email'?'email':'text'} required={!f.optional&&!f.readonly} readonly={f.readonly} {disabled} value={String(value[f.key]??'')} oninput={(e)=>set(f.key,e.currentTarget.value)}/>{/if}
 		</label>
 	{/if}
 {/each}

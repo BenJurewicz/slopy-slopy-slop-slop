@@ -8,7 +8,7 @@ declare function local:allocate($rows as map(*)*, $remaining as xs:decimal) as m
   if(empty($rows)) then () else
   let $row := head($rows)
   let $award := $row?qualified and xs:decimal($row?requestedAmount) le $remaining
-  let $result := map:merge(($row,map{'outcome':if($award) then 'AWARD' else 'REJECT','remainingAfter':string(if($award) then $remaining - xs:decimal($row?requestedAmount) else $remaining)}),map{'duplicates':'use-last'})
+  let $result := map:merge(($row,map{'budgetAllows':xs:decimal($row?requestedAmount) le $remaining,'outcome':if($award) then 'AWARD' else 'REJECT','remainingAfter':string(if($award) then $remaining - xs:decimal($row?requestedAmount) else $remaining)}),map{'duplicates':'use-last'})
   return ($result,local:allocate(tail($rows),if($award) then $remaining - xs:decimal($row?requestedAmount) else $remaining))
 };
 let $all := db:get($db)/*
