@@ -39,3 +39,20 @@ restricted account. It generates `backend/.env` with private credentials; do not
 commit or share that file. The backend does not use the administrator account.
 
 See `../docs/walkthrough.md` for the explicit destructive demo reset procedure.
+
+## Uzupełnienie demonstracyjnych danych do XSD v2
+
+Zatrzymaj aplikację, pozostawiając BaseX uruchomiony. Skrypt dotyczy wyłącznie
+fikcyjnych danych demonstracyjnych; nie tworzy kopii bazy:
+
+```sh
+python3 infra/scripts/enrich-demo-v2.py          # sprawdzenie bez zapisu
+python3 infra/scripts/enrich-demo-v2.py --apply  # jeden atomowy zapis
+```
+
+Uruchamiaj z katalogu projektu, z JDK w `JAVA_HOME` lub `PATH`. Skrypt dodaje
+adres, REGON, reprezentanta, numery dokumentów/projektów, okres realizacji, koszt,
+wkład własny i stan dostępności budżetu. Przed zapisem sprawdza XSD v2 i zachowanie
+wszystkich dotychczasowych pól. Zachowuje identyfikatory, powiązania, rewizje,
+kwoty, oceny i statusy; przerywa przy równoległej zmianie danych. Ponowne
+uruchomienie na v2 nie zapisuje niczego. Nie uruchamia resetu ani nowego demo.
