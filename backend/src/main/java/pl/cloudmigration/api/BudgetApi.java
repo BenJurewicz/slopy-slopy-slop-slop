@@ -25,7 +25,7 @@ public class BudgetApi {
         if(lines==null||lines.isEmpty())throw AppException.invalid("Dodaj pozycje budżetu.");
         var calculated=lines.stream().map(line->{
             try {
-                var quantity=new BigDecimal(line.quantity());Rules.require(quantity.signum()>0&&quantity.scale()<=3,"Nieprawidłowa ilość.");
+                var quantity=Rules.quantity(line.quantity());
                 var total=quantity.multiply(Rules.money(line.unitCost())).setScale(2,RoundingMode.HALF_UP);
                 return new BudgetLine(line.description(),line.category(),line.quantity(),line.unit(),line.unitCost(),total.toPlainString());
             }catch(AppException e){throw e;}catch(Exception e){throw AppException.invalid("Nieprawidłowa ilość lub koszt jednostkowy.");}

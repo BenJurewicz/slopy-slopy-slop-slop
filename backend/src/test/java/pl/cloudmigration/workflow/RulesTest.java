@@ -43,4 +43,8 @@ class RulesTest {
         assertThrows(AppException.class,()->Rules.evaluation(Examples.evaluation(),ineligible,Examples.competition()));
     }
 
+    @Test void rejectsUnboundedExponentAndOversizedNumericInputBeforeCalculations(){
+        for(var input:List.of("1E999999999","1e999999999","1".repeat(1000))){assertThrows(AppException.class,()->Rules.money(input));assertThrows(AppException.class,()->Rules.quantity(input));}
+    }
+
 }

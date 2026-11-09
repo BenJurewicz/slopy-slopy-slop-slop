@@ -9,13 +9,17 @@ import pl.cloudmigration.api.AppException;
 public final class Rules {
     private Rules() {}
     public static BigDecimal money(String value) {
-        try { var amount=new BigDecimal(value); if(amount.signum()<0 || amount.scale()>2)throw new NumberFormatException(); return amount.setScale(2); }
+        try { if(value==null||value.length()>64||value.contains("e")||value.contains("E"))throw new NumberFormatException();var amount=new BigDecimal(value); if(amount.signum()<0 || amount.scale()>2)throw new NumberFormatException(); return amount.setScale(2); }
         catch(Exception e){throw AppException.invalid("Kwota musi być nieujemną liczbą z maksymalnie dwoma miejscami po przecinku.");}
+    }
+    public static BigDecimal quantity(String value){
+        try{if(value==null||value.length()>64||value.contains("e")||value.contains("E"))throw new NumberFormatException();var number=new BigDecimal(value);if(number.signum()<=0||number.scale()>3)throw new NumberFormatException();return number;}
+        catch(Exception e){throw AppException.invalid("Ilość musi być dodatnią liczbą z maksymalnie trzema miejscami po przecinku.");}
     }
     public static BigDecimal total(Application application) {
         return application.budget().stream().map(line->{
             try {
-                var quantity=new BigDecimal(line.quantity()); if(quantity.signum()<=0 || quantity.scale()>3)throw new IllegalArgumentException();
+                var quantity=quantity(line.quantity());
                 var computed=quantity.multiply(money(line.unitCost())).setScale(2,RoundingMode.HALF_UP);
                 require(computed.compareTo(money(line.total()))==0,"Nieprawidłowa suma pozycji budżetu: "+line.description()); return computed;
             } catch(AppException e){throw e;} catch(Exception e){throw AppException.invalid("Nieprawidłowa ilość w budżecie.");}
