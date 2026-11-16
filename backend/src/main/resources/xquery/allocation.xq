@@ -4,21 +4,62 @@ declare variable $competition external;
 declare variable $threshold external;
 declare variable $offset external;
 declare variable $limit external;
-declare function local:allocate($rows as map(*)*, $remaining as xs:decimal) as map(*)* {
-  if(empty($rows)) then () else
-  let $row := head($rows)
-  let $award := $row?qualified and xs:decimal($row?requestedAmount) le $remaining
-  let $result := map:merge(($row,map{'budgetAllows':xs:decimal($row?requestedAmount) le $remaining,'outcome':if($award) then 'AWARD' else 'REJECT','remainingAfter':string(if($award) then $remaining - xs:decimal($row?requestedAmount) else $remaining)}),map{'duplicates':'use-last'})
-  return ($result,local:allocate(tail($rows),if($award) then $remaining - xs:decimal($row?requestedAmount) else $remaining))
+
+declare function local:allocate(
+    $rows as map(*)*,
+    $remaining as xs:decimal
+) as map(*)* {
+    if (empty($rows)) then ()
+    else
+        let $row := head($rows)
+        let $budgetAllows := xs:decimal($row?requestedAmount) le $remaining
+        let $award := $row?qualified and $budgetAllows
+        let $remainingAfter :=
+            if ($award) then $remaining - xs:decimal($row?requestedAmount)
+            else $remaining
+        let $result := map:merge((
+            $row,
+            map {
+                'budgetAllows': $budgetAllows,
+                'outcome': if ($award) then 'AWARD' else 'REJECT',
+                'remainingAfter': string($remainingAfter)
+            }
+        ), map { 'duplicates': 'use-last' })
+        return ($result, local:allocate(tail($rows), $remainingAfter))
 };
-let $all := db:get($db)/*
-let $c := $all[self::*:competition][@id=$competition]
-let $apps := $all[self::*:application][*:competitionId=$competition]
-let $issued := $all[self::*:decision][*:applicationId=$apps/@id][*:state='ISSUED']
-let $evals := $all[self::*:evaluation][*:applicationId=$apps/@id][*:state='FINAL'][not(*:applicationId=$issued/*:applicationId)]
-let $remaining := xs:decimal($c/*:budget)-sum($issued[*:outcome='AWARD']/*:amount ! xs:decimal(.))
-let $rank := for $e in $evals let $a := $apps[@id=$e/*:applicationId]
- order by xs:integer($e/*:total) descending,xs:dateTime($a/*:submittedAt),string($a/@id)
- return map{'applicationId':string($a/@id),'evaluationId':string($e/@id),'title':string($a/*:title),'score':xs:integer($e/*:total),'qualified':$e/*:eligible='true' and xs:integer($e/*:total)>=xs:integer($c/*:threshold),'requestedAmount':string($a/*:requestedAmount)}
-let $rows := local:allocate($rank,$remaining)
-return if(empty($c)) then error(xs:QName('CM_NOT_FOUND')) else serialize(map{'total':count($rows),'rows':array{subsequence($rows,xs:integer($offset)+1,xs:integer($limit))}},map{'method':'json'})
+
+let $documents := db:get($db)/*
+let $configuration := $documents[self::*:competition][@id = $competition]
+let $applications := $documents[self::*:application][*:competitionId = $competition]
+let $issuedDecisions := $documents[self::*:decision]
+    [*:applicationId = $applications/@id][*:state = 'ISSUED']
+let $evaluations := $documents[self::*:evaluation]
+    [*:applicationId = $applications/@id][*:state = 'FINAL']
+    [not(*:applicationId = $issuedDecisions/*:applicationId)]
+let $remaining := xs:decimal($configuration/*:budget)
+    - sum($issuedDecisions[*:outcome = 'AWARD']/*:amount ! xs:decimal(.))
+
+let $ranking :=
+    for $evaluation in $evaluations
+    let $application := $applications[@id = $evaluation/*:applicationId]
+    order by
+        xs:integer($evaluation/*:total) descending,
+        xs:dateTime($application/*:submittedAt),
+        string($application/@id)
+    return map {
+        'applicationId': string($application/@id),
+        'evaluationId': string($evaluation/@id),
+        'title': string($application/*:title),
+        'score': xs:integer($evaluation/*:total),
+        'qualified': $evaluation/*:eligible = 'true'
+            and xs:integer($evaluation/*:total) >= xs:integer($configuration/*:threshold),
+        'requestedAmount': string($application/*:requestedAmount)
+    }
+let $rows := local:allocate($ranking, $remaining)
+
+return
+    if (empty($configuration)) then error(xs:QName('CM_NOT_FOUND'))
+    else serialize(map {
+        'total': count($rows),
+        'rows': array { subsequence($rows, xs:integer($offset) + 1, xs:integer($limit)) }
+    }, map { 'method': 'json' })
