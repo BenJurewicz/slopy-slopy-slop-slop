@@ -10,3 +10,9 @@ frontend/openapi-ts-error-*.log
 
 __pycache__/
 *.pyc
+
+# Eclipse / Java language server metadata and compiler output
+/backend/.classpath
+/backend/.project
+/backend/.settings/
+/backend/bin/
