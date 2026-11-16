@@ -2,9 +2,9 @@
 
 ## Wyniki
 
-- Backend: **44 testy jednostkowe/HTTP** i **8 testów integracyjnych z BaseX**, bez błędów.
+- Backend: **45 testów jednostkowych/HTTP** i **13 testów integracyjnych z BaseX**, bez błędów.
 - Frontend: **9 testów**, sprawdzanie Svelte/TypeScript bez błędów i ostrzeżeń.
-- Przeglądarka: **6 testów** na pakiecie JAR, bez błędów.
+- Przeglądarka: **8 testów** na pakiecie JAR, bez błędów.
 - `pnpm peers check`: brak konfliktów; TypeScript 6.0.3, Hey API 0.99.0.
 - Czysty build przez `scripts/build.sh`: frontend i wykonywalny JAR z zasobami.
 - Ponowna inicjalizacja bazy: dwa udane wywołania bez utraty dokumentów.
@@ -14,6 +14,14 @@
   ponownie zapisane do DOCX. Testy sprawdzają wszystkie dane i zachowanie
   kontrolek. Fixtures: `backend/src/test/resources/docx/word-blank-application.docx`,
   `word-filled-application.docx`, `word-edited-application.docx`.
+- Jeden konkurs CloudMigration: automatyczna inicjalizacja, zachowanie istniejącego
+  ID, równoległe odczyty bez duplikatów, blokada tworzenia/usuwania drugiego
+  konkursu i odrzucenie obcego ID we wniosku. Ustawienia są edytowalne przed
+  wnioskami; później wyłącznie etap. Wiele starych konfiguracji jest odrzucane
+  bez usuwania danych. Import, finansowanie i raporty nie wymagają wyboru konkursu.
+- Istniejące 20 dokumentów: zachowane wszystkie dane, identyfikatory, powiązania,
+  rewizje i stany; porównanie eksportów XML z uwzględnieniem równoważnych prefiksów
+  przestrzeni nazw. Bez resetu i kopii bazy.
 - XSD v2: adres, NIP/REGON i reprezentant beneficjenta, numery dokumentów/projektu,
   okres realizacji, całkowity koszt i wkład własny. Terminy zadań muszą mieścić
   się w okresie projektu. Serwer oblicza kwoty bez arytmetyki zmiennoprzecinkowej.
@@ -59,7 +67,7 @@ podzielone fragmenty tekstu Word, powtórzone bloki, brak lub duplikaty kontrole
 pusty formularz, rozbieżne powtórzenia tytułu oraz niezgodne sumy wydatków,
 kosztu i wkładu własnego. Duże wykładniki i nadmiernie długie liczby są odrzucane
 przed obliczeniami. Testy sprawdzają także przypisanie do
-aktywnego konkursu zamiast konkursu opisanego w pliku oraz odrzucenie starego
+CloudMigration bez wyboru konkursu, niezależnie od nazwy naboru w pliku oraz odrzucenie starego
 formatu z technicznymi oznaczeniami sekcji.
 Parametry XQuery są wiązane; interfejs nie przyjmuje dowolnego kodu zapytania.
 

@@ -17,7 +17,8 @@ aktualizującym XQuery. Błąd dowolnej decyzji wycofuje całą transakcję.
 
 ## Pełna ścieżka w interfejsie
 
-1. Utwórz konkurs (np. budżet 250 000 PLN, limit 150 000 PLN, próg 60).
+1. W **Ustawienia** sprawdź konfigurację CloudMigration (domyślnie budżet
+   250 000 PLN, limit 150 000 PLN, próg 60). Konkurs jest tworzony automatycznie.
 2. W **Wnioski** pobierz **pusty formularz DOCX**; osobny **wypełniony przykład**
    pokazuje sposób udzielenia odpowiedzi. W Wordzie zastąp wykropkowane pola
    własnymi danymi; kopiuj całe oznaczone bloki, aby dodać pozycje infrastruktury,
@@ -27,8 +28,8 @@ aktualizującym XQuery. Błąd dowolnej decyzji wycofuje całą transakcję.
    można zapisywać jako `1 000,00`, daty jako `2026-11-01` lub `01.11.2026`.
    Wartości wydatków można zostawić puste — aplikacja je wyliczy. Nie usuwaj
    kontrolek odpowiedzi, nie wstawiaj makr ani zewnętrznych odwołań.
-3. Wybierz właściwy **aktywny konkurs** i zaimportuj DOCX. Wniosek zostanie
-   przypisany do wybranego konkursu; nie trzeba wpisywać identyfikatorów w Wordzie.
+3. Zaimportuj DOCX. Wniosek zawsze należy do CloudMigration;
+   nie trzeba wybierać konkursu ani wpisywać identyfikatorów w Wordzie.
    Sprawdź komunikat, pola firmy, projekt, harmonogram i budżet. Podgląd nie jest
    jeszcze zapisany. Kliknij **Zapisz szkic**.
 4. Otwórz szkic, zmień tytuł lub koszty. Po zmianie kosztów kliknij **Przelicz
@@ -46,8 +47,11 @@ aktualizującym XQuery. Błąd dowolnej decyzji wycofuje całą transakcję.
 
 ## Zestaw demonstracyjny
 
-**Wczytaj przykład** działa tylko w pustej bazie. Tworzy siedem wniosków i sześć
-ocen końcowych. Oczekiwane finansowanie:
+**Przegląd: Wczytaj przykład** działa, gdy nie ma wniosków, ocen ani decyzji.
+Korzysta z istniejących ustawień, bez tworzenia kolejnego konkursu. Wymaga
+otwartego naboru, limitu dotacji co najmniej 140 000 PLN, sumy kryteriów 100
+punktów i progu 60. Tworzy siedem wniosków i sześć ocen końcowych.
+Przy domyślnym budżecie 250 000 PLN oczekiwane finansowanie:
 
 | Projekt | Punkty | Wniosek PLN | Wynik |
 |---|---:|---:|---|
@@ -77,8 +81,7 @@ Remis rozstrzyga wcześniejsze złożenie, a przy identycznym czasie ID.
 ## Katalog XQuery
 
 `applications`, `over-budget`, `missing-evaluations`, `ranking`, `qualified`,
-`summary`, `decisions`, `providers`, `allocation`. Parametry: `competitionId`,
-`threshold` (próg wnioskowanej kwoty), `offset`, `limit` (1–500).
+`summary`, `decisions`, `providers`, `allocation`. Parametry: `threshold` (próg wnioskowanej kwoty), `offset`, `limit` (1-500).
 Raport `allocation` realizuje politykę pełnych dotacji również w XQuery;
 zgodność z podglądem finansowania jest testowana na rzeczywistej BaseX.
 
@@ -90,7 +93,7 @@ procesu do wydania decyzji. `examples/invalid/` pokazuje ujemny budżet, brak p�
 W `examples/new-docx/` są oryginały trzech szablonów; `examples/generated-docx/`
 zawiera pusty formularz, osobny przykład oraz eksporty oceny i decyzji. Konkurs
 ma eksport XML. DOCX nie wymaga identyfikatora konkursu: przypisanie następuje
-przy imporcie na podstawie wyboru w aplikacji. Ocena i decyzja pokazują rzeczywiste
+automatycznie przy imporcie do CloudMigration. Ocena i decyzja pokazują rzeczywiste
 nazwy projektu i firmy oraz kontekst powiązanej oceny, odczytane z bazy.
 
 `generateXmlModels` wywołuje XJC przy kompilacji. Testy `DocumentCodecTest`
@@ -118,11 +121,17 @@ wolumenu, bazy ani użytkowników. Bazy testowe nie są danymi demonstracyjnymi.
 
 ## Kontrakty HTTP
 
-CRUD: `/api/competitions`, `/api/applications`, `/api/evaluations`, `/api/decisions`.
+Ustawienia: `GET /api/competition`, `PUT /api/competition`. Nie ma operacji
+utworzenia/usunięcia ani kolekcji konkursów. W pustej bazie pierwszy odczyt tworzy
+ustawienia domyślne. Istniejący identyfikator i powiązania pozostają bez zmian.
+CRUD dokumentów: `/api/applications`, `/api/evaluations`, `/api/decisions`.
 Tworzenie: POST z `revision: 0`; ID nadaje serwer. PUT zawiera ID i aktualną
 rewizję; DELETE przekazuje `?revision=N`. Przejścia: `.../submit`, `.../finalize`.
-Dokumenty: `/api/documents/template`, `/import`, `/{type}/{id}/xml`, `/{type}/{id}/docx`.
-Finansowanie: `/api/funding/{competitionId}`, `/prepare`, `/api/funding/issue`.
+Dokumenty: `/api/documents/template`, `/example`, `/import`, `/{type}/{id}/xml`, `/{type}/{id}/docx`.
+Finansowanie: `GET /api/funding`, `POST /api/funding/prepare`,
+`POST /api/funding/issue`. Import, ranking i raporty nie przyjmują wyboru konkursu;
+backend używa konfiguracji CloudMigration. Wniosek może pominąć `competitionId`
+przy tworzeniu; obcy identyfikator jest odrzucany.
 Raporty: `/api/queries`, `/api/queries/{id}/execute`. Budżet: `/api/budget/calculate`.
 
 Odpowiedzi błędów: `code`, `message`, `details`. Statusy: 400 niepoprawne żądanie,

@@ -55,7 +55,10 @@ Kolejne buildy backendu mogą działać z `--offline`. Nie jest używany Maven.
    Aplikacja: <http://127.0.0.1:8080/>. Swagger: <http://127.0.0.1:8080/swagger-ui.html>.
    Node.js nie jest potrzebny do serwowania gotowej aplikacji.
 
-5. W pustej bazie wybierz **Wczytaj przykład** albo utwórz własny konkurs.
+5. Konfiguracja jedynego konkursu **CloudMigration** powstaje automatycznie.
+   W **Ustawienia** zmień budżet, limit, próg, kryteria i etap. Po dodaniu pierwszego
+   wniosku można zmieniać tylko etap. Nie ma wyboru, tworzenia ani usuwania konkursów.
+   Jeśli nie ma jeszcze wniosków, **Przegląd: Wczytaj przykład** dodaje dane demonstracyjne.
 
 ## Rozwój i testy
 
@@ -82,6 +85,10 @@ są w ignorowanym `frontend/test-results/`.
 
 ## Dokumenty i architektura
 
+- Jeden stały konkurs CloudMigration: `GET/PUT /api/competition`; identyfikator
+  konfiguracji pozostaje technicznym powiązaniem w XML. Istniejąca konfiguracja
+  i jej dokumenty są zachowywane bez resetu ani migracji schematu. Baza z wieloma
+  konfiguracjami zwraca konflikt zamiast automatycznie wybierać lub usuwać dane.
 - XML jest źródłem prawdy w BaseX: `competitions/`, `applications/`, `evaluations/`, `decisions/`.
 - XSD: `backend/src/main/resources/schemas/`; klasy JAXB powstają automatycznie
   w `backend/build/generated/sources/xjc/`.

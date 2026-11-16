@@ -27,7 +27,7 @@ daty jako `2026-11-01` lub `01.11.2026`. Zadania muszą mieścić się w okresie
 realizacji projektu. Wartości wydatków, koszt całkowity i wkład własny można
 pozostawić puste do obliczenia. Wpisane podsumowania muszą się zgadzać.
 
-Import przypisuje wniosek do **konkursu wybranego w aplikacji**, nie nazwy naboru
+Import przypisuje wniosek do **CloudMigration**, nie nazwy naboru
 wydrukowanej w pliku. System nadaje nową tożsamość, numer wniosku, rewizję i stan
 szkicu. Numer projektu można podać; pusty numer również zostanie nadany.
 Po imporcie sprawdź podgląd i wybierz **Zapisz szkic**.

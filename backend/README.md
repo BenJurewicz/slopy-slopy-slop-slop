@@ -32,3 +32,12 @@ The executable JAR includes its static assets. Start it from `backend/` so that
 `./gradlew --offline integrationTest` exercises real BaseX and resets only
 `cloudmigration_tests`. `generateExamples` writes XML/DOCX fixtures to `../examples`.
 Use `../scripts/build.sh` for a clean combined build with frontend checks.
+
+## CloudMigration settings
+
+`GET /api/competition` returns the single configuration, creating defaults only
+when none exists. `PUT /api/competition` uses the existing ID and revision.
+There are no competition creation/deletion or collection endpoints. Existing XML
+IDs and document links are preserved. Multiple legacy configurations cause HTTP
+409 without data removal. Applications inherit the configuration ID; imports,
+reports and funding use it internally rather than accepting a competition choice.
