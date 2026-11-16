@@ -98,12 +98,10 @@ describe('workspace transitions', () => {
 describe('report pagination', () => {
     it('requests later pages and restarts at the first page on a new run', async () => {
         const workspace = new Workspace();
-        const execute = vi
-            .spyOn(api, 'executeQuery')
-            .mockResolvedValue({
-                total: 501,
-                rows: [{ title: 'Last project' }],
-            });
+        const execute = vi.spyOn(api, 'executeQuery').mockResolvedValue({
+            total: 501,
+            rows: [{ title: 'Last project' }],
+        });
         await workspace.runReport(500);
         expect(execute).toHaveBeenLastCalledWith('summary', {
             threshold: '0',
