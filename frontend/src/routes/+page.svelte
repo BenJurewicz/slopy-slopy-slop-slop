@@ -15,28 +15,32 @@
     onMount(workspace.initialize);
 </script>
 
-<svelte:head
-    ><title>CloudMigration</title><meta
+<svelte:head>
+    <title>CloudMigration</title>
+    <meta
         name="description"
         content="Obsługa wniosków, ocen i finansowania projektów migracji do chmury."
-    /></svelte:head
->
+    />
+</svelte:head>
 <div class="workspace">
     <header class="sidebar">
         <strong>CloudMigration</strong>
         <nav aria-label="Główna nawigacja">
-            {#each navigation as item (item.id)}<button
+            {#each navigation as item (item.id)}
+                <button
                     class:active={workspace.view === item.id}
                     aria-current={workspace.view === item.id
                         ? 'page'
                         : undefined}
                     onclick={() => workspace.navigate(item.id)}
-                    >{item.label}</button
-                >{/each}
+                >
+                    {item.label}
+                </button>
+            {/each}
         </nav>
-        <a href="/swagger-ui.html" target="_blank" rel="external noreferrer"
-            >API</a
-        >
+        <a href="/swagger-ui.html" target="_blank" rel="external noreferrer">
+            API
+        </a>
     </header>
     <main class="main">
         <header class="topbar">
@@ -45,37 +49,38 @@
                     ?.label}
             </h1>
         </header>
-        {#if workspace.error}<div class="error" role="alert">
+        {#if workspace.error}
+            <div class="error" role="alert">
                 {workspace.error}
-                <button class="quiet" onclick={workspace.refresh}
-                    >Odśwież dane</button
-                >
-            </div>{/if}
-        {#if workspace.message}<p class="success" role="status">
+                <button class="quiet" onclick={workspace.refresh}>
+                    Odśwież dane
+                </button>
+            </div>
+        {/if}
+        {#if workspace.message}
+            <p class="success" role="status">
                 {workspace.message}
-            </p>{/if}
-        {#if workspace.loading}<p class="notice" role="status">
-                Wczytywanie dokumentów...
-            </p>{/if}
-        {#if workspace.editor}<DocumentView
-                {workspace}
-                editor={workspace.editor}
-            />{:else if workspace.view === 'overview' && workspace.competition}<Overview
-                {workspace}
-                competition={workspace.competition}
-            />{:else if workspace.view === 'settings' && workspace.competition}<Settings
-                {workspace}
-                competition={workspace.competition}
-            />{:else if workspace.view === 'applications'}<Applications
-                {workspace}
-            />{:else if workspace.view === 'evaluations'}<Evaluations
-                {workspace}
-            />{:else if workspace.view === 'funding'}<Funding
-                {workspace}
-            />{:else if workspace.view === 'decisions'}<Decisions
-                {workspace}
-            />{:else if workspace.view === 'reports'}<Reports
-                {workspace}
-            />{/if}
+            </p>
+        {/if}
+        {#if workspace.loading}
+            <p class="notice" role="status">Wczytywanie dokumentów...</p>
+        {/if}
+        {#if workspace.editor}
+            <DocumentView {workspace} editor={workspace.editor} />
+        {:else if workspace.view === 'overview' && workspace.competition}
+            <Overview {workspace} competition={workspace.competition} />
+        {:else if workspace.view === 'settings' && workspace.competition}
+            <Settings {workspace} competition={workspace.competition} />
+        {:else if workspace.view === 'applications'}
+            <Applications {workspace} />
+        {:else if workspace.view === 'evaluations'}
+            <Evaluations {workspace} />
+        {:else if workspace.view === 'funding'}
+            <Funding {workspace} />
+        {:else if workspace.view === 'decisions'}
+            <Decisions {workspace} />
+        {:else if workspace.view === 'reports'}
+            <Reports {workspace} />
+        {/if}
     </main>
 </div>

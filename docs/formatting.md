@@ -20,6 +20,11 @@ Java i Kotlin są obsługiwane przez osobny projekt Gradle w katalogu głównym,
 bez zmiany konfiguracji wykonawczej aplikacji. Profil Eclipse obejmuje także
 `infra/scripts/ValidateXml.java`.
 
+Szablony Svelte rozdzielają znaczniki i bloki sterujące na osobne wiersze.
+Nadpisanie `htmlWhitespaceSensitivity: 'ignore'` zapobiega sklejaniu znaczników
+przez Prettier. Po zmianie białych znaków sprawdzaj również renderowany widok,
+zwłaszcza tekst przy elementach liniowych.
+
 ESLint używa zalecanych reguł JavaScript, TypeScript i Svelte. Konfiguracja
 Prettier wyłącza kolidujące reguły formatowania. Jedyny lokalny wyjątek
 `prefer-writable-derived` w edytorze zachowuje głęboko reaktywną, edytowalną
@@ -59,7 +64,8 @@ Git. `.prettierignore` i cele Spotless wykluczają wygenerowany klient API,
 JAXB, katalogi build/cache, zależności, lockfile, dane prywatne i fixtures.
 Przykłady w `examples/`, zasoby testowe i dokumenty DOCX nie są zmieniane.
 Wyłączenia fixtures obowiązują również pomocnicze formattery Python/Bash/Lua.
-XQuery nie ma w tym zestawie uzgodnionego formattera i pozostaje bez zmian.
+XQuery nie ma w tym zestawie uzgodnionego formattera; powyższe polecenia go nie
+zmieniają.
 
 Polskie litery są zwykłą treścią. Kosmetyczne cudzysłowy i myślniki zastąpiono
 ASCII. Znaki wymagane przez rzeczywiste fixtures Word i testy regresyjne

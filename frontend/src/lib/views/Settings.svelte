@@ -9,32 +9,39 @@
     }: { workspace: Workspace; competition: Competition } = $props();
 </script>
 
-{#if !workspace.applications.length}<p class="notice">
+{#if !workspace.applications.length}
+    <p class="notice">
         Ustawienia można zmieniać do utworzenia pierwszego wniosku.
-    </p>{/if}
-{#key competition.revision}<Editor
+    </p>
+{/if}
+{#key competition.revision}
+    <Editor
         kind="competition"
         settingsLocked={workspace.applications.length > 0}
         value={{ ...competition }}
         save={workspace.saveSettings}
         close={() => workspace.navigate('overview')}
         busy={workspace.busy}
-    />{/key}
-<a rel="external" href={`/api/documents/competition/${competition.id}/xml`}
-    >Pobierz ustawienia XML</a
->
+    />
+{/key}
+<a rel="external" href={`/api/documents/competition/${competition.id}/xml`}>
+    Pobierz ustawienia XML
+</a>
 <section>
     <h2>Dane testowe</h2>
     <div class="actions">
         <button
             disabled={workspace.busy || workspace.loading}
-            onclick={workspace.loadDemo}>Wczytaj dane demonstracyjne</button
+            onclick={workspace.loadDemo}
         >
+            Wczytaj dane demonstracyjne
+        </button>
         <button
             class="danger"
             disabled={workspace.busy || workspace.loading}
             onclick={workspace.resetData}
-            >Usuń wszystkie wnioski, oceny i decyzje</button
         >
+            Usuń wszystkie wnioski, oceny i decyzje
+        </button>
     </div>
 </section>

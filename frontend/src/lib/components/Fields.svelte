@@ -26,7 +26,8 @@
 {#each spec as f (f.key)}
     {#if f.type === 'object'}
         <fieldset>
-            <legend>{f.label}</legend><Fields
+            <legend>{f.label}</legend>
+            <Fields
                 spec={f.children!}
                 {disabled}
                 bind:value={() => object(f.key), (v) => set(f.key, v)}
@@ -39,8 +40,9 @@
             {#each list(f.key) as _item, index (index)}
                 <div class="repeat">
                     <div class="repeat-title">
-                        <strong>Pozycja {index + 1}</strong
-                        >{#if !disabled && f.key !== 'scores'}<button
+                        <strong>Pozycja {index + 1}</strong>
+                        {#if !disabled && f.key !== 'scores'}
+                            <button
                                 type="button"
                                 class="quiet"
                                 aria-label={`Usuń pozycję ${index + 1} - ${f.label}`}
@@ -50,8 +52,11 @@
                                         list(f.key).filter(
                                             (_, i) => i !== index,
                                         ),
-                                    )}>Usuń</button
-                            >{/if}
+                                    )}
+                            >
+                                Usuń
+                            </button>
+                        {/if}
                     </div>
                     <Fields
                         spec={f.children!}
@@ -63,39 +68,49 @@
                     />
                 </div>
             {/each}
-            {#if !disabled && f.key !== 'scores'}<button
+            {#if !disabled && f.key !== 'scores'}
+                <button
                     type="button"
                     class="secondary"
                     onclick={() =>
                         set(f.key, [...list(f.key), empty(f.children!)])}
-                    >Dodaj pozycję - {f.label}</button
-                >{/if}
+                >
+                    Dodaj pozycję - {f.label}
+                </button>
+            {/if}
         </fieldset>
     {:else}
-        <label class:check={f.type === 'boolean'}
-            ><span>{f.label}</span>
-            {#if f.type === 'textarea'}<textarea
+        <label class:check={f.type === 'boolean'}>
+            <span>{f.label}</span>
+            {#if f.type === 'textarea'}
+                <textarea
                     rows="3"
                     required
                     {disabled}
                     value={String(value[f.key] ?? '')}
-                    oninput={(e) => set(f.key, e.currentTarget.value)}
-                ></textarea>
-            {:else if f.type === 'select'}<select
+                    oninput={(e) =>
+                        set(f.key, e.currentTarget.value)}></textarea>
+            {:else if f.type === 'select'}
+                <select
                     {disabled}
                     value={String(value[f.key] ?? f.options![0])}
                     onchange={(e) => set(f.key, e.currentTarget.value)}
-                    >{#each f.options! as option (option)}<option value={option}
-                            >{captions[option] ?? option}</option
-                        >{/each}</select
                 >
-            {:else if f.type === 'boolean'}<input
+                    {#each f.options! as option (option)}
+                        <option value={option}>
+                            {captions[option] ?? option}
+                        </option>
+                    {/each}
+                </select>
+            {:else if f.type === 'boolean'}
+                <input
                     type="checkbox"
                     disabled={disabled || f.readonly}
                     checked={Boolean(value[f.key])}
                     onchange={(e) => set(f.key, e.currentTarget.checked)}
                 />
-            {:else if f.type === 'number'}<input
+            {:else if f.type === 'number'}
+                <input
                     type="number"
                     min="0"
                     step="1"
@@ -104,7 +119,8 @@
                     value={Number(value[f.key] ?? 0)}
                     oninput={(e) => set(f.key, Number(e.currentTarget.value))}
                 />
-            {:else}<input
+            {:else}
+                <input
                     type={f.type === 'date'
                         ? 'date'
                         : f.type === 'email'
@@ -115,7 +131,8 @@
                     {disabled}
                     value={String(value[f.key] ?? '')}
                     oninput={(e) => set(f.key, e.currentTarget.value)}
-                />{/if}
+                />
+            {/if}
         </label>
     {/if}
 {/each}

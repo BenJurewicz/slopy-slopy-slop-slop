@@ -17,5 +17,11 @@ export default {
     semi: true,
     trailingComma: 'all',
     xmlWhitespaceSensitivity: 'strict',
-    overrides: [{ files: '*.xsd', options: { parser: 'xml' } }],
+    overrides: [
+        { files: '*.xsd', options: { parser: 'xml' } },
+        {
+            files: '*.svelte',
+            options: { htmlWhitespaceSensitivity: 'ignore' },
+        },
+    ],
 };

@@ -86,8 +86,12 @@
         </div>
         <button class="quiet" onclick={close}>Zamknij</button>
     </header>
-    {#if readonly}<p class="notice">Zatwierdzony: tylko do odczytu.</p>{/if}
-    {#if error}<p class="error" role="alert">{error}</p>{/if}
+    {#if readonly}
+        <p class="notice">Zatwierdzony: tylko do odczytu.</p>
+    {/if}
+    {#if error}
+        <p class="error" role="alert">{error}</p>
+    {/if}
     <form onsubmit={submit}>
         {#if kind === 'competition' && settingsLocked}
             <Fields
@@ -100,36 +104,43 @@
                 spec={fields.competition.filter((f) => f.key === 'stage')}
                 disabled={busy}
             />
-        {:else}<Fields
+        {:else}
+            <Fields
                 bind:value={draft}
                 spec={fields[kind]}
                 disabled={Boolean(readonly) || busy}
-            />{/if}
-        {#if kind === 'application' && !readonly}<div class="notice">
+            />
+        {/if}
+        {#if kind === 'application' && !readonly}
+            <div class="notice">
                 Kwoty netto w PLN. Po zmianie kosztów lub dotacji przelicz
                 budżet. <button
                     type="button"
                     class="secondary"
                     disabled={calculating || busy}
                     onclick={calculate}
-                    >{calculating
-                        ? 'Przeliczanie...'
-                        : 'Przelicz budżet'}</button
                 >
-            </div>{/if}
-        {#if !readonly}<div class="form-actions">
+                    {calculating ? 'Przeliczanie...' : 'Przelicz budżet'}
+                </button>
+            </div>
+        {/if}
+        {#if !readonly}
+            <div class="form-actions">
                 <button
                     class="primary"
                     disabled={busy || calculating}
                     type="submit"
-                    >{busy
+                >
+                    {busy
                         ? 'Zapisywanie...'
                         : kind === 'competition'
                           ? 'Zapisz ustawienia'
-                          : 'Zapisz szkic'}</button
-                ><button class="secondary" type="button" onclick={close}
-                    >Anuluj</button
-                >
-            </div>{/if}
+                          : 'Zapisz szkic'}
+                </button>
+                <button class="secondary" type="button" onclick={close}>
+                    Anuluj
+                </button>
+            </div>
+        {/if}
     </form>
 </section>
