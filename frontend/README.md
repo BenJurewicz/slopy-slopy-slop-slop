@@ -32,6 +32,22 @@ pnpm preview
 The build produces static files in `build/`. Configure the web server to serve
 `200.html` for frontend routes that do not match a file.
 
+## Source layout
+
+- `src/routes/+page.svelte` mounts a workspace and renders the navigation shell.
+- `src/lib/workspace.svelte.ts` owns that page's reactive state, data loading,
+  document transitions and action feedback. Each mounted page gets its own instance.
+- `src/lib/views/` contains the individual workspace sections, without extra DOM
+  wrappers or a second copy of their state.
+- `src/lib/components/Editor.svelte` owns the editable draft; `Fields.svelte`
+  renders schema-defined fields and immutable repeatable-row updates.
+- `src/lib/forms.ts` defines field metadata and initial document values.
+- `src/lib/navigation.ts` and `report-display.ts` contain navigation and report
+  presentation metadata.
+
+Existing edge-case behavior is characterized, not repaired; see
+[known-issues.md](../docs/known-issues.md).
+
 ## Generated API client
 
 The frontend uses `@hey-api/openapi-ts` to generate types and Fetch endpoint

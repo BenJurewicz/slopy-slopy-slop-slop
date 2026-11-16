@@ -131,7 +131,7 @@ make editor-check    # lokalna integracja z istniejącym Neovim/LazyVim
 
 Wspólne ustawienia: cztery spacje, LF, UTF-8 i docelowo 80 kolumn; Makefile używa
 Tab. Generowane SDK/JAXB, fixtures, DOCX i dane bazy nie są formatowane. XQuery
-pozostaje bez zmian. [Profile, narzędzia i uruchamianie Neovim](docs/formatting.md).
+nie jest zmieniane przez te polecenia. [Profile, narzędzia i uruchamianie Neovim](docs/formatting.md).
 
 ## Dokumenty i architektura
 
@@ -148,6 +148,8 @@ pozostaje bez zmian. [Profile, narzędzia i uruchamianie Neovim](docs/formatting
 - Przykłady XML, błędne dane i DOCX: `examples/`.
 - [Instrukcja demonstracji i reguły](docs/walkthrough.md).
 - [Plan](docs/plan.md).
+- [Weryfikacja](docs/verification.md).
+- [Znane błędy zachowane podczas refaktoryzacji](docs/known-issues.md).
 
 Baza i aplikacja są związane z adresem loopback. Hasła nie trafiają do frontendu.
 Brak uwierzytelniania jest świadomym ograniczeniem demonstracji, nie rozwiązaniem

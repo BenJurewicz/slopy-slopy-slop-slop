@@ -2,9 +2,9 @@
 
 ## Wyniki
 
-- Backend: **47 testów jednostkowych/HTTP** i **18 testów integracyjnych z BaseX**, bez błędów.
-- Frontend: **10 testów**, sprawdzanie Svelte/TypeScript bez błędów i ostrzeżeń.
-- Przeglądarka: **11 testów** na pakiecie JAR, bez błędów. Dodatkowy test
+- Backend: **50 testów jednostkowych/HTTP** i **18 testów integracyjnych z BaseX**, bez błędów.
+- Frontend: **35 testów**, sprawdzanie Svelte/TypeScript bez błędów i ostrzeżeń.
+- Przeglądarka: **14 testów** na pakiecie JAR, bez błędów. Dodatkowy test
   sprawdza zachowanie fokusu i wartości podczas edycji oraz usuwania
   powtarzalnych wierszy formularza.
 - Dane testowe: obie operacje wymagają potwierdzenia. Anulowanie nie wysyła
@@ -18,7 +18,8 @@
   Sprawdzony także rzeczywisty start frontendu i backendu oraz zatrzymanie
   obu serwerów i BaseX przez Ctrl+C; skróty danych pozostały identyczne.
 - Formatowanie: `make format`, następnie `make format-check` bez dalszych
-  zmian. Generowane SDK/JAXB, fixtures, DOCX i XQuery pozostały nietknięte.
+  zmian. Generowane SDK/JAXB, fixtures i DOCX pozostały nietknięte.
+  XQuery uporządkowano ręcznie; automatyczne formattery go nie zmieniają.
   Niepoprawne tymczasowe pliki Python/Bash/Lua w katalogu fixtures zostały
   prawidłowo pominięte również przez pomocnicze formattery.
 - `make check`, `pnpm format:check` i ESLint przechodzą bez błędów.
@@ -60,6 +61,29 @@
   do PDF do sprawdzenia czytelności. Domyślny formularz jest pusty, przykład osobny;
   ocena i decyzja pobierają rzeczywiste powiązane dane z BaseX.
 - Pages: wyłączone z zakresu weryfikacji zgodnie z ustalonym zakresem.
+
+## Refaktoryzacja czytelności
+
+Punkt odniesienia: `d30e28f`, z 86 przechodzącymi testami. Po refaktoryzacji
+zestaw obejmuje 117 testów. Nowe testy charakteryzują dotychczasowe zachowanie,
+nie wprowadzają napraw błędów opisanych w [known-issues.md](known-issues.md).
+
+- Backend rozdziela walidację, metadane, ranking, przygotowanie decyzji,
+  wydanie oraz odczyt struktury XML/DOCX. Zachowano kolejność sprawdzeń,
+  komunikaty, arytmetykę dziesiętną i granice transakcji.
+- Porównano 27 odpowiedzi dziewięciu raportów przed i po zmianach XQuery,
+  z różnymi progami i stronicowaniem. Znormalizowane skróty są identyczne.
+- Frontend rozdziela powłokę strony, stan i akcje `Workspace`, widoki oraz
+  edytor formularzy. Wydzielenie widoków sprawdzono przez 16 porównań DOM,
+  wartości kontrolek i zrzutów. Uporządkowanie markup i formularzy sprawdzono
+  przez 28 takich porównań, na ekranach 1280x720 i 390x844; skróty są identyczne.
+- Dla startu serwera E2E porównano sześć scenariuszy systemu i `JAVA_HOME`:
+  identyczne bajty żądania oraz argumenty uruchamiania procesu.
+- Dla migracji porównano 26 przebiegów z atrapami sieci i procesów: identyczne
+  XML, kolejność pól, flagi budżetu, polecenia, komunikaty oraz błędy.
+  Nie uruchamiano migracji na bazie użytkowej.
+- Pomocniczy walidator Java zachowuje wyniki siedmiu scenariuszy, w tym
+  dostarczonych XML, pustych danych, błędów schematu i odrzucenia DTD.
 
 ## Pokrycie wymagań
 

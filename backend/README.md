@@ -39,6 +39,20 @@ or `make format-check` from `Project/`, not a backend Spotless task.
 The Eclipse profile is shared with Neovim; see
 [formatting.md](../docs/formatting.md).
 
+## Source layout
+
+- `workflow/Workflow` coordinates document metadata and lifecycle transitions;
+  `Rules` validates business constraints.
+- `workflow/Funding` separates ranking, draft preparation and atomic issuance.
+- `documents/DocumentCodec` handles XML conversion and record traversal;
+  `storage/` owns BaseX transport and persistence.
+- `docx/DocxDocuments` coordinates document import/export, `WordUpload` checks
+  uploaded archives, and `WordTemplates` handles Word structure and controls.
+- `resources/xquery/` contains named storage transactions and reports.
+
+The readability refactor preserves validation order, messages and existing bugs.
+See [known-issues.md](../docs/known-issues.md).
+
 ## CloudMigration settings
 
 `GET /api/competition` returns the single configuration, creating defaults only
