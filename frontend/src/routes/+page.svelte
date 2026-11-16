@@ -343,7 +343,7 @@
     <header class="sidebar">
         <strong>CloudMigration</strong>
         <nav aria-label="Główna nawigacja">
-            {#each nav as item}<button
+            {#each nav as item (item.id)}<button
                     class:active={view === item.id}
                     aria-current={view === item.id ? 'page' : undefined}
                     onclick={() => navigate(item.id)}>{item.label}</button
@@ -395,11 +395,11 @@
                         .join(' | ')}
                 </p>{/if}
             {#if selectedApp}<div class="actions">
-                    {#each evals.filter((e) => e.applicationId === selectedApp?.id) as e}<button
+                    {#each evals.filter((e) => e.applicationId === selectedApp?.id) as e (e.id)}<button
                             class="secondary"
                             onclick={() => open('evaluation', e)}
                             >Powiązana ocena</button
-                        >{/each}{#each decs.filter((d) => d.applicationId === selectedApp?.id) as d}<button
+                        >{/each}{#each decs.filter((d) => d.applicationId === selectedApp?.id) as d (d.id)}<button
                             class="secondary"
                             onclick={() => open('decision', d)}
                             >Powiązana decyzja</button
@@ -519,7 +519,7 @@
                                 ><th>Działania</th></tr
                             ></thead
                         ><tbody
-                            >{#each filtered.slice(page * 10, (page + 1) * 10) as a}<tr
+                            >{#each filtered.slice(page * 10, (page + 1) * 10) as a (a.id)}<tr
                                     ><td
                                         ><strong>{a.title}</strong><small
                                             >{a.company.name}</small
@@ -587,7 +587,7 @@
                                 ><th>Status</th><th>Działania</th></tr
                             ></thead
                         ><tbody
-                            >{#each evals as e}<tr
+                            >{#each evals as e (e.id)}<tr
                                     ><td
                                         ><strong
                                             >{title(e.applicationId)}</strong
@@ -668,7 +668,7 @@
                                     ></tr
                                 ></thead
                             ><tbody
-                                >{#each preview.rows as row, index}<tr
+                                >{#each preview.rows as row, index (row.applicationId)}<tr
                                         ><td
                                             ><strong
                                                 >{index + 1}. {row.title}</strong
@@ -716,7 +716,7 @@
                                 ><th>Działania</th></tr
                             ></thead
                         ><tbody
-                            >{#each decs as d}<tr
+                            >{#each decs as d (d.id)}<tr
                                     ><td
                                         ><strong
                                             >{title(d.applicationId)}</strong
@@ -764,7 +764,7 @@
                         aria-describedby="report-description"
                         bind:value={queryId}
                         onchange={() => (report = null)}
-                        >{#each queries as q}<option value={q.id}
+                        >{#each queries as q (q.id)}<option value={q.id}
                                 >{q.name}</option
                             >{/each}</select
                     ></label
@@ -798,13 +798,13 @@
                             <table>
                                 <thead
                                     ><tr
-                                        >{#each Object.keys(report.rows[0]) as key}<th
+                                        >{#each Object.keys(report.rows[0]) as key (key)}<th
                                                 >{reportLabels[key] ?? key}</th
                                             >{/each}</tr
                                     ></thead
                                 ><tbody
-                                    >{#each report.rows as row}<tr
-                                            >{#each Object.entries(row) as [key, value]}<td
+                                    >{#each report.rows as row, index (index)}<tr
+                                            >{#each Object.entries(row) as [key, value] (key)}<td
                                                     >{[
                                                         'awarded',
                                                         'remaining',

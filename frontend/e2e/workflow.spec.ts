@@ -543,3 +543,47 @@ test('settings data actions confirm replacement and reset without changing data 
         page.getByLabel('Budżet konkursu (PLN)', { exact: true }),
     ).toBeEnabled();
 });
+
+test('editing and deleting repeatable rows preserves focus and values', async ({
+    page,
+    request,
+}) => {
+    const before = await (await request.get('/api/applications')).json();
+    await page.goto('/applications');
+    await page
+        .getByRole('button', { name: 'Nowy wniosek', exact: true })
+        .click();
+    const tasks = page.getByRole('group', {
+        name: 'Zadania i harmonogram',
+        exact: true,
+    });
+    const first = tasks.getByLabel('Zadanie', { exact: true }).first();
+    await first.click();
+    await first.pressSequentially('Migracja');
+    await expect(first).toBeFocused();
+    await expect(first).toHaveValue('Migracja');
+    await tasks
+        .getByRole('button', {
+            name: 'Dodaj pozycję - Zadania i harmonogram',
+            exact: true,
+        })
+        .click();
+    const second = tasks.getByLabel('Zadanie', { exact: true }).nth(1);
+    await second.fill('Testy');
+    await tasks
+        .getByRole('button', {
+            name: 'Usuń pozycję 1 - Zadania i harmonogram',
+            exact: true,
+        })
+        .click();
+    const remaining = tasks.getByLabel('Zadanie', { exact: true });
+    await expect(remaining).toHaveCount(1);
+    await expect(remaining).toHaveValue('Testy');
+    await remaining.click();
+    await remaining.pressSequentially(' i backup');
+    await expect(remaining).toBeFocused();
+    await expect(remaining).toHaveValue('Testy i backup');
+    expect(await (await request.get('/api/applications')).json()).toEqual(
+        before,
+    );
+});

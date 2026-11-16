@@ -23,7 +23,7 @@
     }
 </script>
 
-{#each spec as f}
+{#each spec as f (f.key)}
     {#if f.type === 'object'}
         <fieldset>
             <legend>{f.label}</legend><Fields
@@ -35,7 +35,8 @@
     {:else if f.type === 'list'}
         <fieldset>
             <legend>{f.label}</legend>
-            {#each list(f.key) as item, index}
+            <!-- Values change immutably; index keys keep active row inputs mounted. -->
+            {#each list(f.key) as _item, index (index)}
                 <div class="repeat">
                     <div class="repeat-title">
                         <strong>Pozycja {index + 1}</strong
@@ -84,7 +85,7 @@
                     {disabled}
                     value={String(value[f.key] ?? f.options![0])}
                     onchange={(e) => set(f.key, e.currentTarget.value)}
-                    >{#each f.options! as option}<option value={option}
+                    >{#each f.options! as option (option)}<option value={option}
                             >{captions[option] ?? option}</option
                         >{/each}</select
                 >
