@@ -15,7 +15,9 @@ java {
 val xjc by configurations.creating
 
 dependencies {
-    implementation(platform("org.springframework.boot:spring-boot-dependencies:4.0.3"))
+    implementation(
+        platform("org.springframework.boot:spring-boot-dependencies:4.0.3"),
+    )
     implementation("org.springframework.boot:spring-boot-starter-webmvc")
     implementation("org.glassfish.jaxb:jaxb-runtime:4.0.9")
     implementation("org.docx4j:docx4j-JAXB-ReferenceImpl:17.3.2")
@@ -32,12 +34,14 @@ tasks.test {
 val integrationTest by tasks.registering(Test::class) {
     description = "Run tests against the local BaseX container"
     group = "verification"
-    testClassesDirs = sourceSets.test.get().output.classesDirs
+    testClassesDirs =
+        sourceSets.test
+            .get()
+            .output.classesDirs
     classpath = sourceSets.test.get().runtimeClasspath
     useJUnitPlatform { includeTags("integration") }
     shouldRunAfter(tasks.test)
 }
-
 
 val generatedXml = layout.buildDirectory.dir("generated/sources/xjc")
 val generateXmlModels by tasks.registering(JavaExec::class) {
@@ -45,7 +49,13 @@ val generateXmlModels by tasks.registering(JavaExec::class) {
     mainClass.set("com.sun.tools.xjc.XJCFacade")
     inputs.dir("src/main/resources/schemas")
     outputs.dir(generatedXml)
-    args = listOf("-d", generatedXml.get().asFile.absolutePath, "-p", "pl.cloudmigration.xml.model") +
+    args =
+        listOf(
+            "-d",
+            generatedXml.get().asFile.absolutePath,
+            "-p",
+            "pl.cloudmigration.xml.model",
+        ) +
         listOf("competition", "application", "evaluation", "decision").map {
             file("src/main/resources/schemas/$it.xsd").absolutePath
         }
@@ -59,7 +69,10 @@ tasks.processResources {
     from("../frontend/build") { into("static") }
 }
 tasks.bootJar {
-    val frontendIndex = layout.projectDirectory.file("../frontend/build/200.html")
+    val frontendIndex =
+        layout.projectDirectory.file(
+            "../frontend/build/200.html",
+        )
     doFirst {
         check(frontendIndex.asFile.exists()) {
             "Build the frontend first: cd ../frontend && pnpm build"
