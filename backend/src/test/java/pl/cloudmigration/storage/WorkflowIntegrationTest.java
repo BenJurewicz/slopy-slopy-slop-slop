@@ -105,9 +105,9 @@ class WorkflowIntegrationTest {
     @Test void crossDocumentReportsAndAllocationDataset(){
         var result=demo.load();assertEquals(20,result.applications());var preview=funding.preview();
         var applications=workflow.repository.list(Type.application).stream().map(Application.class::cast).toList();
-        assertEquals(2,applications.stream().filter(app->"DRAFT".equals(app.state())).count());
-        assertEquals(18,applications.stream().filter(app->"SUBMITTED".equals(app.state())).count());
-        assertEquals(17,workflow.repository.list(Type.evaluation).size());
+        assertEquals(1,applications.stream().filter(app->"DRAFT".equals(app.state())).count());
+        assertEquals(19,applications.stream().filter(app->"SUBMITTED".equals(app.state())).count());
+        assertEquals(18,workflow.repository.list(Type.evaluation).size());
         assertTrue(workflow.repository.list(Type.decision).isEmpty());
         var outcomes=preview.rows().stream().collect(java.util.stream.Collectors.toMap(Funding.Allocation::title,Funding.Allocation::outcome));
         assertEquals("REJECT",outcomes.get("Projekt testowy 11"));
@@ -117,7 +117,7 @@ class WorkflowIntegrationTest {
         assertEquals("REJECT",outcomes.get("Projekt testowy 16"));
         assertEquals("REJECT",outcomes.get("Projekt testowy 17"));
         assertEquals(17,preview.rows().size());assertEquals(13,preview.rows().stream().filter(r->r.outcome().equals("AWARD")).count());
-        assertEquals(1,reports.run("missing-evaluations",new Reports.Parameters("0",0,100)).total());
+        assertEquals(2,reports.run("missing-evaluations",new Reports.Parameters("0",0,100)).total());
         assertEquals(17,reports.run("ranking",new Reports.Parameters("0",0,100)).total());
         assertEquals(15,reports.run("qualified",new Reports.Parameters("0",0,100)).total());
         assertEquals(1,reports.run("over-budget",new Reports.Parameters("50000",0,100)).total());
@@ -128,10 +128,25 @@ class WorkflowIntegrationTest {
         var summary=reports.run("summary",new Reports.Parameters("0",0,100)).rows().getFirst();
         assertEquals("245000",summary.get("awarded"));assertEquals("5000",summary.get("remaining"));
     }
+    @Test void demoHasOneEvaluationReadyForApprovalAndOneProjectWithoutAnEvaluation(){
+        demo.load();
+        var apps=workflow.repository.list(Type.application).stream().map(Application.class::cast).collect(java.util.stream.Collectors.toMap(Application::title,app->app));
+        var evaluations=workflow.repository.list(Type.evaluation).stream().map(Evaluation.class::cast).toList();
+        var ready=evaluations.stream().filter(e->e.applicationId().equals(apps.get("Projekt testowy 18").id())).findFirst().orElseThrow();
+        assertEquals("DRAFT",ready.state());assertEquals(80,ready.total());
+        assertTrue(ready.scores().stream().allMatch(score->!score.comment().isBlank()));
+        assertEquals("SUBMITTED",apps.get("Projekt testowy 19").state());
+        assertTrue(evaluations.stream().noneMatch(e->e.applicationId().equals(apps.get("Projekt testowy 19").id())));
+        assertEquals("DRAFT",apps.get("Projekt testowy 20").state());
+        assertEquals(1,evaluations.stream().filter(e->"DRAFT".equals(e.state())).count());
+        assertEquals("FINAL",workflow.finalizeEvaluation(ready.id(),ready.revision()).state());
+        var pending=reports.run("missing-evaluations",new Reports.Parameters("0",0,100));
+        assertEquals(1,pending.total());assertEquals("Projekt testowy 19",pending.rows().getFirst().get("title"));
+    }
+
     @Test void filledExampleCanBeAddedAndGradedWithoutGradingThePendingDemoProject() throws Exception {
         demo.load();
-        var pending=reports.run("missing-evaluations",new Reports.Parameters("0",0,100)).rows().getFirst();
-        assertEquals("Projekt testowy 18",pending.get("title"));
+        var pending=reports.run("missing-evaluations",new Reports.Parameters("0",0,100)).rows().stream().filter(row->"Projekt testowy 19".equals(row.get("title"))).findFirst().orElseThrow();
         var file=new org.springframework.mock.web.MockMultipartFile("file","przyklad.docx","application/vnd.openxmlformats-officedocument.wordprocessingml.document",documents.example().getBody());
         var preview=documents.preview(file);
         assertEquals("DRAFT",preview.application().state());
@@ -142,7 +157,7 @@ class WorkflowIntegrationTest {
         added=workflow.submit(added.id(),added.revision());
         var evaluation=evaluate(added);assertEquals("FINAL",evaluation.state());assertEquals(80,evaluation.total());
         var ungraded=reports.run("missing-evaluations",new Reports.Parameters("0",0,100));
-        assertEquals(1,ungraded.total());assertEquals(pending.get("applicationId"),ungraded.rows().getFirst().get("applicationId"));
+        assertEquals(2,ungraded.total());assertTrue(ungraded.rows().stream().anyMatch(row->pending.get("applicationId").equals(row.get("applicationId"))));
     }
 
     @Test void rejectsAnEntireOverBudgetBatchAndPreservesDrafts(){

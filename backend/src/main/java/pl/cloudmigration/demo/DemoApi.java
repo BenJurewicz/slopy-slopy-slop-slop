@@ -23,7 +23,9 @@ public class DemoApi {
     private final Workflow workflow;
     public DemoApi(Workflow workflow){this.workflow=workflow;}
     public record DemoResult(String competitionId,int applications) {}
-    private record Example(String amount,Integer score,boolean eligible,boolean submitted) {}
+    private record Example(String amount,Integer score,boolean eligible,boolean submitted,boolean finalized) {
+        Example(String amount,Integer score,boolean eligible,boolean submitted){this(amount,score,eligible,submitted,true);}
+    }
     private static final List<Example> EXAMPLES=List.of(
         new Example("20000.00",98,true,true),new Example("25000.00",96,true,true),
         new Example("15000.00",96,true,true),new Example("30000.00",92,true,true),
@@ -33,8 +35,8 @@ public class DemoApi {
         new Example("60000.00",78,true,true),new Example("10000.00",76,true,true),
         new Example("15000.00",74,true,true),new Example("50000.00",72,true,true),
         new Example("25000.00",70,true,true),new Example("10000.00",55,true,true),
-        new Example("10000.00",80,false,true),new Example("20000.00",null,true,true),
-        new Example("10000.00",null,true,false),new Example("5000.00",null,true,false));
+        new Example("10000.00",80,false,true),new Example("20000.00",80,true,true,false),
+        new Example("10000.00",null,true,true),new Example("5000.00",null,true,false));
     @Operation(operationId="loadDemo")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode="200",description="Operacja wykonana",useReturnTypeSchema=true)
     @PostMapping("/load") public DemoResult load(){
@@ -55,7 +57,7 @@ public class DemoApi {
             var points=new ArrayList<Score>();int remaining=example.score();
             for(var criterion:c.criteria()){int score=Math.min(criterion.maximum(),remaining);remaining-=score;points.add(new Score(criterion.code(),score,"Ocena demonstracyjna"));}
             var e=(Evaluation)workflow.create(Type.evaluation,new Evaluation(null,0,a.id(),"DRAFT","Jan Nowak",java.time.LocalDate.now().toString(),example.eligible(),!example.eligible()?"Firma nie jest mikro ani małym przedsiębiorstwem.":"Warunki spełnione.",points,example.score(),null));
-            workflow.finalizeEvaluation(e.id(),e.revision());
+            if(example.finalized())workflow.finalizeEvaluation(e.id(),e.revision());
         }
         return new DemoResult(c.id(),EXAMPLES.size());
     }
