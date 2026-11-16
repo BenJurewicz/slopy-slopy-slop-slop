@@ -25,6 +25,8 @@ public class Errors {
     ResponseEntity<Error> missingParameter(){return ResponseEntity.badRequest().body(new Error("REQUEST","Brak wymaganego parametru lub pliku.",List.of()));}
     @ExceptionHandler(org.springframework.web.HttpRequestMethodNotSupportedException.class)
     ResponseEntity<Error> method(){return ResponseEntity.status(405).body(new Error("METHOD","Metoda nie jest obsługiwana.",List.of()));}
+    @ExceptionHandler(org.springframework.web.HttpMediaTypeNotSupportedException.class)
+    ResponseEntity<Error> unsupportedFormat(){return ResponseEntity.status(415).body(new Error("FORMAT","Nieobsługiwany format żądania.",List.of()));}
     @ExceptionHandler(Exception.class)
     ResponseEntity<Error> internal(Exception e){org.slf4j.LoggerFactory.getLogger(Errors.class).error("Request failed: {}",e.getClass().getSimpleName());return ResponseEntity.internalServerError().body(new Error("INTERNAL","Nie można wykonać operacji.",List.of()));}
 }

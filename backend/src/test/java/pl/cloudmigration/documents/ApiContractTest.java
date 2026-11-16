@@ -43,6 +43,15 @@ class ApiContractTest {
         assertEquals(200,response.statusCode());assertTrue(response.body().contains("\"ownContribution\":\"5.02\""));
         var invalid=client.send(HttpRequest.newBuilder(URI.create("http://127.0.0.1:"+port+"/api/budget/calculate?requestedAmount=20.00")).header("Content-Type","application/json").POST(HttpRequest.BodyPublishers.ofString(body)).build(),HttpResponse.BodyHandlers.ofString());assertEquals(422,invalid.statusCode());
     }
+    @Test void destructiveDemoActionsRequireJsonConfirmationBeforeAccessingDatabase() throws Exception {
+        for(String path:new String[]{"/api/demo/load","/api/demo"}){
+            String method=path.endsWith("load")?"POST":"DELETE";
+            var unconfirmed=client.send(HttpRequest.newBuilder(URI.create("http://127.0.0.1:"+port+path)).header("Content-Type","application/json").method(method,HttpRequest.BodyPublishers.ofString("{\"confirmed\":false}")).build(),HttpResponse.BodyHandlers.ofString());
+            assertEquals(422,unconfirmed.statusCode());assertTrue(unconfirmed.body().contains("Potwierdź"));
+            var form=client.send(HttpRequest.newBuilder(URI.create("http://127.0.0.1:"+port+path)).header("Content-Type","application/x-www-form-urlencoded").method(method,HttpRequest.BodyPublishers.ofString("confirmed=true")).build(),HttpResponse.BodyHandlers.ofString());
+            assertEquals(415,form.statusCode());
+        }
+    }
     @Test void reportCatalogueExplainsEveryReportWithoutDatabaseAccess() throws Exception {
         var response=get("/api/queries");assertEquals(200,response.statusCode());
         var queries=new tools.jackson.databind.ObjectMapper().readTree(response.body());assertEquals(9,queries.size());

@@ -50,16 +50,37 @@ class WorkflowIntegrationTest {
         var closed=(Competition)workflow.update(Type.competition,c.id(),Records.with(updated,Map.of("stage","CLOSED")));
         assertEquals("CLOSED",closed.stage());assertEquals(a,workflow.repository.get(Type.application,a.id()));
     }
-    @Test void demoReusesExistingSettingsAndRejectsIncompatibleLimitsBeforeCreatingDocuments(){
-        var c=workflow.competition();
-        var limited=(Competition)workflow.update(Type.competition,c.id(),Records.with(c,Map.of("maxGrant","50000.00")));
-        assertEquals(409,assertThrows(AppException.class,()->demo.load()).status);
-        assertTrue(workflow.repository.list(Type.application).isEmpty());
-        var restored=(Competition)workflow.update(Type.competition,c.id(),Records.with(limited,Map.of("maxGrant","150000.00")));
-        assertEquals(c.id(),demo.load().competitionId());assertEquals(restored,workflow.competition());
+    @Test void demoReplacesExistingRecordsAndSettingsWithoutAccumulatingDuplicates(){
+        var c=competition();var a=application(c);a=workflow.submit(a.id(),a.revision());evaluate(a);
+        var decisions=funding.prepare();funding.issue(decisions.stream().map(d->new Funding.IssueEntry(d.id(),d.revision())).toList());
+        workflow.update(Type.competition,c.id(),Records.with(c,Map.of("stage","CLOSED")));
+        var loaded=demo.load(new DemoApi.Confirmation(true));assertNotEquals(c.id(),loaded.competitionId());
+        assertEquals("OPEN",workflow.competition().stage());assertEquals("250000.00",workflow.competition().budget());
+        assertEquals(20,workflow.repository.list(Type.application).size());assertEquals(18,workflow.repository.list(Type.evaluation).size());
+        assertTrue(workflow.repository.list(Type.decision).isEmpty());
+        var previous=a;assertThrows(AppException.class,()->workflow.repository.get(Type.application,previous.id()));
+        var firstIds=workflow.repository.list(Type.application).stream().map(Records::id).collect(java.util.stream.Collectors.toSet());
+        demo.load(new DemoApi.Confirmation(true));assertEquals(20,workflow.repository.list(Type.application).size());
+        assertTrue(workflow.repository.list(Type.application).stream().noneMatch(app->firstIds.contains(Records.id(app))));
         assertEquals(1,workflow.repository.list(Type.competition).size());
-        assertEquals(20,workflow.repository.list(Type.application).size());
-        assertThrows(AppException.class,()->demo.load());
+    }
+    @Test void resetRemovesAllDocumentStatesButKeepsSettings(){
+        demo.load(new DemoApi.Confirmation(true));var c=workflow.competition();
+        var drafts=funding.prepare();funding.issue(drafts.stream().map(d->new Funding.IssueEntry(d.id(),d.revision())).toList());
+        demo.reset(new DemoApi.Confirmation(true));assertEquals(c,workflow.competition());
+        for(var type:List.of(Type.application,Type.evaluation,Type.decision))assertTrue(workflow.repository.list(type).isEmpty());
+        demo.reset(new DemoApi.Confirmation(true));assertEquals(c,workflow.competition());
+    }
+    @Test void destructiveActionsRejectUnconfirmedRequestsWithoutChangingRecords(){
+        demo.load(new DemoApi.Confirmation(true));var c=workflow.competition();var apps=workflow.repository.list(Type.application);
+        assertThrows(AppException.class,()->demo.load(new DemoApi.Confirmation(false)));
+        assertThrows(AppException.class,()->demo.reset(new DemoApi.Confirmation(false)));
+        assertEquals(c,workflow.competition());assertEquals(apps,workflow.repository.list(Type.application));
+    }
+    @Test void invalidDemoReplacementDoesNotClearExistingRecords(){
+        demo.load(new DemoApi.Confirmation(true));var c=workflow.competition();var apps=workflow.repository.list(Type.application);
+        assertThrows(AppException.class,()->client.execute(client.resource("replace-demo"),Map.of("batch","<replacement/>")));
+        assertEquals(c,workflow.competition());assertEquals(apps,workflow.repository.list(Type.application));
     }
     @Test void legacyMultipleCompetitionsAreRejectedWithoutDeletingData(){
         var c=competition();var second=Records.with(c,Map.of("id",UUID.randomUUID().toString()));
@@ -103,7 +124,7 @@ class WorkflowIntegrationTest {
         var summary=reports.run("summary",new Reports.Parameters("0",0,100));assertEquals("50000",summary.rows().getFirst().get("awarded"));
     }
     @Test void crossDocumentReportsAndAllocationDataset(){
-        var result=demo.load();assertEquals(20,result.applications());var preview=funding.preview();
+        var result=demo.load(new DemoApi.Confirmation(true));assertEquals(20,result.applications());var preview=funding.preview();
         var applications=workflow.repository.list(Type.application).stream().map(Application.class::cast).toList();
         assertEquals(1,applications.stream().filter(app->"DRAFT".equals(app.state())).count());
         assertEquals(19,applications.stream().filter(app->"SUBMITTED".equals(app.state())).count());
@@ -129,7 +150,7 @@ class WorkflowIntegrationTest {
         assertEquals("245000",summary.get("awarded"));assertEquals("5000",summary.get("remaining"));
     }
     @Test void demoHasOneEvaluationReadyForApprovalAndOneProjectWithoutAnEvaluation(){
-        demo.load();
+        demo.load(new DemoApi.Confirmation(true));
         var apps=workflow.repository.list(Type.application).stream().map(Application.class::cast).collect(java.util.stream.Collectors.toMap(Application::title,app->app));
         var evaluations=workflow.repository.list(Type.evaluation).stream().map(Evaluation.class::cast).toList();
         var ready=evaluations.stream().filter(e->e.applicationId().equals(apps.get("Projekt testowy 18").id())).findFirst().orElseThrow();
@@ -145,7 +166,7 @@ class WorkflowIntegrationTest {
     }
 
     @Test void filledExampleCanBeAddedAndGradedWithoutGradingThePendingDemoProject() throws Exception {
-        demo.load();
+        demo.load(new DemoApi.Confirmation(true));
         var pending=reports.run("missing-evaluations",new Reports.Parameters("0",0,100)).rows().stream().filter(row->"Projekt testowy 19".equals(row.get("title"))).findFirst().orElseThrow();
         var file=new org.springframework.mock.web.MockMultipartFile("file","przyklad.docx","application/vnd.openxmlformats-officedocument.wordprocessingml.document",documents.example().getBody());
         var preview=documents.preview(file);
@@ -174,7 +195,7 @@ class WorkflowIntegrationTest {
         assertEquals("DRAFT",workflow.repository.get(Type.decision,second.id(),Decision.class).state());
     }
     @Test void staleEntryRollsBackMultiDecisionBatchAndAllocationAgreesWithXQuery(){
-        var demoResult=demo.load();var c=demoResult.competitionId();
+        var demoResult=demo.load(new DemoApi.Confirmation(true));var c=demoResult.competitionId();
         var preview=funding.preview();var allocation=reports.run("allocation",new Reports.Parameters("0",0,100));
         assertEquals(preview.rows().stream().map(Funding.Allocation::outcome).toList(),allocation.rows().stream().map(row->row.get("outcome")).toList());
         var drafts=funding.prepare();var entries=new ArrayList<Funding.IssueEntry>();
