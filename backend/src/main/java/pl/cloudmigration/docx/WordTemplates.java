@@ -12,6 +12,8 @@ import org.w3c.dom.*;
 import pl.cloudmigration.api.AppException;
 import pl.cloudmigration.documents.DocumentCodec;
 import pl.cloudmigration.documents.DocumentCodec.Type;
+import pl.cloudmigration.documents.Models.Criterion;
+import pl.cloudmigration.documents.Models.Score;
 
 final class WordTemplates {
     static final String W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
@@ -62,7 +64,7 @@ final class WordTemplates {
         parent.removeChild(original);
     }
 
-    private Element el(String name) {
+    private Element wordElement(String name) {
         return xml.createElementNS(W, "w:" + name);
     }
 
@@ -73,47 +75,62 @@ final class WordTemplates {
         var paragraphs = body.getElementsByTagNameNS(W, "p");
         boolean block = paragraphs.getLength() > 0;
         var runs = body.getElementsByTagNameNS(W, "r");
-        Element run = runs.getLength() == 0 ? null : (Element) runs.item(0);
-        var rpr = run == null ? null : child(run, "rPr");
-        Element p = block
+        Element prototypeRun = runs.getLength() == 0
+                ? null
+                : (Element) runs.item(0);
+        var runProperties = prototypeRun == null
+                ? null
+                : child(prototypeRun, "rPr");
+        Element paragraph = block
                 ? (Element) paragraphs.item(0).cloneNode(false)
                 : null;
         if (block) {
             var properties = child((Element) paragraphs.item(0), "pPr");
             if (properties != null)
-                p.appendChild(properties.cloneNode(true));
+                paragraph.appendChild(properties.cloneNode(true));
         }
         while (body.hasChildNodes())
             body.removeChild(body.getFirstChild());
-        var container = block ? p : body;
-        if (block) {
-            if (control.getParentNode() instanceof Element parent
-                    && "tr".equals(parent.getLocalName())) {
-                var cell = el("tc");
-                if (cellProperties != null)
-                    cell.appendChild(cellProperties.cloneNode(true));
-                body.appendChild(cell);
-                cell.appendChild(p);
-            } else
-                body.appendChild(p);
-        }
-        var lines = value.split("\n", -1);
-        for (int i = 0; i < lines.length; i++) {
-            var r = el("r");
-            if (rpr != null)
-                r.appendChild(rpr.cloneNode(true));
-            if (i > 0)
-                r.appendChild(el("br"));
-            var t = el("t");
-            t.setAttributeNS(XMLConstants.XML_NS_URI, "xml:space", "preserve");
-            t.setTextContent(lines[i]);
-            r.appendChild(t);
-            container.appendChild(r);
-        }
+        var container = block ? paragraph : body;
+        if (block)
+            attachParagraph(control, body, paragraph, cellProperties);
+        appendTextLines(container, runProperties, value);
         var properties = child(control, "sdtPr");
         var placeholder = child(properties, "showingPlcHdr");
         if (placeholder != null)
             properties.removeChild(placeholder);
+    }
+
+    private void attachParagraph(Element control, Element body,
+            Element paragraph, Element cellProperties) {
+        if (!(control.getParentNode() instanceof Element parent)
+                || !"tr".equals(parent.getLocalName())) {
+            body.appendChild(paragraph);
+            return;
+        }
+        var cell = wordElement("tc");
+        if (cellProperties != null)
+            cell.appendChild(cellProperties.cloneNode(true));
+        body.appendChild(cell);
+        cell.appendChild(paragraph);
+    }
+
+    private void appendTextLines(Element container, Element runProperties,
+            String value) {
+        var lines = value.split("\n", -1);
+        for (int i = 0; i < lines.length; i++) {
+            var run = wordElement("r");
+            if (runProperties != null)
+                run.appendChild(runProperties.cloneNode(true));
+            if (i > 0)
+                run.appendChild(wordElement("br"));
+            var textNode = wordElement("t");
+            textNode.setAttributeNS(XMLConstants.XML_NS_URI, "xml:space",
+                    "preserve");
+            textNode.setTextContent(lines[i]);
+            run.appendChild(textNode);
+            container.appendChild(run);
+        }
     }
 
     void replace(String from, String to) {
@@ -140,15 +157,16 @@ final class WordTemplates {
             int end = start + from.length(), offset = 0;
             boolean inserted = false;
             for (int j = 0; j < texts.getLength(); j++) {
-                var t = texts.item(j);
-                String old = t.getTextContent();
+                var textNode = texts.item(j);
+                String old = textNode.getTextContent();
                 int next = offset + old.length();
                 if (next > start && offset < end) {
                     String prefix = old.substring(0,
                             Math.max(0, start - offset));
                     String suffix = old.substring(
                             Math.min(old.length(), Math.max(0, end - offset)));
-                    t.setTextContent(prefix + (inserted ? "" : to) + suffix);
+                    textNode.setTextContent(
+                            prefix + (inserted ? "" : to) + suffix);
                     inserted = true;
                 }
                 offset = next;
@@ -168,12 +186,13 @@ final class WordTemplates {
     }
 
     private Element ancestor(Element element, String name) {
-        Node n = element;
-        while (n != null) {
-            if (n instanceof Element e && W.equals(e.getNamespaceURI())
-                    && name.equals(e.getLocalName()))
-                return e;
-            n = n.getParentNode();
+        Node node = element;
+        while (node != null) {
+            if (node instanceof Element matchedElement
+                    && W.equals(matchedElement.getNamespaceURI())
+                    && name.equals(matchedElement.getLocalName()))
+                return matchedElement;
+            node = node.getParentNode();
         }
         throw new IllegalStateException("Missing " + name);
     }
@@ -188,25 +207,31 @@ final class WordTemplates {
             texts.item(i).setTextContent(i == 0 ? value : "");
     }
 
-    void scores(List<pl.cloudmigration.documents.Models.Criterion> criteria,
-            List<pl.cloudmigration.documents.Models.Score> scores) {
-        var points = new HashMap<String, pl.cloudmigration.documents.Models.Score>();
-        scores.forEach(v -> points.put(v.code(), v));
+    void scores(List<Criterion> criteria, List<Score> scores) {
+        var points = new HashMap<String, Score>();
+        scores.forEach(value -> points.put(value.code(), value));
         var controls = controls(root, "technical_feasibility_score");
+        fillScoreTable(criteria, points, controls);
+        fillScoreDescriptions(criteria, points, controls);
+    }
+
+    private void fillScoreTable(List<Criterion> criteria,
+            Map<String, Score> points, List<Element> controls) {
         var row = ancestor(controls.getFirst(), "tr");
         var table = row.getParentNode();
         var prototype = (Element) row.cloneNode(true);
         var summary = ancestor(controls(root, "total_score").getFirst(), "tr");
         var header = table.getFirstChild();
-        while (header != null && !(header instanceof Element e
-                && "tr".equals(e.getLocalName())))
+        while (header != null && !(header instanceof Element matchedElement
+                && "tr".equals(matchedElement.getLocalName())))
             header = header.getNextSibling();
-        for (var n = table.getFirstChild(); n != null;) {
-            var next = n.getNextSibling();
-            if (n instanceof Element e && "tr".equals(e.getLocalName())
-                    && n != header && n != summary)
-                table.removeChild(n);
-            n = next;
+        for (var node = table.getFirstChild(); node != null;) {
+            var next = node.getNextSibling();
+            if (node instanceof Element matchedElement
+                    && "tr".equals(matchedElement.getLocalName())
+                    && node != header && node != summary)
+                table.removeChild(node);
+            node = next;
         }
         for (var criterion : criteria) {
             var clone = (Element) prototype.cloneNode(true);
@@ -221,8 +246,13 @@ final class WordTemplates {
                     Integer.toString(points.get(criterion.code()).points()));
             table.insertBefore(clone, summary);
         }
-        plain((Element) summary.getElementsByTagNameNS(W, "tc").item(2), Integer
-                .toString(criteria.stream().mapToInt(v -> v.maximum()).sum()));
+        plain((Element) summary.getElementsByTagNameNS(W, "tc").item(2),
+                Integer.toString(criteria.stream()
+                        .mapToInt(value -> value.maximum()).sum()));
+    }
+
+    private void fillScoreDescriptions(List<Criterion> criteria,
+            Map<String, Score> points, List<Element> controls) {
         var heading = ancestor(controls.get(1), "p");
         var description = controls(root,
                 "technical_feasibility_score_description").getFirst();
@@ -230,73 +260,76 @@ final class WordTemplates {
         var descriptionTemplate = (Element) description.cloneNode(true);
         var parent = heading.getParentNode();
         Node end = heading;
-        while (end != null && !(end instanceof Element e
-                && text(e).startsWith("4. Podsumowanie")))
+        while (end != null && !(end instanceof Element matchedElement
+                && text(matchedElement).startsWith("4. Podsumowanie")))
             end = end.getNextSibling();
         if (end == null)
             throw new IllegalStateException("Missing evaluation summary");
-        for (Node n = heading; n != end;) {
-            Node next = n.getNextSibling();
-            parent.removeChild(n);
-            n = next;
+        for (Node node = heading; node != end;) {
+            Node next = node.getNextSibling();
+            parent.removeChild(node);
+            node = next;
         }
         for (var criterion : criteria) {
-            var h = (Element) headingTemplate.cloneNode(true);
-            var d = (Element) descriptionTemplate.cloneNode(true);
+            var headingClone = (Element) headingTemplate.cloneNode(true);
+            var descriptionClone = (Element) descriptionTemplate
+                    .cloneNode(true);
             var score = points.get(criterion.code());
-            replaceIn(h, "Wykonalność techniczna:", criterion.name() + ":");
-            replaceIn(h, "z 25 punktów",
+            replaceIn(headingClone, "Wykonalność techniczna:",
+                    criterion.name() + ":");
+            replaceIn(headingClone, "z 25 punktów",
                     "z " + criterion.maximum() + " punktów");
-            var field = controls(h, "technical_feasibility_score").getFirst();
+            var field = controls(headingClone, "technical_feasibility_score")
+                    .getFirst();
             tag(field, scoreTag(criterion.code()));
             write(field, Integer.toString(score.points()));
-            tag(d, scoreTag(criterion.code()) + "_description");
-            write(d, score.comment());
-            parent.insertBefore(h, end);
-            parent.insertBefore(d, end);
+            tag(descriptionClone, scoreTag(criterion.code()) + "_description");
+            write(descriptionClone, score.comment());
+            parent.insertBefore(headingClone, end);
+            parent.insertBefore(descriptionClone, end);
         }
     }
 
     void omitFrom(String heading) {
         var body = (Element) root.getElementsByTagNameNS(W, "body").item(0);
         boolean remove = false;
-        for (var n = body.getFirstChild(); n != null;) {
-            var next = n.getNextSibling();
-            if (n instanceof Element e) {
-                if (visible(e).contains(heading)
-                        || ("p".equals(e.getLocalName())
-                                && text(e).contains(heading)))
+        for (var node = body.getFirstChild(); node != null;) {
+            var next = node.getNextSibling();
+            if (node instanceof Element matchedElement) {
+                if (visible(matchedElement).contains(heading)
+                        || ("p".equals(matchedElement.getLocalName())
+                                && text(matchedElement).contains(heading)))
                     remove = true;
-                if (remove && !"sectPr".equals(e.getLocalName()))
-                    body.removeChild(e);
+                if (remove && !"sectPr".equals(matchedElement.getLocalName()))
+                    body.removeChild(matchedElement);
             }
-            n = next;
+            node = next;
         }
     }
 
     void note(String text) {
         var body = (Element) root.getElementsByTagNameNS(W, "body").item(0);
-        var p = el("p");
-        var r = el("r");
-        var t = el("t");
-        t.setTextContent(text);
-        r.appendChild(t);
-        p.appendChild(r);
-        body.insertBefore(p, child(body, "sectPr"));
+        var paragraph = wordElement("p");
+        var run = wordElement("r");
+        var textNode = wordElement("t");
+        textNode.setTextContent(text);
+        run.appendChild(textNode);
+        paragraph.appendChild(run);
+        body.insertBefore(paragraph, child(body, "sectPr"));
     }
 
     void notice(String value) {
         var body = child(root, "body");
-        var p = el("p");
-        var r = el("r");
-        var pr = el("rPr");
-        pr.appendChild(el("b"));
-        r.appendChild(pr);
-        var t = el("t");
-        t.setTextContent(value);
-        r.appendChild(t);
-        p.appendChild(r);
-        body.insertBefore(p, body.getFirstChild());
+        var paragraph = wordElement("p");
+        var run = wordElement("r");
+        var properties = wordElement("rPr");
+        properties.appendChild(wordElement("b"));
+        run.appendChild(properties);
+        var textNode = wordElement("t");
+        textNode.setTextContent(value);
+        run.appendChild(textNode);
+        paragraph.appendChild(run);
+        body.insertBefore(paragraph, body.getFirstChild());
     }
 
     byte[] save() throws Exception {
@@ -317,19 +350,19 @@ final class WordTemplates {
         pack.getMainDocumentPart()
                 .setJaxbElement((org.docx4j.wml.Document) XmlUtils
                         .unmarshalString(serialize(xml)));
-        var out = new ByteArrayOutputStream();
-        pack.save(out);
-        return out.toByteArray();
+        var output = new ByteArrayOutputStream();
+        pack.save(output);
+        return output.toByteArray();
     }
 
     static String serialize(Node node) throws Exception {
-        var f = TransformerFactory.newDefaultInstance();
-        f.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
-        f.setAttribute(XMLConstants.ACCESS_EXTERNAL_STYLESHEET, "");
-        var out = new StringWriter();
-        f.newTransformer().transform(new DOMSource(node),
-                new StreamResult(out));
-        return out.toString();
+        var factory = TransformerFactory.newDefaultInstance();
+        factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+        factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_STYLESHEET, "");
+        var output = new StringWriter();
+        factory.newTransformer().transform(new DOMSource(node),
+                new StreamResult(output));
+        return output.toString();
     }
 
     static String text(Element element) {
@@ -339,10 +372,12 @@ final class WordTemplates {
     }
 
     static Element child(Element parent, String name) {
-        for (var n = parent.getFirstChild(); n != null; n = n.getNextSibling())
-            if (n instanceof Element e && W.equals(e.getNamespaceURI())
-                    && name.equals(e.getLocalName()))
-                return e;
+        for (var node = parent.getFirstChild(); node != null; node = node
+                .getNextSibling())
+            if (node instanceof Element matchedElement
+                    && W.equals(matchedElement.getNamespaceURI())
+                    && name.equals(matchedElement.getLocalName()))
+                return matchedElement;
         return null;
     }
 
@@ -351,8 +386,8 @@ final class WordTemplates {
         var all = scope.getElementsByTagNameNS(W, "sdt");
         for (int i = 0; i < all.getLength(); i++) {
             var sdt = (Element) all.item(i);
-            var pr = child(sdt, "sdtPr");
-            var tag = pr == null ? null : child(pr, "tag");
+            var properties = child(sdt, "sdtPr");
+            var tag = properties == null ? null : child(properties, "tag");
             if (tag != null && key.equals(tag.getAttributeNS(W, "val")))
                 found.add(sdt);
         }
@@ -371,21 +406,23 @@ final class WordTemplates {
     }
 
     private static void visibleNodes(Node node, StringBuilder text) {
-        if (node instanceof Element e && W.equals(e.getNamespaceURI())) {
-            if (Set.of("del", "moveFrom").contains(e.getLocalName()))
+        if (node instanceof Element matchedElement
+                && W.equals(matchedElement.getNamespaceURI())) {
+            if (Set.of("del", "moveFrom")
+                    .contains(matchedElement.getLocalName()))
                 return;
-            if (e.getLocalName().equals("p") && text.length() > 0
+            if (matchedElement.getLocalName().equals("p") && text.length() > 0
                     && text.charAt(text.length() - 1) != '\n')
                 text.append('\n');
-            if (e.getLocalName().equals("t")) {
-                text.append(e.getTextContent());
+            if (matchedElement.getLocalName().equals("t")) {
+                text.append(matchedElement.getTextContent());
                 return;
             }
-            if (e.getLocalName().equals("br")) {
+            if (matchedElement.getLocalName().equals("br")) {
                 text.append('\n');
                 return;
             }
-            if (e.getLocalName().equals("tab")) {
+            if (matchedElement.getLocalName().equals("tab")) {
                 text.append(' ');
                 return;
             }
