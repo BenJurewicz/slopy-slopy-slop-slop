@@ -43,6 +43,9 @@ collect() {
     files=()
     count=0
     while IFS= read -r -d '' file; do
+        case "$file" in
+        examples/* | */src/test/resources/* | frontend/src/lib/generated/* | */build/* | */node_modules/* | */.svelte-kit/* | .gradle/* | */.gradle/*) continue ;;
+        esac
         if [[ -f "$file" ]]; then
             files+=("$file")
             count=$((count + 1))
