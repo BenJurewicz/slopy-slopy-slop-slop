@@ -30,6 +30,10 @@ public class Workflow {
                     "Baza zawiera wiele konkursów. Wymagana jest jedna konfiguracja CloudMigration; żadne dane nie zostały usunięte.");
         if (!existing.isEmpty())
             return (Competition) existing.getFirst();
+        return initializeCompetition();
+    }
+
+    private Competition initializeCompetition() {
         var defaults = new Competition(DEFAULT_COMPETITION_ID, 0,
                 "CloudMigration",
                 "Migracja mikro- i małych przedsiębiorstw do chmury.",
@@ -57,58 +61,78 @@ public class Workflow {
                 && !repository.list(Type.competition).isEmpty())
             throw AppException.conflict(
                     "CloudMigration jest jedynym konkursem. Zmień jego ustawienia.");
-        var changes = new HashMap<String, Object>();
-        changes.put("id",
-                type == Type.competition
-                        ? DEFAULT_COMPETITION_ID
-                        : UUID.randomUUID().toString());
-        changes.put("revision", 1);
-        if (type == Type.competition)
-            changes.put("name", "CloudMigration");
-        if (type == Type.competition
-                && ((Competition) value).eligibilityRules() == null)
-            changes.put("eligibilityRules", Models.ELIGIBILITY_RULES);
-        if (type != Type.competition)
-            changes.put("state", "DRAFT");
-        if (type == Type.application)
-            changes.put("submittedAt", null);
-        if (type != Type.competition)
-            changes.put("number",
-                    number(type == Type.application
-                            ? "WN"
-                            : type == Type.evaluation ? "OC" : "DEC",
-                            (String) changes.get("id")));
-        var document = normalize(type, Records.with(value, changes));
+
+        var document = normalize(type,
+                Records.with(value, initialMetadata(type, value)));
         validate(type, document);
         repository.save(type, Records.id(document), 0, document);
         return document;
+    }
+
+    private Map<String, Object> initialMetadata(Type type, Object value) {
+        var changes = new HashMap<String, Object>();
+        var id = type == Type.competition
+                ? DEFAULT_COMPETITION_ID
+                : UUID.randomUUID().toString();
+        changes.put("id", id);
+        changes.put("revision", 1);
+
+        if (type == Type.competition) {
+            changes.put("name", "CloudMigration");
+            if (((Competition) value).eligibilityRules() == null)
+                changes.put("eligibilityRules", Models.ELIGIBILITY_RULES);
+            return changes;
+        }
+
+        changes.put("state", "DRAFT");
+        if (type == Type.application)
+            changes.put("submittedAt", null);
+        changes.put("number", number(numberPrefix(type), id));
+        return changes;
+    }
+
+    private String numberPrefix(Type type) {
+        if (type == Type.application)
+            return "WN";
+        if (type == Type.evaluation)
+            return "OC";
+        return "DEC";
     }
 
     public Object update(Type type, String id, Object value) {
         if (!id.equals(Records.id(value)))
             throw AppException
                     .invalid("Identyfikator dokumentu nie odpowiada adresowi.");
-        var old = repository.get(type, id);
+
+        var current = repository.get(type, id);
+        validateUpdate(type, id, current, value);
+        return replace(type, id, value);
+    }
+
+    private void validateUpdate(Type type, String id, Object current,
+            Object replacement) {
         if (type == Type.competition) {
             Rules.require(id.equals(competition().id()),
                     "Nieprawidłowa konfiguracja CloudMigration.");
             Rules.require(
-                    Objects.equals(((Competition) value).name(),
-                            ((Competition) old).name()),
+                    Objects.equals(((Competition) replacement).name(),
+                            ((Competition) current).name()),
                     "name", "Nazwa konkursu nie podlega zmianie.");
+            return;
         }
-        if (type != Type.competition) {
-            try {
-                if (!"DRAFT"
-                        .equals(old.getClass().getMethod("state").invoke(old))
-                        || !"DRAFT".equals(value.getClass().getMethod("state")
-                                .invoke(value)))
-                    throw AppException.conflict("Dokument jest zablokowany.");
-            } catch (ReflectiveOperationException e) {
-                throw new IllegalStateException(e);
-            }
+
+        requireDraft(current);
+        requireDraft(replacement);
+    }
+
+    private void requireDraft(Object document) {
+        try {
+            var state = document.getClass().getMethod("state").invoke(document);
+            if (!"DRAFT".equals(state))
+                throw AppException.conflict("Dokument jest zablokowany.");
+        } catch (ReflectiveOperationException exception) {
+            throw new IllegalStateException(exception);
         }
-        return replace(type, id, value);
     }
 
     private Object replace(Type type, String id, Object value) {
@@ -147,9 +171,9 @@ public class Workflow {
     private Object normalize(Type type, Object value) {
         if (type != Type.application)
             return value;
-        var a = (Application) value;
-        var total = Rules.total(a);
-        var requested = Rules.money(a.requestedAmount());
+        var application = (Application) value;
+        var total = Rules.total(application);
+        var requested = Rules.money(application.requestedAmount());
         Rules.require(requested.compareTo(total) <= 0, "requestedAmount",
                 "Dotacja przekracza koszty projektu.");
         var changes = new HashMap<String, Object>();
@@ -158,13 +182,15 @@ public class Workflow {
                 total.subtract(requested).setScale(2).toPlainString());
         var competition = competition();
         Rules.require(
-                a.competitionId() == null || a.competitionId().isBlank()
-                        || a.competitionId().equals(competition.id()),
+                application.competitionId() == null
+                        || application.competitionId().isBlank()
+                        || application.competitionId().equals(competition.id()),
                 "competitionId", "Wniosek musi należeć do CloudMigration.");
         changes.put("competitionId", competition.id());
-        if (a.projectNumber() == null || a.projectNumber().isBlank())
-            changes.put("projectNumber", number("PR", a.id()));
-        return Records.with(a, changes);
+        if (application.projectNumber() == null
+                || application.projectNumber().isBlank())
+            changes.put("projectNumber", number("PR", application.id()));
+        return Records.with(application, changes);
     }
 
     public void validate(Type type, Object value) {
@@ -172,22 +198,24 @@ public class Workflow {
         switch (type) {
             case competition -> Rules.competition((Competition) value);
             case application -> {
-                var a = (Application) value;
-                Rules.application(a, configurationFor(a));
+                var application = (Application) value;
+                Rules.application(application, configurationFor(application));
             }
             case evaluation -> {
-                var e = (Evaluation) value;
-                var a = repository.get(Type.application, e.applicationId(),
-                        Application.class);
-                Rules.evaluation(e, a, configurationFor(a));
+                var evaluation = (Evaluation) value;
+                var application = repository.get(Type.application,
+                        evaluation.applicationId(), Application.class);
+                Rules.evaluation(evaluation, application,
+                        configurationFor(application));
             }
             case decision -> {
-                var d = (Decision) value;
-                var a = repository.get(Type.application, d.applicationId(),
-                        Application.class);
-                Rules.decision(d, a, repository.get(Type.evaluation,
-                        d.evaluationId(), Evaluation.class),
-                        configurationFor(a));
+                var decision = (Decision) value;
+                var application = repository.get(Type.application,
+                        decision.applicationId(), Application.class);
+                Rules.decision(decision, application,
+                        repository.get(Type.evaluation, decision.evaluationId(),
+                                Evaluation.class),
+                        configurationFor(application));
             }
         }
     }
