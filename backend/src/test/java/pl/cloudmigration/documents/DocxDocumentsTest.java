@@ -217,6 +217,10 @@ class DocxDocumentsTest {
         var bytes = documents.template(Examples.competition());
         var text = visible(bytes);
         assertTrue(text.contains("Wypełnij wykropkowane pola"));
+        assertTrue(text.contains("automatycznie przypisany do CloudMigration"));
+        assertFalse(text.contains("wybranego w aplikacji"));
+        assertFalse(visible(documents.template(null))
+                .contains("wybierz w aplikacji"));
         assertTrue(text.contains("REGON"));
         assertFalse(text.contains(Examples.application().company().name()));
         assertFalse(text.contains(Examples.application().title()));

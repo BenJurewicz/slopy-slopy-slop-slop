@@ -90,11 +90,11 @@ public class DocxDocuments {
             var word = new WordTemplates(Type.application);
             word.replace("Konkurs: CloudMigration 2026",
                     competition == null
-                            ? "Konkurs: wybierz w aplikacji podczas importu"
+                            ? "Konkurs: CloudMigration"
                             : "Konkurs: " + competition.name());
             if (application == null) {
                 word.note(
-                        "Wypełnij wykropkowane pola. Numer nowego wniosku nadaje aplikacja podczas zapisu; numer z importowanego dokumentu nie jest zachowywany. Numer projektu może pozostać pusty - wtedy również nada go aplikacja. Powielaj całe bloki oznaczonej infrastruktury, zadań, wydatków i zespołu. Kwoty netto w PLN; daty RRRR-MM-DD lub DD.MM.RRRR. Koszt projektu, wartości wydatków i wkład własny można pozostawić puste do przeliczenia przy imporcie. Wniosek zostanie przypisany do konkursu wybranego w aplikacji.");
+                        "Wypełnij wykropkowane pola. Numer nowego wniosku nadaje aplikacja podczas zapisu; numer z importowanego dokumentu nie jest zachowywany. Numer projektu może pozostać pusty - wtedy również nada go aplikacja. Powielaj całe bloki oznaczonej infrastruktury, zadań, wydatków i zespołu. Kwoty netto w PLN; daty RRRR-MM-DD lub DD.MM.RRRR. Koszt projektu, wartości wydatków i wkład własny można pozostawić puste do przeliczenia przy imporcie. Wniosek zostanie automatycznie przypisany do CloudMigration.");
                 return word.save();
             }
             word.notice("Status wniosku: " + state(application.state())
