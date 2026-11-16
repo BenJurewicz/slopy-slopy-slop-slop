@@ -50,7 +50,8 @@ The Eclipse profile is shared with Neovim; see
   uploaded archives, and `WordTemplates` handles Word structure and controls.
 - `resources/xquery/` contains named storage transactions and reports.
 
-The readability refactor preserves validation order, messages and existing bugs.
+The readability refactor preserved validation order and messages. Subsequent
+fixes address the documented issues, including redundant BaseX list requests.
 See [known-issues.md](../docs/known-issues.md).
 
 ## CloudMigration settings

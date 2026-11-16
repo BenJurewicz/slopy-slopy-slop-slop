@@ -45,7 +45,7 @@ The build produces static files in `build/`. Configure the web server to serve
 - `src/lib/navigation.ts` and `report-display.ts` contain navigation and report
   presentation metadata.
 
-Existing edge-case behavior is characterized, not repaired; see
+Regression tests cover the resolved edge cases listed in
 [known-issues.md](../docs/known-issues.md).
 
 ## Generated API client

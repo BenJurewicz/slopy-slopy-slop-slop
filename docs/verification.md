@@ -2,9 +2,9 @@
 
 ## Wyniki
 
-- Backend: **50 testów jednostkowych/HTTP** i **18 testów integracyjnych z BaseX**, bez błędów.
-- Frontend: **35 testów**, sprawdzanie Svelte/TypeScript bez błędów i ostrzeżeń.
-- Przeglądarka: **14 testów** na pakiecie JAR, bez błędów. Dodatkowy test
+- Backend: **55 testów jednostkowych/HTTP** i **18 testów integracyjnych z BaseX**, bez błędów.
+- Frontend: **36 testów**, sprawdzanie Svelte/TypeScript bez błędów i ostrzeżeń.
+- Przeglądarka: **16 testów** na pakiecie JAR, bez błędów. Dodatkowy test
   sprawdza zachowanie fokusu i wartości podczas edycji oraz usuwania
   powtarzalnych wierszy formularza.
 - Dane testowe: obie operacje wymagają potwierdzenia. Anulowanie nie wysyła
@@ -84,6 +84,15 @@ nie wprowadzają napraw błędów opisanych w [known-issues.md](known-issues.md)
   Nie uruchamiano migracji na bazie użytkowej.
 - Pomocniczy walidator Java zachowuje wyniki siedmiu scenariuszy, w tym
   dostarczonych XML, pustych danych, błędów schematu i odrzucenia DTD.
+
+## Naprawy znanych błędów
+
+Po refaktoryzacji naprawiono wszystkie siedem pozycji z `known-issues.md`.
+Bieżący zestaw obejmuje 125 testów: 55 backendu, 18 integracyjnych, 36 frontendu
+oraz 16 przeglądarkowych. Regresje sprawdzają błędy odświeżenia, pozostawienie
+edytora po odrzuconym złożeniu, blokadę niezapisanych zmian, korektę strony po
+usunięciu wniosku, dostęp do 501. wiersza raportu oraz jeden odczyt BaseX na listę.
+Instrukcja pustego DOCX opisuje automatyczne przypisanie do CloudMigration.
 
 ## Pokrycie wymagań
 

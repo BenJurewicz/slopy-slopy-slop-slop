@@ -149,7 +149,7 @@ nie jest zmieniane przez te polecenia. [Profile, narzędzia i uruchamianie Neovi
 - [Instrukcja demonstracji i reguły](docs/walkthrough.md).
 - [Plan](docs/plan.md).
 - [Weryfikacja](docs/verification.md).
-- [Znane błędy zachowane podczas refaktoryzacji](docs/known-issues.md).
+- [Znane błędy i ich naprawy](docs/known-issues.md).
 
 Baza i aplikacja są związane z adresem loopback. Hasła nie trafiają do frontendu.
 Brak uwierzytelniania jest świadomym ograniczeniem demonstracji, nie rozwiązaniem
