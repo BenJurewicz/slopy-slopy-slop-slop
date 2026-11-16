@@ -4,7 +4,10 @@ set -euo pipefail
 set -m
 cd "$(dirname "$0")/.."
 
-fail() { printf 'make run: %s\n' "$*" >&2; exit 1; }
+fail() {
+    printf 'make run: %s\n' "$*" >&2
+    exit 1
+}
 for command in docker pnpm node lsof; do
     command -v "$command" >/dev/null || fail "Missing $command; complete the first-time setup in README.md."
 done
@@ -21,10 +24,14 @@ java="${JAVA_HOME:+$JAVA_HOME/bin/}java"
 # --offline does not stop the wrapper from downloading Gradle itself. Use only
 # the already cached distribution pinned by gradle-wrapper.properties.
 distribution=$(sed -n 's|^distributionUrl=.*/\([^/]*\)\.zip$|\1|p' backend/gradle/wrapper/gradle-wrapper.properties)
-version=${distribution%-bin}; version=${version%-all}
+version=${distribution%-bin}
+version=${version%-all}
 gradle=''
 for candidate in "${GRADLE_USER_HOME:-$HOME/.gradle}/wrapper/dists/$distribution"/*/"$version/bin/gradle"; do
-    if [[ -x "$candidate" ]]; then gradle=$candidate; break; fi
+    if [[ -x "$candidate" ]]; then
+        gradle=$candidate
+        break
+    fi
 done
 [[ -n "$gradle" ]] || fail 'Gradle is not cached; complete the first-time setup in README.md.'
 gradle="$(cd "$(dirname "$gradle")" && pwd)/gradle"
@@ -45,7 +52,7 @@ cleanup() {
     set +eu # Bash 3.2 treats an empty array as unset under nounset.
     printf '\nStopping development servers...\n'
     for pid in "${pids[@]}"; do kill -TERM -- "-$pid" 2>/dev/null; done
-    for ((i=0; i<50; i++)); do
+    for ((i = 0; i < 50; i++)); do
         alive=0
         for pid in "${pids[@]}"; do kill -0 -- "-$pid" 2>/dev/null && alive=1; done
         [[ "$alive" == 0 ]] && break
