@@ -55,7 +55,7 @@ class DocxDocumentsTest {
         var context=new DocxDocuments.Context(competition,Examples.application(),evaluation);
         var text=visible(documents.export(DocumentCodec.Type.evaluation,evaluation,context)).replaceAll("\\s+"," ");assertTrue(text.contains("Własne kryterium: 75 z 100 punktów"),text);assertTrue(text.contains("Komentarz własny"));assertFalse(text.contains("Wykonalność techniczna"));
         var decision=Records.with(Examples.decision(),Map.of("outcome","REJECT","amount","0.00","budgetAllows",true));
-        var xml=DocumentCodec.parse(entries(documents.export(DocumentCodec.Type.decision,decision,context)).get("word/document.xml"));assertEquals("Tak",field(xml,"budget_allows").getTextContent().strip());assertEquals("50 000,00",field(xml,"down_pay").getTextContent().strip());
+        var xml=DocumentCodec.parse(entries(documents.export(DocumentCodec.Type.decision,decision,context)).get("word/document.xml"));assertEquals("Tak",field(xml,"budget_allows").getTextContent().strip());assertEquals("50\u00A0000,00",field(xml,"down_pay").getTextContent().strip());
     }
     @Test void rejectsUnboundedNumbersBeforeBudgetArithmetic() throws Exception {
         for(var key:List.of("budget_quantity","budget_unit_cost","req_fund")){var file=changed(application(),xml->set(xml,key,"1E999999999"));assertTrue(assertThrows(AppException.class,()->read(file)).getMessage().contains("liczba"));}
@@ -84,7 +84,7 @@ class DocxDocumentsTest {
             var value=values[i++];if(type==DocumentCodec.Type.competition){assertThrows(AppException.class,()->documents.export(type,value,context));continue;}
             var bytes=documents.export(type,value,context);var text=visible(bytes);
             var xml=DocumentCodec.parse(entries(bytes).get("word/document.xml"));var ids=new HashSet<String>();var controls=xml.getElementsByTagNameNS(W,"id");for(int j=0;j<controls.getLength();j++)assertTrue(ids.add(((Element)controls.item(j)).getAttributeNS(W,"val")));
-            var paragraphs=xml.getElementsByTagNameNS(W,"p");var paragraphIds=new HashSet<String>();var w14="http://schemas.microsoft.com/office/word/2010/wordml";for(int j=0;j<paragraphs.getLength();j++){var paragraph=(Element)paragraphs.item(j);if(paragraph.hasAttributeNS(w14,"paraId"))assertTrue(paragraphIds.add(paragraph.getAttributeNS(w14,"paraId")));}assertFalse(text.contains("[application]"));assertFalse(text.contains("company.name"));assertFalse(text.contains(" — title"));assertFalse(text.contains(Examples.application().id()));assertFalse(text.contains(competitionId));assertFalse(text.contains(Examples.evaluation().id()));
+            var paragraphs=xml.getElementsByTagNameNS(W,"p");var paragraphIds=new HashSet<String>();var w14="http://schemas.microsoft.com/office/word/2010/wordml";for(int j=0;j<paragraphs.getLength();j++){var paragraph=(Element)paragraphs.item(j);if(paragraph.hasAttributeNS(w14,"paraId"))assertTrue(paragraphIds.add(paragraph.getAttributeNS(w14,"paraId")));}assertFalse(text.contains("[application]"));assertFalse(text.contains("company.name"));assertFalse(text.contains(" \u2014 title"));assertFalse(text.contains(Examples.application().id()));assertFalse(text.contains(competitionId));assertFalse(text.contains(Examples.evaluation().id()));
         }
         var evaluation=visible(documents.export(DocumentCodec.Type.evaluation,Examples.evaluation(),context));assertTrue(evaluation.contains(Examples.application().company().name()));assertTrue(evaluation.contains(Examples.application().title()));assertTrue(evaluation.contains(Examples.competition().criteria().getFirst().name()));assertTrue(evaluation.contains("nie oznacza automatycznego"));
         var decision=visible(documents.export(DocumentCodec.Type.decision,Examples.decision(),context));assertTrue(decision.contains(Examples.application().title()));assertTrue(decision.contains("Powiązana ocena"));assertTrue(decision.contains("Status: Szkic"));
@@ -133,7 +133,7 @@ class DocxDocumentsTest {
         assertData(Examples.application(),read(getClass().getResourceAsStream("/docx/word-filled-application.docx").readAllBytes()));
     }
     @Test void importsReadableFormEditedAndSavedByMicrosoftWord() throws Exception {
-        var actual=read(getClass().getResourceAsStream("/docx/word-edited-application.docx").readAllBytes());assertEquals("Migracja Żółwia — edytowana w Word",actual.title());
+        var actual=read(getClass().getResourceAsStream("/docx/word-edited-application.docx").readAllBytes());assertEquals("Migracja Żółwia \u2014 edytowana w Word",actual.title());
         var expected=Records.with(Examples.application(),Map.of("title",actual.title(),"description","Opis zmieniony w Word: Łódź i Gdańsk.\nDrugi akapit: kopie zapasowe i bezpieczeństwo."));assertData(expected,actual);
     }
 }

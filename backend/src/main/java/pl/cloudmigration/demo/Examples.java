@@ -15,7 +15,7 @@ public final class Examples {
     }
     public static Application application() {
         return new Application(APPLICATION,1,COMPETITION,"DRAFT",null,
-            new Company("Biuro Rachunkowe Żółw","1234567890","MICRO","Anna Kowalska","anna@example.org","ul. Przykładowa 12, 80-001 Gdańsk","123456785","Anna Kowalska – właścicielka"),
+            new Company("Biuro Rachunkowe Żółw","1234567890","MICRO","Anna Kowalska","anna@example.org","ul. Przykładowa 12, 80-001 Gdańsk","123456785","Anna Kowalska \u2013 właścicielka"),
             "Bezpieczna księgowość w chmurze","Migracja bazy danych i oprogramowania.\nAutomatyczne kopie zapasowe.",
             "Ograniczenie przestojów","Bezpieczny dostęp zdalny",
             List.of(new Infrastructure("Serwer księgowy","Lokalny","Serwer legacy")),
