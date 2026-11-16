@@ -63,8 +63,36 @@ Kolejne buildy backendu mogą działać z `--offline`. Nie jest używany Maven.
 
 ## Rozwój i testy
 
-Backend: `cd backend && ./gradlew --offline bootRun`. Frontend:
-`cd frontend && pnpm dev`; żądania `/api` są przekazywane do portu 8080.
+Po pierwszej konfiguracji, z katalogu `Project/`:
+
+```sh
+make run
+```
+
+Polecenie używa Makefile i Bash: uruchamia BaseX, backend na porcie 8080 oraz
+frontend na <http://127.0.0.1:5173>. Logi trafiają do jednego terminala.
+**Ctrl+C** zatrzymuje oba serwery wraz z procesami potomnymi i kontener BaseX,
+bez usuwania wolumenu ani danych. Zatrzymuje także BaseX uruchomiony wcześniej
+dla tego projektu. Błąd uruchomienia lub zakończenie jednego serwera również
+zatrzymuje pozostałe procesy. Zajęte porty 8080 lub 5173 powodują błąd bez
+zatrzymywania istniejących serwerów.
+
+Frontend odświeża się po zmianach; po zmianach backendu zatrzymaj polecenie
+przez Ctrl+C i uruchom `make run` ponownie. Żądania `/api` z frontendu są
+przekazywane do backendu. Na macOS skrypt wybiera JDK 23, jeśli `JAVA_HOME`
+nie jest ustawione. Na innych systemach ustaw je samodzielnie.
+
+Potrzebne są Bash, Make, `lsof` i zależności z pierwszej konfiguracji.
+Polecenie nie instaluje pakietów ani nie pobiera obrazów. Korzysta z zapisanej
+lokalnie dystrybucji Gradle wskazanej przez Wrapper i zależności offline;
+brakujące zależności trzeba wcześniej przygotować zgodnie z instrukcją
+pierwszego uruchomienia.
+
+Test samego uruchamiania i sprzątania, z atrapami procesów i bez dostępu do bazy:
+
+```sh
+bash scripts/test-dev.sh
+```
 
 ```sh
 cd backend

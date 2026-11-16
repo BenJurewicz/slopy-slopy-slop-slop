@@ -10,6 +10,11 @@
   dopisywać, przywraca domyślne ustawienia i usuwa poprzednie decyzje.
   Reset usuwa również dokumenty końcowe, zachowując ustawienia. Niepoprawny
   zestaw zastępczy i brak potwierdzenia nie usuwają istniejących danych.
+- `make run`: pięć testów cyklu życia na Bash 3.2, bez dostępu do bazy:
+  Ctrl+C po starcie, Ctrl+C podczas startu BaseX, zakończenie serwera, błąd
+  startu bazy i zajęte porty. Procesy potomne nie pozostają uruchomione.
+  Sprawdzony także rzeczywisty start frontendu i backendu oraz zatrzymanie
+  obu serwerów i BaseX przez Ctrl+C; skróty danych pozostały identyczne.
 - `pnpm peers check`: brak konfliktów; TypeScript 6.0.3, Hey API 0.99.0.
 - Czysty build przez `scripts/build.sh`: frontend i wykonywalny JAR z zasobami.
 - Ponowna inicjalizacja bazy: dwa udane wywołania bez utraty dokumentów.
