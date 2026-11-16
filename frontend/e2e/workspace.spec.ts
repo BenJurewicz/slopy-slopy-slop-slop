@@ -11,7 +11,7 @@ function draftRow(index: number) {
     };
 }
 
-test('a rejected submission still closes the editor and discards unsaved edits', async ({
+test('a rejected submission preserves the editor and unsaved edits', async ({
     page,
 }) => {
     await page.route('**/api/applications', (route) =>
@@ -37,8 +37,7 @@ test('a rejected submission still closes the editor and discards unsaved edits',
     await expect(page.getByRole('alert')).toContainText('Submission rejected');
     await expect(
         page.getByLabel('Tytuł projektu', { exact: true }),
-    ).toHaveCount(0);
-    await expect(page.getByText('Projekt 1', { exact: true })).toBeVisible();
+    ).toHaveValue('Unsaved changes');
 });
 
 test('deleting the only row on the last page still leaves an out-of-range page', async ({

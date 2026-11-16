@@ -53,7 +53,7 @@ describe('workspace transitions', () => {
         expect(workspace.reportThreshold).toBe('50000');
     });
 
-    it('keeps the existing success message when the refresh after a write fails', async () => {
+    it('does not display success when the refresh after a write fails', async () => {
         const workspace = new Workspace();
         vi.spyOn(api, 'saveDocument').mockResolvedValue(competition);
         vi.mocked(api.getCompetition).mockRejectedValue(
@@ -63,7 +63,7 @@ describe('workspace transitions', () => {
         await workspace.saveSettings({});
 
         expect(workspace.error).toBe('Reload failed');
-        expect(workspace.message).toBe('Ustawienia zapisane.');
+        expect(workspace.message).toBe('');
         expect(workspace.busy).toBe(false);
         expect(workspace.loading).toBe(false);
         expect(workspace.competition).toBeNull();

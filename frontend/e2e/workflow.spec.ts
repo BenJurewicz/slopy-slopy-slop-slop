@@ -588,9 +588,7 @@ test('editing and deleting repeatable rows preserves focus and values', async ({
     );
 });
 
-test('a successful settings write still reports success when its refresh fails', async ({
-    page,
-}) => {
+test('a failed settings refresh does not display success', async ({ page }) => {
     await page.goto('/settings');
     await expect(
         page.getByLabel('Budżet konkursu (PLN)', { exact: true }),
@@ -604,5 +602,5 @@ test('a successful settings write still reports success when its refresh fails',
     );
     await expect(
         page.getByText('Ustawienia zapisane.', { exact: true }),
-    ).toBeVisible();
+    ).not.toBeVisible();
 });

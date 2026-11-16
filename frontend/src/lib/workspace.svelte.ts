@@ -114,8 +114,10 @@ export class Workspace {
                         limit: 1,
                     })
                 ).rows[0] ?? {};
+            return true;
         } catch (cause) {
             this.error = (cause as Error).message;
+            return false;
         } finally {
             this.loading = false;
         }
@@ -137,10 +139,11 @@ export class Workspace {
         this.message = '';
         try {
             await action();
-            await this.refresh();
-            this.message = success;
+            if (await this.refresh()) this.message = success;
+            return true;
         } catch (cause) {
             this.error = (cause as Error).message;
+            return false;
         } finally {
             this.busy = false;
         }
@@ -189,8 +192,7 @@ export class Workspace {
         try {
             await api.saveDocument(this.editor.kind, value);
             this.editor = null;
-            await this.refresh();
-            this.message = 'Dokument zapisany.';
+            if (await this.refresh()) this.message = 'Dokument zapisany.';
         } finally {
             this.busy = false;
         }
@@ -201,8 +203,7 @@ export class Workspace {
         this.message = '';
         try {
             await api.saveDocument('competition', value);
-            await this.refresh();
-            this.message = 'Ustawienia zapisane.';
+            if (await this.refresh()) this.message = 'Ustawienia zapisane.';
         } finally {
             this.busy = false;
         }
@@ -230,11 +231,11 @@ export class Workspace {
             )
         )
             return;
-        await this.runAction(
+        const submitted = await this.runAction(
             () => api.submitApplication(application.id, application.revision),
             'Wniosek złożony.',
         );
-        this.editor = null;
+        if (submitted) this.editor = null;
     };
 
     finalizeEvaluation = async (evaluation: Evaluation) => {
