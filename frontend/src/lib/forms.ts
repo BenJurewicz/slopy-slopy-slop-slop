@@ -1,5 +1,7 @@
 import type { Kind, Competition, Application } from './api';
+
 export type Data = Record<string, unknown>;
+
 export type Field = {
     key: string;
     label: string;
@@ -19,16 +21,19 @@ export type Field = {
     optional?: boolean;
     help?: string;
 };
+
 const field = (
     key: string,
     label: string,
     type: Field['type'] = 'text',
 ): Field => ({ key, label, type });
+
 const infrastructure = [
     field('name', 'System / usługa'),
     field('provider', 'Dostawca'),
     field('description', 'Opis', 'textarea'),
 ];
+
 export const fields: Record<Kind, Field[]> = {
     competition: [
         field('description', 'Opis programu', 'textarea'),
@@ -172,6 +177,7 @@ export const fields: Record<Kind, Field[]> = {
         field('reason', 'Uzasadnienie', 'textarea'),
     ],
 };
+
 export const captions: Record<string, string> = {
     OPEN: 'Nabór otwarty',
     EVALUATION: 'Ocena',
@@ -182,29 +188,35 @@ export const captions: Record<string, string> = {
     AWARD: 'Przyznaj dotację',
     REJECT: 'Odmów finansowania',
 };
-export function empty(fields: Field[]): Data {
+
+export function initialValues(definition: Field[]): Data {
     return Object.fromEntries(
-        fields.map((f) => [
-            f.key,
-            f.type === 'object'
-                ? empty(f.children!)
-                : f.type === 'list'
-                  ? [empty(f.children!)]
-                  : f.type === 'number'
-                    ? 0
-                    : f.type === 'boolean'
-                      ? false
-                      : f.type === 'select'
-                        ? f.options![0]
-                        : f.type === 'date'
-                          ? new Date().toISOString().slice(0, 10)
-                          : '',
-        ]),
+        definition.map((field) => [field.key, initialValue(field)]),
     );
 }
+
+function initialValue(field: Field): unknown {
+    switch (field.type) {
+        case 'object':
+            return initialValues(field.children!);
+        case 'list':
+            return [initialValues(field.children!)];
+        case 'number':
+            return 0;
+        case 'boolean':
+            return false;
+        case 'select':
+            return field.options![0];
+        case 'date':
+            return new Date().toISOString().slice(0, 10);
+        default:
+            return '';
+    }
+}
+
 export function newApplication(): Data {
     return {
-        ...empty(fields.application),
+        ...initialValues(fields.application),
         revision: 0,
         state: 'DRAFT',
         submittedAt: null,
@@ -223,16 +235,20 @@ export function newApplication(): Data {
         ],
     };
 }
-export function newEvaluation(a: Application, c: Competition): Data {
+
+export function newEvaluation(
+    application: Application,
+    competition: Competition,
+): Data {
     return {
         revision: 0,
-        applicationId: a.id,
+        applicationId: application.id,
         state: 'DRAFT',
         reviewer: '',
         date: new Date().toISOString().slice(0, 10),
-        eligible: a.company.size !== 'OTHER',
+        eligible: application.company.size !== 'OTHER',
         reason: '',
-        scores: c.criteria.map((criterion) => ({
+        scores: competition.criteria.map((criterion) => ({
             code: criterion.code,
             points: 0,
             comment: '',

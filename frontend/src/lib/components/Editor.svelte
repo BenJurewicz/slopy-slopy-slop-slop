@@ -2,6 +2,15 @@
     import Fields from './Fields.svelte';
     import { fields, type Data } from '../forms';
     import { api, type Kind } from '../api';
+    import type { BudgetLine } from '../generated/api/types.gen';
+
+    const documentTitles: Record<Kind, string> = {
+        competition: 'Ustawienia CloudMigration',
+        application: 'Wniosek',
+        evaluation: 'Ocena',
+        decision: 'Decyzja',
+    };
+
     let {
         kind,
         value,
@@ -17,28 +26,36 @@
         busy?: boolean;
         settingsLocked?: boolean;
     } = $props();
+
     // Live score totals need a deep draft that tracks nested mutations.
     // eslint-disable-next-line svelte/prefer-writable-derived
     let draft = $state<Data>({});
+    let error = $state('');
+    let calculating = $state(false);
+    const readonly = $derived(value.state && value.state !== 'DRAFT');
+
     $effect(() => {
         draft = structuredClone($state.snapshot(value));
     });
-    let error = $state('');
-    let calculating = $state(false);
+
     $effect(() => {
-        if (kind === 'evaluation' && draft.scores)
-            draft.total = (draft.scores as { points: number }[]).reduce(
-                (sum, s) => sum + s.points,
-                0,
-            );
+        if (kind !== 'evaluation' || !draft.scores) return;
+        draft.total = totalScore(draft.scores);
     });
-    const readonly = $derived(value.state && value.state !== 'DRAFT');
+
+    function totalScore(scores: unknown): number {
+        return (scores as { points: number }[]).reduce(
+            (sum, score) => sum + score.points,
+            0,
+        );
+    }
+
     async function calculate() {
         calculating = true;
         error = '';
         try {
             const result = await api.calculateBudget(
-                draft.budget as import('../generated/api/types.gen').BudgetLine[],
+                draft.budget as BudgetLine[],
                 String(draft.requestedAmount ?? '0.00'),
             );
             draft = {
@@ -47,27 +64,25 @@
                 projectCost: result.total,
                 ownContribution: result.ownContribution,
             };
-        } catch (e) {
-            error = (e as Error).message;
+        } catch (cause) {
+            error = (cause as Error).message;
         } finally {
             calculating = false;
         }
     }
+
     async function submit(event: SubmitEvent) {
         event.preventDefault();
         error = '';
         if (kind === 'evaluation')
             draft = {
                 ...draft,
-                total: (draft.scores as { points: number }[]).reduce(
-                    (sum, s) => sum + s.points,
-                    0,
-                ),
+                total: totalScore(draft.scores),
             };
         try {
             await save(draft);
-        } catch (e) {
-            error = (e as Error).message;
+        } catch (cause) {
+            error = (cause as Error).message;
         }
     }
 </script>
@@ -75,14 +90,7 @@
 <section class="panel editor">
     <header class="section-heading">
         <div>
-            <h2>
-                {{
-                    competition: 'Ustawienia CloudMigration',
-                    application: 'Wniosek',
-                    evaluation: 'Ocena',
-                    decision: 'Decyzja',
-                }[kind]}
-            </h2>
+            <h2>{documentTitles[kind]}</h2>
         </div>
         <button class="quiet" onclick={close}>Zamknij</button>
     </header>
@@ -96,12 +104,16 @@
         {#if kind === 'competition' && settingsLocked}
             <Fields
                 bind:value={draft}
-                spec={fields.competition.filter((f) => f.key !== 'stage')}
+                spec={fields.competition.filter(
+                    (field) => field.key !== 'stage',
+                )}
                 disabled
             />
             <Fields
                 bind:value={draft}
-                spec={fields.competition.filter((f) => f.key === 'stage')}
+                spec={fields.competition.filter(
+                    (field) => field.key === 'stage',
+                )}
                 disabled={busy}
             />
         {:else}
