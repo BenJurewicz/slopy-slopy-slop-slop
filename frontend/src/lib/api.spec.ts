@@ -20,6 +20,19 @@ describe('generated API integration', () => {
 		expect(sent().url).toBe('http://cloudmigration.test/api/competition');
 		expect(result.id).toBe('competition-1');
 	});
+	it('sends explicit confirmation for both destructive data actions', async () => {
+		fetcher.mockResolvedValueOnce(json({ competitionId: 'demo', applications: 20 }));
+		await api.loadDemo();
+		expect(sent().url).toBe('http://cloudmigration.test/api/demo/load');
+		expect(sent().method).toBe('POST');
+		expect(await sent().json()).toEqual({ confirmed: true });
+		fetcher.mockClear();
+		fetcher.mockResolvedValueOnce(new Response(null, { status: 204 }));
+		await api.resetData();
+		expect(sent().url).toBe('http://cloudmigration.test/api/demo');
+		expect(sent().method).toBe('DELETE');
+		expect(await sent().json()).toEqual({ confirmed: true });
+	});
 	it('creates and updates using generated request bodies', async () => {
 		fetcher.mockResolvedValue(json({ id: 'application-1', revision: 1 }, 201));
 		await api.saveDocument('application', { title: 'Migracja' });

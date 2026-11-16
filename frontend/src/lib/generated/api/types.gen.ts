@@ -155,6 +155,10 @@ export type ImportPreview = {
     diagnostics?: Array<string>;
 };
 
+export type Confirmation = {
+    confirmed?: boolean;
+};
+
 export type DemoResult = {
     competitionId?: string;
     applications?: number;
@@ -1033,7 +1037,7 @@ export type ImportApplicationResponses = {
 export type ImportApplicationResponse = ImportApplicationResponses[keyof ImportApplicationResponses];
 
 export type LoadDemoData = {
-    body?: never;
+    body: Confirmation;
     path?: never;
     query?: never;
     url: '/api/demo/load';
@@ -1070,7 +1074,7 @@ export type LoadDemoError = LoadDemoErrors[keyof LoadDemoErrors];
 
 export type LoadDemoResponses = {
     /**
-     * Operacja wykonana
+     * Dane demonstracyjne wczytane
      */
     200: DemoResult;
 };
@@ -1626,3 +1630,48 @@ export type DownloadApplicationExampleResponses = {
 };
 
 export type DownloadApplicationExampleResponse = DownloadApplicationExampleResponses[keyof DownloadApplicationExampleResponses];
+
+export type ResetDataData = {
+    body: Confirmation;
+    path?: never;
+    query?: never;
+    url: '/api/demo';
+};
+
+export type ResetDataErrors = {
+    /**
+     * Nieprawidłowe żądanie
+     */
+    400: Error;
+    /**
+     * Brak zasobu
+     */
+    404: Error;
+    /**
+     * Konflikt rewizji lub procesu
+     */
+    409: Error;
+    /**
+     * Za duży plik
+     */
+    413: Error;
+    /**
+     * Błąd walidacji
+     */
+    422: Error;
+    /**
+     * Baza niedostępna
+     */
+    503: Error;
+};
+
+export type ResetDataError = ResetDataErrors[keyof ResetDataErrors];
+
+export type ResetDataResponses = {
+    /**
+     * Dane usunięte
+     */
+    204: void;
+};
+
+export type ResetDataResponse = ResetDataResponses[keyof ResetDataResponses];

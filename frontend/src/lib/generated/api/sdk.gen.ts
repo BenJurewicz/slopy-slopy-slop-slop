@@ -2,7 +2,7 @@
 
 import { type Client, type ClientMeta, formDataBodySerializer, type Options as Options2, type RequestResult, type TDataShape } from './client';
 import { client } from './client.gen';
-import type { CalculateBudgetData, CalculateBudgetErrors, CalculateBudgetResponses, CreateApplicationData, CreateApplicationErrors, CreateApplicationResponses, CreateDecisionData, CreateDecisionErrors, CreateDecisionResponses, CreateEvaluationData, CreateEvaluationErrors, CreateEvaluationResponses, DeleteApplicationData, DeleteApplicationErrors, DeleteApplicationResponses, DeleteDecisionData, DeleteDecisionErrors, DeleteDecisionResponses, DeleteEvaluationData, DeleteEvaluationErrors, DeleteEvaluationResponses, DownloadApplicationExampleData, DownloadApplicationExampleErrors, DownloadApplicationExampleResponses, DownloadDocxData, DownloadDocxErrors, DownloadDocxResponses, DownloadTemplateData, DownloadTemplateErrors, DownloadTemplateResponses, DownloadXmlData, DownloadXmlErrors, DownloadXmlResponses, ExecuteQueryData, ExecuteQueryErrors, ExecuteQueryResponses, FinalizeDocumentData, FinalizeDocumentErrors, FinalizeDocumentResponses, GetApplicationData, GetApplicationErrors, GetApplicationResponses, GetCompetitionData, GetCompetitionErrors, GetCompetitionResponses, GetDecisionData, GetDecisionErrors, GetDecisionResponses, GetEvaluationData, GetEvaluationErrors, GetEvaluationResponses, ImportApplicationData, ImportApplicationErrors, ImportApplicationResponses, IssueDecisionsData, IssueDecisionsErrors, IssueDecisionsResponses, ListApplicationsData, ListApplicationsErrors, ListApplicationsResponses, ListDecisionsData, ListDecisionsErrors, ListDecisionsResponses, ListEvaluationsData, ListEvaluationsErrors, ListEvaluationsResponses, ListQueriesData, ListQueriesErrors, ListQueriesResponses, LoadDemoData, LoadDemoErrors, LoadDemoResponses, PrepareDecisionsData, PrepareDecisionsErrors, PrepareDecisionsResponses, PreviewFundingData, PreviewFundingErrors, PreviewFundingResponses, SubmitData, SubmitErrors, SubmitResponses, UpdateApplicationData, UpdateApplicationErrors, UpdateApplicationResponses, UpdateCompetitionData, UpdateCompetitionErrors, UpdateCompetitionResponses, UpdateDecisionData, UpdateDecisionErrors, UpdateDecisionResponses, UpdateEvaluationData, UpdateEvaluationErrors, UpdateEvaluationResponses } from './types.gen';
+import type { CalculateBudgetData, CalculateBudgetErrors, CalculateBudgetResponses, CreateApplicationData, CreateApplicationErrors, CreateApplicationResponses, CreateDecisionData, CreateDecisionErrors, CreateDecisionResponses, CreateEvaluationData, CreateEvaluationErrors, CreateEvaluationResponses, DeleteApplicationData, DeleteApplicationErrors, DeleteApplicationResponses, DeleteDecisionData, DeleteDecisionErrors, DeleteDecisionResponses, DeleteEvaluationData, DeleteEvaluationErrors, DeleteEvaluationResponses, DownloadApplicationExampleData, DownloadApplicationExampleErrors, DownloadApplicationExampleResponses, DownloadDocxData, DownloadDocxErrors, DownloadDocxResponses, DownloadTemplateData, DownloadTemplateErrors, DownloadTemplateResponses, DownloadXmlData, DownloadXmlErrors, DownloadXmlResponses, ExecuteQueryData, ExecuteQueryErrors, ExecuteQueryResponses, FinalizeDocumentData, FinalizeDocumentErrors, FinalizeDocumentResponses, GetApplicationData, GetApplicationErrors, GetApplicationResponses, GetCompetitionData, GetCompetitionErrors, GetCompetitionResponses, GetDecisionData, GetDecisionErrors, GetDecisionResponses, GetEvaluationData, GetEvaluationErrors, GetEvaluationResponses, ImportApplicationData, ImportApplicationErrors, ImportApplicationResponses, IssueDecisionsData, IssueDecisionsErrors, IssueDecisionsResponses, ListApplicationsData, ListApplicationsErrors, ListApplicationsResponses, ListDecisionsData, ListDecisionsErrors, ListDecisionsResponses, ListEvaluationsData, ListEvaluationsErrors, ListEvaluationsResponses, ListQueriesData, ListQueriesErrors, ListQueriesResponses, LoadDemoData, LoadDemoErrors, LoadDemoResponses, PrepareDecisionsData, PrepareDecisionsErrors, PrepareDecisionsResponses, PreviewFundingData, PreviewFundingErrors, PreviewFundingResponses, ResetDataData, ResetDataErrors, ResetDataResponses, SubmitData, SubmitErrors, SubmitResponses, UpdateApplicationData, UpdateApplicationErrors, UpdateApplicationResponses, UpdateCompetitionData, UpdateCompetitionErrors, UpdateCompetitionResponses, UpdateDecisionData, UpdateDecisionErrors, UpdateDecisionResponses, UpdateEvaluationData, UpdateEvaluationErrors, UpdateEvaluationResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -118,7 +118,19 @@ export const importApplication = <ThrowOnError extends boolean = false>(options?
     }
 });
 
-export const loadDemo = <ThrowOnError extends boolean = false>(options?: Options<LoadDemoData, ThrowOnError>): RequestResult<LoadDemoResponses, LoadDemoErrors, ThrowOnError> => (options?.client ?? client).post<LoadDemoResponses, LoadDemoErrors, ThrowOnError>({ url: '/api/demo/load', ...options });
+/**
+ * Replace all data with a fresh demo dataset
+ *
+ * Deletes current documents and settings, then loads default CloudMigration settings and demo records atomically.
+ */
+export const loadDemo = <ThrowOnError extends boolean = false>(options: Options<LoadDemoData, ThrowOnError>): RequestResult<LoadDemoResponses, LoadDemoErrors, ThrowOnError> => (options.client ?? client).post<LoadDemoResponses, LoadDemoErrors, ThrowOnError>({
+    url: '/api/demo/load',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
 
 export const listDecisions = <ThrowOnError extends boolean = false>(options?: Options<ListDecisionsData, ThrowOnError>): RequestResult<ListDecisionsResponses, ListDecisionsErrors, ThrowOnError> => (options?.client ?? client).get<ListDecisionsResponses, ListDecisionsErrors, ThrowOnError>({ url: '/api/decisions', ...options });
 
@@ -171,3 +183,17 @@ export const downloadDocx = <ThrowOnError extends boolean = false>(options: Opti
 export const downloadTemplate = <ThrowOnError extends boolean = false>(options?: Options<DownloadTemplateData, ThrowOnError>): RequestResult<DownloadTemplateResponses, DownloadTemplateErrors, ThrowOnError> => (options?.client ?? client).get<DownloadTemplateResponses, DownloadTemplateErrors, ThrowOnError>({ url: '/api/documents/template', ...options });
 
 export const downloadApplicationExample = <ThrowOnError extends boolean = false>(options?: Options<DownloadApplicationExampleData, ThrowOnError>): RequestResult<DownloadApplicationExampleResponses, DownloadApplicationExampleErrors, ThrowOnError> => (options?.client ?? client).get<DownloadApplicationExampleResponses, DownloadApplicationExampleErrors, ThrowOnError>({ url: '/api/documents/example', ...options });
+
+/**
+ * Delete applications, evaluations and decisions
+ *
+ * Keeps CloudMigration settings. This action cannot be undone.
+ */
+export const resetData = <ThrowOnError extends boolean = false>(options: Options<ResetDataData, ThrowOnError>): RequestResult<ResetDataResponses, ResetDataErrors, ThrowOnError> => (options.client ?? client).delete<ResetDataResponses, ResetDataErrors, ThrowOnError>({
+    url: '/api/demo',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
