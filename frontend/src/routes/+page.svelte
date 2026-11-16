@@ -1,5 +1,6 @@
 <script lang="ts">
     import { onMount } from 'svelte';
+    import { navigation, type View } from '../lib/navigation';
     import Editor from '../lib/components/Editor.svelte';
     import {
         api,
@@ -36,23 +37,6 @@
         state: 'Status',
         id: 'Identyfikator',
     };
-    type View =
-        | 'overview'
-        | 'settings'
-        | 'applications'
-        | 'evaluations'
-        | 'funding'
-        | 'decisions'
-        | 'reports';
-    const nav: { id: View; label: string }[] = [
-        { id: 'overview', label: 'Przegląd' },
-        { id: 'applications', label: 'Wnioski' },
-        { id: 'evaluations', label: 'Oceny' },
-        { id: 'funding', label: 'Ranking i dotacje' },
-        { id: 'decisions', label: 'Decyzje' },
-        { id: 'reports', label: 'Raporty XQuery' },
-        { id: 'settings', label: 'Ustawienia' },
-    ];
     let view = $state<View>('overview');
     let loading = $state(true);
     let busy = $state(false);
@@ -104,7 +88,7 @@
     );
     onMount(() => {
         const route = window.location.pathname.slice(1);
-        if (nav.some((item) => item.id === route)) view = route as View;
+        if (navigation.some((item) => item.id === route)) view = route as View;
         void refresh();
     });
     async function refresh() {
@@ -343,7 +327,7 @@
     <header class="sidebar">
         <strong>CloudMigration</strong>
         <nav aria-label="Główna nawigacja">
-            {#each nav as item (item.id)}<button
+            {#each navigation as item (item.id)}<button
                     class:active={view === item.id}
                     aria-current={view === item.id ? 'page' : undefined}
                     onclick={() => navigate(item.id)}>{item.label}</button
@@ -355,7 +339,7 @@
     </header>
     <main class="main">
         <header class="topbar">
-            <h1>{nav.find((n) => n.id === view)?.label}</h1>
+            <h1>{navigation.find((n) => n.id === view)?.label}</h1>
         </header>
         {#if error}<div class="error" role="alert">
                 {error}
