@@ -587,3 +587,22 @@ test('editing and deleting repeatable rows preserves focus and values', async ({
         before,
     );
 });
+
+test('a successful settings write still reports success when its refresh fails', async ({
+    page,
+}) => {
+    await page.goto('/settings');
+    await expect(
+        page.getByLabel('Budżet konkursu (PLN)', { exact: true }),
+    ).toBeEnabled();
+    await page.route('**/api/applications', (route) => route.abort());
+    await page
+        .getByRole('button', { name: 'Zapisz ustawienia', exact: true })
+        .click();
+    await expect(page.getByRole('alert')).toContainText(
+        'Nie można połączyć się z serwerem.',
+    );
+    await expect(
+        page.getByText('Ustawienia zapisane.', { exact: true }),
+    ).toBeVisible();
+});
