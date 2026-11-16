@@ -15,6 +15,10 @@
         />
         <setting id="org.eclipse.jdt.core.formatter.lineSplit" value="80" />
         <setting
+            id="org.eclipse.jdt.core.formatter.alignment_for_arguments_in_annotation"
+            value="16"
+        />
+        <setting
             id="org.eclipse.jdt.core.formatter.blank_lines_before_method"
             value="1"
         />

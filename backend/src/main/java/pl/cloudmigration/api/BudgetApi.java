@@ -2,18 +2,40 @@ package pl.cloudmigration.api;
 
 import java.math.*;
 import java.util.List;
-import org.springframework.web.bind.annotation.*;
+
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+
+import org.springframework.web.bind.annotation.*;
+
 import pl.cloudmigration.documents.Models.BudgetLine;
 import pl.cloudmigration.workflow.Rules;
 
-@io.swagger.v3.oas.annotations.responses.ApiResponses({
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Nieprawidłowe żądanie", content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = pl.cloudmigration.api.Errors.Error.class))),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Brak zasobu", content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = pl.cloudmigration.api.Errors.Error.class))),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "Konflikt rewizji lub procesu", content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = pl.cloudmigration.api.Errors.Error.class))),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "413", description = "Za duży plik", content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = pl.cloudmigration.api.Errors.Error.class))),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "422", description = "Błąd walidacji", content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = pl.cloudmigration.api.Errors.Error.class))),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "503", description = "Baza niedostępna", content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = pl.cloudmigration.api.Errors.Error.class)))})
+@ApiResponses({
+        @ApiResponse(responseCode = "400",
+                description = "Nieprawidłowe żądanie",
+                content = @Content(mediaType = "application/json",
+                        schema = @Schema(implementation = Errors.Error.class))),
+        @ApiResponse(responseCode = "404", description = "Brak zasobu",
+                content = @Content(mediaType = "application/json",
+                        schema = @Schema(implementation = Errors.Error.class))),
+        @ApiResponse(responseCode = "409",
+                description = "Konflikt rewizji lub procesu",
+                content = @Content(mediaType = "application/json",
+                        schema = @Schema(implementation = Errors.Error.class))),
+        @ApiResponse(responseCode = "413", description = "Za duży plik",
+                content = @Content(mediaType = "application/json",
+                        schema = @Schema(implementation = Errors.Error.class))),
+        @ApiResponse(responseCode = "422", description = "Błąd walidacji",
+                content = @Content(mediaType = "application/json",
+                        schema = @Schema(implementation = Errors.Error.class))),
+        @ApiResponse(responseCode = "503", description = "Baza niedostępna",
+                content = @Content(mediaType = "application/json",
+                        schema = @Schema(
+                                implementation = Errors.Error.class)))})
 @RestController
 @RequestMapping("/api/budget")
 public class BudgetApi {
@@ -22,7 +44,8 @@ public class BudgetApi {
     }
 
     @Operation(operationId = "calculateBudget")
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Operacja wykonana", useReturnTypeSchema = true)
+    @ApiResponse(responseCode = "200", description = "Operacja wykonana",
+            useReturnTypeSchema = true)
     @PostMapping("/calculate")
     public Calculated calculate(@RequestBody List<BudgetLine> lines,
             @RequestParam(required = false) String requestedAmount) {
