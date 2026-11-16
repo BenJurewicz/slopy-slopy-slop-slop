@@ -2,7 +2,6 @@ package pl.cloudmigration.docx;
 
 import java.io.*;
 import java.util.*;
-import java.util.zip.*;
 import javax.xml.XMLConstants;
 import javax.xml.transform.*;
 import javax.xml.transform.dom.DOMSource;
@@ -14,10 +13,6 @@ import pl.cloudmigration.api.AppException;
 import pl.cloudmigration.documents.DocumentCodec;
 import pl.cloudmigration.documents.DocumentCodec.Type;
 
-/**
- * Fill the supplied Word documents in place; parse uploaded answers without
- * loading untrusted packages into docx4j.
- */
 final class WordTemplates {
     static final String W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
     private final WordprocessingMLPackage pack;
@@ -400,85 +395,4 @@ final class WordTemplates {
             visibleNodes(child, text);
     }
 
-    static Document upload(byte[] bytes) {
-        if (bytes.length > 5 * 1024 * 1024)
-            throw new AppException(413, "UPLOAD_SIZE", "Plik przekracza 5 MB.");
-        try {
-            byte[] main = null;
-            boolean type = false;
-            long expanded = 0;
-            var paths = new HashSet<String>();
-            try (var zip = new ZipInputStream(
-                    new ByteArrayInputStream(bytes))) {
-                ZipEntry entry;
-                byte[] buffer = new byte[8192];
-                while ((entry = zip.getNextEntry()) != null) {
-                    String name = entry.getName(),
-                            lower = name.toLowerCase(Locale.ROOT);
-                    if (!paths.add(lower) || paths.size() > 1000
-                            || name.contains("..") || name.startsWith("/"))
-                        throw AppException.invalid(
-                                "Nieprawidłowa struktura archiwum DOCX.");
-                    if (lower.contains("vbaproject"))
-                        throw AppException.invalid("Makra nie są obsługiwane.");
-                    boolean isXml = lower.endsWith(".xml")
-                            || lower.endsWith(".rels");
-                    var out = new ByteArrayOutputStream();
-                    int n;
-                    while ((n = zip.read(buffer)) != -1) {
-                        expanded += n;
-                        if (expanded > 20L * 1024 * 1024)
-                            throw AppException.invalid(
-                                    "Zbyt duża zawartość rozpakowanego DOCX.");
-                        if (isXml)
-                            out.write(buffer, 0, n);
-                    }
-                    if (isXml) {
-                        var parsed = DocumentCodec.parse(out.toByteArray());
-                        if (name.equals("[Content_Types].xml")) {
-                            var all = parsed.getElementsByTagNameNS("*",
-                                    "Override");
-                            for (int i = 0; i < all.getLength(); i++) {
-                                var p = (Element) all.item(i);
-                                if ("/word/document.xml"
-                                        .equals(p.getAttribute("PartName"))
-                                        && "application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"
-                                                .equals(p.getAttribute(
-                                                        "ContentType")))
-                                    type = true;
-                            }
-                        }
-                        var relations = parsed.getElementsByTagNameNS("*",
-                                "Relationship");
-                        for (int i = 0; i < relations.getLength(); i++) {
-                            var relation = (Element) relations.item(i);
-                            if ("External".equalsIgnoreCase(
-                                    relation.getAttribute("TargetMode"))
-                                    || relation.getAttribute("Target").matches(
-                                            "(?i)^[a-z][a-z0-9+.-]*:.*"))
-                                throw AppException.invalid(
-                                        "Zewnętrzne odwołania w DOCX nie są obsługiwane.");
-                        }
-                    }
-                    if (name.equals("word/document.xml"))
-                        main = out.toByteArray();
-                }
-            }
-            if (main == null || !type)
-                throw AppException
-                        .invalid("Plik nie jest obsługiwanym dokumentem DOCX.");
-            var document = DocumentCodec.parse(main);
-            if (!W.equals(document.getDocumentElement().getNamespaceURI())
-                    || !"document".equals(
-                            document.getDocumentElement().getLocalName()))
-                throw AppException
-                        .invalid("Nieobsługiwany format dokumentu Word.");
-            return document;
-        } catch (AppException e) {
-            throw e;
-        } catch (Exception e) {
-            throw AppException.invalid(
-                    "Nie można odczytać pliku DOCX. Sprawdź, czy plik nie jest uszkodzony.");
-        }
-    }
 }

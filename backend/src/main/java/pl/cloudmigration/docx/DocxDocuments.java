@@ -255,7 +255,7 @@ public class DocxDocuments {
         } catch (Exception exception) {
             throw AppException.invalid("Wybierz konkurs przed importem.");
         }
-        var root = WordTemplates.upload(bytes).getDocumentElement();
+        var root = WordUpload.read(bytes).getDocumentElement();
         if (controls(root, "application_id").size() != 1
                 || controls(root, "project_id").size() != 1
                 || controls(root, "beneficiary").isEmpty())
