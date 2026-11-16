@@ -1,5 +1,6 @@
 <script lang="ts">
     import { onMount } from 'svelte';
+    import { reportLabels, formatReportCell } from '../lib/report-display';
     import { navigation, type View } from '../lib/navigation';
     import Editor from '../lib/components/Editor.svelte';
     import {
@@ -15,28 +16,6 @@
         type Preview,
     } from '../lib/api';
     import { newApplication, newEvaluation, type Data } from '../lib/forms';
-    const reportLabels: Record<string, string> = {
-        applications: 'Wnioski',
-        evaluations: 'Oceny',
-        averageScore: 'Średnia punktów',
-        awarded: 'Przyznane środki',
-        remaining: 'Pozostałe środki',
-        applicationId: 'Wniosek',
-        evaluationId: 'Ocena',
-        title: 'Projekt',
-        company: 'Firma',
-        outcome: 'Wynik',
-        amount: 'Kwota',
-        requestedAmount: 'Wnioskowana kwota',
-        budgetAllows: 'Budżet pozwala na dotację',
-        remainingAfter: 'Pozostały budżet',
-        qualified: 'Zakwalifikowany',
-        score: 'Punkty',
-        provider: 'Dostawca chmury',
-        projects: 'Projekty',
-        state: 'Status',
-        id: 'Identyfikator',
-    };
     let view = $state<View>('overview');
     let loading = $state(true);
     let busy = $state(false);
@@ -789,27 +768,10 @@
                                 ><tbody
                                     >{#each report.rows as row, index (index)}<tr
                                             >{#each Object.entries(row) as [key, value] (key)}<td
-                                                    >{[
-                                                        'awarded',
-                                                        'remaining',
-                                                        'remainingAfter',
-                                                        'amount',
-                                                        'requestedAmount',
-                                                    ].includes(key)
-                                                        ? money(String(value))
-                                                        : [
-                                                                'state',
-                                                                'outcome',
-                                                            ].includes(key)
-                                                          ? status(
-                                                                String(value),
-                                                            )
-                                                          : typeof value ===
-                                                              'boolean'
-                                                            ? value
-                                                                ? 'Tak'
-                                                                : 'Nie'
-                                                            : String(value)}</td
+                                                    >{formatReportCell(
+                                                        key,
+                                                        value,
+                                                    )}</td
                                                 >{/each}</tr
                                         >{/each}</tbody
                                 >
