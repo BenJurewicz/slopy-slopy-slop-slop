@@ -49,6 +49,14 @@ assert(
 )
 vim.api.nvim_exec_autocmds("BufReadPost", { buffer = generated })
 assert(vim.b[generated].autoformat == false)
+for _, protected in ipairs({
+    { "frontend/.env.editor-check", "sh" },
+    { "backend/src/main/resources/xquery/__editor_test__.xq", "xquery" },
+}) do
+    local buf = buffer(root .. "/" .. protected[1], protected[2], "unchanged")
+    vim.api.nvim_exec_autocmds("BufReadPost", { buffer = buf })
+    assert(vim.b[buf].autoformat == false)
+end
 local outside = buffer(
     "/tmp/cloudmigration-outside-editor-test.ts",
     "typescript",
