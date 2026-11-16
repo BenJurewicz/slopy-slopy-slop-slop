@@ -100,3 +100,42 @@ test('submission is blocked until visible application edits are saved or undone'
     await page.getByLabel('Tytuł projektu', { exact: true }).fill('Projekt 1');
     await expect(submit).toBeEnabled();
 });
+
+test('report pagination exposes results after row 500', async ({ page }) => {
+    const rows = Array.from({ length: 501 }, (_, index) => ({
+        title: `Report project ${index + 1}`,
+    }));
+    await page.route('**/api/queries/ranking/execute', async (route) => {
+        const { offset, limit } = route.request().postDataJSON();
+        await route.fulfill({
+            json: {
+                total: rows.length,
+                rows: rows.slice(offset, offset + limit),
+            },
+        });
+    });
+    await page.goto('/reports');
+    await page.getByLabel('Raport', { exact: true }).selectOption('ranking');
+    await page
+        .getByRole('button', { name: 'Pokaż wyniki', exact: true })
+        .click();
+    await expect(page.getByText('Strona 1 z 2', { exact: true })).toBeVisible();
+    await expect(page.locator('tbody tr')).toHaveCount(500);
+    await page.getByRole('button', { name: 'Następna', exact: true }).click();
+    await expect(
+        page.getByText('Report project 501', { exact: true }),
+    ).toBeVisible();
+    await expect(page.locator('tbody tr')).toHaveCount(1);
+    await expect(
+        page.getByRole('button', { name: 'Następna', exact: true }),
+    ).toBeDisabled();
+    await page.getByRole('button', { name: 'Poprzednia', exact: true }).click();
+    await expect(
+        page.getByText('Report project 1', { exact: true }),
+    ).toBeVisible();
+    await page.getByRole('button', { name: 'Następna', exact: true }).click();
+    await page
+        .getByRole('button', { name: 'Pokaż wyniki', exact: true })
+        .click();
+    await expect(page.getByText('Strona 1 z 2', { exact: true })).toBeVisible();
+});

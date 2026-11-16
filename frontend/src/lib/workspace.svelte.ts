@@ -39,6 +39,8 @@ export class Workspace {
     financialSummary = $state<Record<string, unknown>>({});
     selectedQueryId = $state('summary');
     reportThreshold = $state('0');
+    reportOffset = $state(0);
+    readonly reportPageSize = 500;
     report = $state<{
         total: number;
         rows: Record<string, unknown>[];
@@ -323,7 +325,7 @@ export class Workspace {
         this.fundingPreview = null;
     };
 
-    runReport = async () => {
+    runReport = async (offset = 0) => {
         this.busy = true;
         this.error = '';
         try {
@@ -332,9 +334,10 @@ export class Workspace {
                     this.selectedQueryId === 'over-budget'
                         ? this.reportThreshold
                         : '0',
-                offset: 0,
-                limit: 500,
+                offset,
+                limit: this.reportPageSize,
             });
+            this.reportOffset = offset;
         } catch (cause) {
             this.error = (cause as Error).message;
         } finally {

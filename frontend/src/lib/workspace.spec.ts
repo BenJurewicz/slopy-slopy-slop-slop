@@ -94,3 +94,29 @@ describe('workspace transitions', () => {
         expect(workspace.busy).toBe(false);
     });
 });
+
+describe('report pagination', () => {
+    it('requests later pages and restarts at the first page on a new run', async () => {
+        const workspace = new Workspace();
+        const execute = vi
+            .spyOn(api, 'executeQuery')
+            .mockResolvedValue({
+                total: 501,
+                rows: [{ title: 'Last project' }],
+            });
+        await workspace.runReport(500);
+        expect(execute).toHaveBeenLastCalledWith('summary', {
+            threshold: '0',
+            offset: 500,
+            limit: 500,
+        });
+        expect(workspace.reportOffset).toBe(500);
+        await workspace.runReport();
+        expect(execute).toHaveBeenLastCalledWith('summary', {
+            threshold: '0',
+            offset: 0,
+            limit: 500,
+        });
+        expect(workspace.reportOffset).toBe(0);
+    });
+});

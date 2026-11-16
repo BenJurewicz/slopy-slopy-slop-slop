@@ -39,7 +39,7 @@
         <button
             class="primary"
             disabled={workspace.busy || !workspace.competition}
-            onclick={workspace.runReport}
+            onclick={() => workspace.runReport()}
         >
             Pokaż wyniki
         </button>
@@ -78,6 +78,39 @@
                         {/each}
                     </tbody>
                 </table>
+            </div>
+        {/if}
+        {#if workspace.report.total > workspace.reportPageSize}
+            <div class="pagination">
+                <button
+                    class="quiet"
+                    disabled={workspace.busy || workspace.reportOffset === 0}
+                    onclick={() =>
+                        workspace.runReport(
+                            workspace.reportOffset - workspace.reportPageSize,
+                        )}
+                >
+                    Poprzednia
+                </button>
+                <span>
+                    Strona {Math.floor(
+                        workspace.reportOffset / workspace.reportPageSize,
+                    ) + 1} z {Math.ceil(
+                        workspace.report.total / workspace.reportPageSize,
+                    )}
+                </span>
+                <button
+                    class="quiet"
+                    disabled={workspace.busy ||
+                        workspace.reportOffset + workspace.reportPageSize >=
+                            workspace.report.total}
+                    onclick={() =>
+                        workspace.runReport(
+                            workspace.reportOffset + workspace.reportPageSize,
+                        )}
+                >
+                    Następna
+                </button>
             </div>
         {/if}
     </section>
