@@ -51,22 +51,33 @@ aktualizującym XQuery. Błąd dowolnej decyzji wycofuje całą transakcję.
 
 **Przegląd: Wczytaj przykład** działa, gdy nie ma wniosków, ocen ani decyzji.
 Korzysta z istniejących ustawień, bez tworzenia kolejnego konkursu. Wymaga
-otwartego naboru, limitu dotacji co najmniej 140 000 PLN, sumy kryteriów 100
-punktów i progu 60. Tworzy siedem wniosków i sześć ocen końcowych.
-Przy domyślnym budżecie 250 000 PLN oczekiwane finansowanie:
+otwartego naboru, limitu dotacji co najmniej 60 000 PLN, sumy kryteriów 100
+punktów i progu 60. Tworzy 20 prostych projektów testowych:
 
-| Projekt | Punkty | Wniosek PLN | Wynik |
-|---|---:|---:|---|
-| Migracja księgowości | 90 | 140 000 | Dotacja |
-| E-commerce bezserwerowy | 85 | 130 000 | Brak środków; pominięty |
-| Backup małej firmy | 85 | 50 000 | Dotacja |
-| Chmurowy system magazynowy | 84 | 65 000 | Brak środków |
-| Duże przedsiębiorstwo | 80 | 20 000 | Niekwalifikowalne |
-| Projekt poniżej progu | 55 | 30 000 | Poniżej progu |
-| Wniosek oczekujący na ocenę | — | 45 000 | Nie uczestniczy w rankingu |
+- 19 złożonych wniosków: 17 z oceną końcową, jeden z oceną do zatwierdzenia
+  i jeden bez oceny.
+- 1 szkic wniosku do edycji i złożenia.
+- Przy domyślnym budżecie 250 000 PLN: 13 pełnych dotacji i 4 odmowy.
 
-Po wydaniu decyzji: przyznane **190 000 PLN**, pozostałe **60 000 PLN**.
-Remis rozstrzyga wcześniejsze złożenie, a przy identycznym czasie ID.
+| Projekty testowe | Wynik przy domyślnym budżecie |
+|---|---|
+| 01-10, 12, 13, 15 | Dotacja |
+| 11, 14 | Brak środków; kolejne mniejsze projekty otrzymują dotację |
+| 16 | Poniżej progu punktowego |
+| 17 | Niekwalifikowalna firma |
+| 18 | Wypełniony szkic oceny, gotowy do zatwierdzenia |
+| 19 | Złożony, bez oceny |
+| 20 | Szkic wniosku |
+
+Projekt 18 wymaga tylko **Zatwierdź ocenę** w widoku **Oceny**.
+Projekt 19 pozostaje bez oceny i można go ocenić przyciskiem **Oceń**.
+**Zobacz wypełniony przykład** pobiera osobny projekt **Bezpieczna księgowość w chmurze**:
+zaimportuj DOCX, zapisz szkic, złóż wniosek i oceń. Nie jest on częścią 20 projektów
+ładowanych automatycznie.
+
+Projekty 02 i 03 mają po 96 punktów, aby sprawdzić rozstrzyganie remisów.
+Loader nie tworzy decyzji. Po ich przygotowaniu i wydaniu przyznane jest
+**245 000 PLN**, a pozostałe środki to **5 000 PLN**.
 
 ## Błędy do pokazania
 

@@ -2,7 +2,7 @@
 
 ## Wyniki
 
-- Backend: **46 testów jednostkowych/HTTP** i **13 testów integracyjnych z BaseX**, bez błędów.
+- Backend: **46 testów jednostkowych/HTTP** i **15 testów integracyjnych z BaseX**, bez błędów.
 - Frontend: **9 testów**, sprawdzanie Svelte/TypeScript bez błędów i ostrzeżeń.
 - Przeglądarka: **9 testów** na pakiecie JAR, bez błędów.
 - `pnpm peers check`: brak konfliktów; TypeScript 6.0.3, Hey API 0.99.0.
