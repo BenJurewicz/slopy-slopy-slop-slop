@@ -7,6 +7,8 @@
         editor,
     }: { workspace: Workspace; editor: NonNullable<Workspace['editor']> } =
         $props();
+
+    let dirty = $state(false);
 </script>
 
 {#if workspace.selectedApplication}
@@ -30,7 +32,7 @@
             {#if workspace.selectedApplication.state === 'DRAFT'}
                 <button
                     class="primary"
-                    disabled={workspace.busy}
+                    disabled={workspace.busy || dirty}
                     onclick={() =>
                         workspace.submitApplication(
                             workspace.selectedApplication!,
@@ -51,6 +53,9 @@
             {/if}
         </div>
     </div>
+    {#if workspace.selectedApplication.state === 'DRAFT' && dirty}
+        <p class="notice">Zapisz szkic przed złożeniem wniosku.</p>
+    {/if}
 {/if}
 {#if editor.kind === 'evaluation' && workspace.competition}
     <p class="notice">
@@ -83,6 +88,7 @@
 {/if}
 {#key `${editor.kind}-${editor.value.id ?? 'new'}`}
     <Editor
+        bind:dirty
         kind={editor.kind}
         value={editor.value}
         save={workspace.saveDocument}

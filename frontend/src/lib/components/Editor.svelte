@@ -18,6 +18,7 @@
         close,
         busy = false,
         settingsLocked = false,
+        dirty = $bindable(false),
     }: {
         kind: Kind;
         value: Data;
@@ -25,6 +26,7 @@
         close: () => void;
         busy?: boolean;
         settingsLocked?: boolean;
+        dirty?: boolean;
     } = $props();
 
     // Live score totals need a deep draft that tracks nested mutations.
@@ -41,6 +43,10 @@
     $effect(() => {
         if (kind !== 'evaluation' || !draft.scores) return;
         draft.total = totalScore(draft.scores);
+    });
+
+    $effect(() => {
+        dirty = JSON.stringify(draft) !== JSON.stringify(value);
     });
 
     function totalScore(scores: unknown): number {

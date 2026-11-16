@@ -11,9 +11,7 @@ function draftRow(index: number) {
     };
 }
 
-test('a rejected submission preserves the editor and unsaved edits', async ({
-    page,
-}) => {
+test('a rejected submission preserves the editor', async ({ page }) => {
     await page.route('**/api/applications', (route) =>
         route.fulfill({ json: [draftRow(1)] }),
     );
@@ -26,9 +24,6 @@ test('a rejected submission preserves the editor and unsaved edits', async ({
     page.on('dialog', (dialog) => dialog.accept());
     await page.goto('/applications');
     await page.getByRole('button', { name: 'Otwórz', exact: true }).click();
-    await page
-        .getByLabel('Tytuł projektu', { exact: true })
-        .fill('Unsaved changes');
 
     await page
         .getByRole('button', { name: 'Złóż wniosek', exact: true })
@@ -37,7 +32,7 @@ test('a rejected submission preserves the editor and unsaved edits', async ({
     await expect(page.getByRole('alert')).toContainText('Submission rejected');
     await expect(
         page.getByLabel('Tytuł projektu', { exact: true }),
-    ).toHaveValue('Unsaved changes');
+    ).toHaveValue('Projekt 1');
 });
 
 test('deleting the last row returns to the previous available page', async ({
@@ -69,4 +64,39 @@ test('deleting the last row returns to the previous available page', async ({
     await expect(
         page.getByRole('button', { name: 'Poprzednia', exact: true }),
     ).toBeDisabled();
+});
+
+test('submission is blocked until visible application edits are saved or undone', async ({
+    page,
+}) => {
+    let submissions = 0;
+    await page.route('**/api/applications', (route) =>
+        route.fulfill({ json: [draftRow(1)] }),
+    );
+    await page.route('**/api/applications/application-1/submit', (route) => {
+        submissions++;
+        return route.fulfill({
+            status: 409,
+            json: { message: 'Unexpected submission' },
+        });
+    });
+    await page.goto('/applications');
+    await page.getByRole('button', { name: 'Otwórz', exact: true }).click();
+    const submit = page.getByRole('button', {
+        name: 'Złóż wniosek',
+        exact: true,
+    });
+    await expect(submit).toBeEnabled();
+    await page
+        .getByLabel('Tytuł projektu', { exact: true })
+        .fill('Unsaved changes');
+    await expect(submit).toBeDisabled();
+    await expect(
+        page.getByText('Zapisz szkic przed złożeniem wniosku.', {
+            exact: true,
+        }),
+    ).toBeVisible();
+    expect(submissions).toBe(0);
+    await page.getByLabel('Tytuł projektu', { exact: true }).fill('Projekt 1');
+    await expect(submit).toBeEnabled();
 });
