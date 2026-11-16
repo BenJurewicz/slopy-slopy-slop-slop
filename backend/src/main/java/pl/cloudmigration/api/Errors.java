@@ -18,9 +18,7 @@ public class Errors {
     ResponseEntity<Error> missing(){return ResponseEntity.status(404).body(new Error("NOT_FOUND","Zasób nie istnieje.",List.of()));}
     @ExceptionHandler(org.springframework.web.bind.MissingServletRequestParameterException.class)
     ResponseEntity<Error> missingRequestParameter(org.springframework.web.bind.MissingServletRequestParameterException e){
-        String message="competitionId".equals(e.getParameterName())
-            ? "Nie przesłano wybranego konkursu. Odśwież całą stronę w przeglądarce, wybierz konkurs i ponownie zaimportuj plik DOCX."
-            : "Brak wymaganego parametru. Odśwież stronę i spróbuj ponownie.";
+        String message="Brak wymaganego parametru. Odśwież stronę i spróbuj ponownie.";
         return ResponseEntity.badRequest().body(new Error("REQUEST",message,List.of()));
     }
     @ExceptionHandler(org.springframework.web.bind.ServletRequestBindingException.class)

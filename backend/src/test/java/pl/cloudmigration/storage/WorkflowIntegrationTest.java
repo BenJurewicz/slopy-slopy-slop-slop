@@ -34,6 +34,57 @@ class WorkflowIntegrationTest {
         var e=(Evaluation)workflow.create(Type.evaluation,Records.with(Examples.evaluation(),Map.of("applicationId",a.id())));
         return workflow.finalizeEvaluation(e.id(),e.revision());
     }
+    @Test void singletonSettingsPreserveIdentityAndRejectOtherCompetitions(){
+        var c=workflow.competition();assertEquals("CloudMigration",c.name());assertEquals(c,workflow.competition());
+        assertThrows(AppException.class,()->workflow.create(Type.competition,Examples.competition()));
+        var other=Records.with(c,Map.of("id",UUID.randomUUID().toString()));
+        assertThrows(AppException.class,()->workflow.repository.save(Type.competition,Records.id(other),0,other));
+        assertThrows(AppException.class,()->workflow.repository.delete(Type.competition,c.id(),c.revision()));
+        var updated=(Competition)workflow.update(Type.competition,c.id(),Records.with(c,Map.of("budget","300000.00")));
+        assertEquals(c.id(),updated.id());assertEquals("300000.00",workflow.competition().budget());
+        assertThrows(AppException.class,()->workflow.update(Type.competition,c.id(),Records.with(updated,Map.of("name","Inny konkurs"))));
+        var a=(Application)workflow.create(Type.application,Records.with(Examples.application(),java.util.Collections.singletonMap("competitionId",null)));
+        assertEquals(c.id(),a.competitionId());
+        assertThrows(AppException.class,()->workflow.create(Type.application,Records.with(Examples.application(),Map.of("competitionId",UUID.randomUUID().toString()))));
+        assertThrows(AppException.class,()->workflow.update(Type.competition,c.id(),Records.with(updated,Map.of("budget","350000.00"))));
+        var closed=(Competition)workflow.update(Type.competition,c.id(),Records.with(updated,Map.of("stage","CLOSED")));
+        assertEquals("CLOSED",closed.stage());assertEquals(a,workflow.repository.get(Type.application,a.id()));
+    }
+    @Test void demoReusesExistingSettingsAndRejectsIncompatibleLimitsBeforeCreatingDocuments(){
+        var c=workflow.competition();
+        var limited=(Competition)workflow.update(Type.competition,c.id(),Records.with(c,Map.of("maxGrant","100000.00")));
+        assertEquals(409,assertThrows(AppException.class,()->demo.load()).status);
+        assertTrue(workflow.repository.list(Type.application).isEmpty());
+        var restored=(Competition)workflow.update(Type.competition,c.id(),Records.with(limited,Map.of("maxGrant","150000.00")));
+        assertEquals(c.id(),demo.load().competitionId());assertEquals(restored,workflow.competition());
+        assertEquals(1,workflow.repository.list(Type.competition).size());
+        assertEquals(7,workflow.repository.list(Type.application).size());
+        assertThrows(AppException.class,()->demo.load());
+    }
+    @Test void legacyMultipleCompetitionsAreRejectedWithoutDeletingData(){
+        var c=competition();var second=Records.with(c,Map.of("id",UUID.randomUUID().toString()));
+        var xml=new DocumentCodec().encode(Type.competition,second);
+        client.execute("declare variable $db external; db:put($db,/*,concat('competitions/',string(/*/@id),'.xml'))",Map.of("xml",xml));
+        assertEquals(409,assertThrows(AppException.class,()->workflow.competition()).status);
+        assertEquals(2,workflow.repository.list(Type.competition).size());
+        assertEquals(c,workflow.repository.get(Type.competition,c.id()));
+    }
+    @Test void concurrentInitializationCreatesExactlyOneConfiguration() throws Exception {
+        try(var executor=java.util.concurrent.Executors.newFixedThreadPool(4)){
+            var results=executor.invokeAll(java.util.Collections.nCopies(4,(java.util.concurrent.Callable<Competition>)workflow::competition));
+            String id=results.getFirst().get().id();
+            for(var result:results)assertEquals(id,result.get().id());
+            assertEquals(1,workflow.repository.list(Type.competition).size());
+        }
+    }
+
+    @Test void existingCompetitionIdentityAndLinkedDocumentsArePreserved(){
+        var legacy=Records.with(Examples.competition(),Map.of("id",UUID.randomUUID().toString()));
+        workflow.repository.save(Type.competition,Records.id(legacy),0,legacy);
+        var a=application(legacy);assertEquals(legacy,workflow.competition());assertEquals(legacy.id(),a.competitionId());
+        assertEquals(1,workflow.repository.list(Type.competition).size());
+    }
+
     @Test void realCrudAndStaleRevision(){
         var c=competition();var a=application(c);assertEquals(a,workflow.repository.get(Type.application,a.id()));
         Application edited=Records.with(a,Map.of("title","Zmieniony tytuł"));
@@ -49,20 +100,20 @@ class WorkflowIntegrationTest {
         assertThrows(AppException.class,()->funding.issue(List.of(new Funding.IssueEntry(d.id(),999))));
         assertEquals("DRAFT",workflow.repository.get(Type.decision,d.id(),Decision.class).state());
         var issued=funding.issue(List.of(new Funding.IssueEntry(d.id(),d.revision())));assertEquals("ISSUED",issued.getFirst().state());
-        var summary=reports.run("summary",new Reports.Parameters(c.id(),"0",0,100));assertEquals("50000",summary.rows().getFirst().get("awarded"));
+        var summary=reports.run("summary",new Reports.Parameters("0",0,100));assertEquals("50000",summary.rows().getFirst().get("awarded"));
     }
     @Test void crossDocumentReportsAndAllocationDataset(){
-        var result=demo.load();var preview=funding.preview(result.competitionId());
+        var result=demo.load();var preview=funding.preview();
         assertEquals(6,preview.rows().size());assertEquals(2,preview.rows().stream().filter(r->r.outcome().equals("AWARD")).count());
-        assertEquals(1,reports.run("missing-evaluations",new Reports.Parameters(result.competitionId(),"0",0,100)).total());
-        assertEquals(6,reports.run("ranking",new Reports.Parameters(result.competitionId(),"0",0,100)).total());
-        assertEquals(4,reports.run("qualified",new Reports.Parameters(result.competitionId(),"0",0,100)).total());
-        assertEquals(3,reports.run("over-budget",new Reports.Parameters(result.competitionId(),"50000",0,100)).total());
-        var page=reports.run("applications",new Reports.Parameters(result.competitionId(),"0",2,2));assertEquals(7,page.total());assertEquals(2,page.rows().size());
-        assertEquals(7,((Number)reports.run("providers",new Reports.Parameters(result.competitionId(),"0",0,100)).rows().getFirst().get("projects")).intValue());
-        var drafts=funding.prepare(result.competitionId());assertEquals(6,drafts.size());
+        assertEquals(1,reports.run("missing-evaluations",new Reports.Parameters("0",0,100)).total());
+        assertEquals(6,reports.run("ranking",new Reports.Parameters("0",0,100)).total());
+        assertEquals(4,reports.run("qualified",new Reports.Parameters("0",0,100)).total());
+        assertEquals(3,reports.run("over-budget",new Reports.Parameters("50000",0,100)).total());
+        var page=reports.run("applications",new Reports.Parameters("0",2,2));assertEquals(7,page.total());assertEquals(2,page.rows().size());
+        assertEquals(7,((Number)reports.run("providers",new Reports.Parameters("0",0,100)).rows().getFirst().get("projects")).intValue());
+        var drafts=funding.prepare();assertEquals(6,drafts.size());
         funding.issue(drafts.stream().map(d->new Funding.IssueEntry(d.id(),d.revision())).toList());
-        assertEquals("190000",reports.run("summary",new Reports.Parameters(result.competitionId(),"0",0,100)).rows().getFirst().get("awarded"));
+        assertEquals("190000",reports.run("summary",new Reports.Parameters("0",0,100)).rows().getFirst().get("awarded"));
     }
     @Test void rejectsAnEntireOverBudgetBatchAndPreservesDrafts(){
         var c=(Competition)workflow.create(Type.competition,Records.with(Examples.competition(),Map.of("budget","60000.00","maxGrant","50000.00")));
@@ -79,9 +130,9 @@ class WorkflowIntegrationTest {
     }
     @Test void staleEntryRollsBackMultiDecisionBatchAndAllocationAgreesWithXQuery(){
         var demoResult=demo.load();var c=demoResult.competitionId();
-        var preview=funding.preview(c);var allocation=reports.run("allocation",new Reports.Parameters(c,"0",0,100));
+        var preview=funding.preview();var allocation=reports.run("allocation",new Reports.Parameters("0",0,100));
         assertEquals(preview.rows().stream().map(Funding.Allocation::outcome).toList(),allocation.rows().stream().map(row->row.get("outcome")).toList());
-        var drafts=funding.prepare(c);var entries=new ArrayList<Funding.IssueEntry>();
+        var drafts=funding.prepare();var entries=new ArrayList<Funding.IssueEntry>();
         for(var d:drafts)entries.add(new Funding.IssueEntry(d.id(),d.revision()));
         entries.set(entries.size()-1,new Funding.IssueEntry(drafts.getLast().id(),999));
         assertThrows(AppException.class,()->funding.issue(entries));
@@ -102,12 +153,12 @@ class WorkflowIntegrationTest {
         String adjust="declare variable $db external; declare variable $id external; declare variable $date external; replace value of node db:get($db)/*:application[@id=$id]/*:submittedAt with $date";
         client.execute(adjust,Map.of("id",a.id(),"date","2026-10-12T00:00:00Z"));
         client.execute(adjust,Map.of("id",b.id(),"date","2026-10-12T00:00:00.1Z"));
-        assertEquals(a.id(),funding.preview(c.id()).rows().getFirst().applicationId());
-        assertEquals(a.id(),reports.run("ranking",new Reports.Parameters(c.id(),"0",0,100)).rows().getFirst().get("applicationId"));
+        assertEquals(a.id(),funding.preview().rows().getFirst().applicationId());
+        assertEquals(a.id(),reports.run("ranking",new Reports.Parameters("0",0,100)).rows().getFirst().get("applicationId"));
         client.execute(adjust,Map.of("id",a.id(),"date","2026-10-12T00:00:00.100Z"));
         String expected=a.id().compareTo(b.id())<0?a.id():b.id();
-        assertEquals(expected,funding.preview(c.id()).rows().getFirst().applicationId());
-        assertEquals(expected,reports.run("ranking",new Reports.Parameters(c.id(),"0",0,100)).rows().getFirst().get("applicationId"));
+        assertEquals(expected,funding.preview().rows().getFirst().applicationId());
+        assertEquals(expected,reports.run("ranking",new Reports.Parameters("0",0,100)).rows().getFirst().get("applicationId"));
     }
 
     @Test void readableExportsResolveActualLinkedDocumentsFromBaseX() throws Exception {

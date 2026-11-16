@@ -28,10 +28,10 @@ public class ReportsApi {
     @PostMapping("/queries/{id}/execute") public Reports.Result execute(@PathVariable String id,@RequestBody Reports.Parameters parameters){return reports.run(id,parameters);}
     @Operation(operationId="previewFunding")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode="200",description="Operacja wykonana",useReturnTypeSchema=true)
-    @GetMapping("/funding/{competitionId}") public Funding.Preview preview(@PathVariable String competitionId){return funding.preview(competitionId);}
+    @GetMapping("/funding") public Funding.Preview preview(){return funding.preview();}
     @Operation(operationId="prepareDecisions")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode="200",description="Operacja wykonana",useReturnTypeSchema=true)
-    @PostMapping("/funding/{competitionId}/prepare") public List<Decision> prepare(@PathVariable String competitionId){return funding.prepare(competitionId);}
+    @PostMapping("/funding/prepare") public List<Decision> prepare(){return funding.prepare();}
     @Operation(operationId="issueDecisions")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode="200",description="Operacja wykonana",useReturnTypeSchema=true)
     @PostMapping("/funding/issue") public List<Decision> issue(@RequestBody List<Funding.IssueEntry> entries){return funding.issue(entries);}

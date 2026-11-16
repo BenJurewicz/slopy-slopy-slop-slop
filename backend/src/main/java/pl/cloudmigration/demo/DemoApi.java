@@ -26,11 +26,15 @@ public class DemoApi {
     @Operation(operationId="loadDemo")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode="200",description="Operacja wykonana",useReturnTypeSchema=true)
     @PostMapping("/load") public DemoResult load(){
-        if(!workflow.repository.list(Type.competition).isEmpty())throw AppException.conflict("Dane demonstracyjne można wczytać tylko do pustej bazy.");
-        var c=(Competition)workflow.create(Type.competition,Examples.competition());
+        if(!workflow.repository.list(Type.application).isEmpty()||!workflow.repository.list(Type.evaluation).isEmpty()||!workflow.repository.list(Type.decision).isEmpty())throw AppException.conflict("Dane demonstracyjne można wczytać tylko, gdy nie ma wniosków, ocen ani decyzji.");
+        var c=workflow.competition();
+        if(!"OPEN".equals(c.stage()))throw AppException.conflict("Wczytanie przykładu wymaga otwartego naboru.");
+        if(pl.cloudmigration.workflow.Rules.money(c.maxGrant()).compareTo(new java.math.BigDecimal("140000.00"))<0)throw AppException.conflict("Przykład wymaga limitu dotacji co najmniej 140000 PLN.");
         String[] amounts={"140000.00","130000.00","50000.00","65000.00","30000.00","20000.00","45000.00"};
         String[] names={"Migracja księgowości","E-commerce bezserwerowy","Backup małej firmy","Chmurowy system magazynowy","Projekt poniżej progu","Duże przedsiębiorstwo","Wniosek oczekujący na ocenę"};
+        int maximum=c.criteria().stream().mapToInt(Criterion::maximum).sum();
         int[] scores={90,85,85,84,55,80,0};
+        if(maximum!=100||c.threshold()!=60)throw AppException.conflict("Przykład wymaga kryteriów o sumie 100 punktów i progu 60.");
         for(int i=0;i<amounts.length;i++){
             var changes=new HashMap<String,Object>();changes.put("competitionId",c.id());changes.put("title",names[i]);changes.put("requestedAmount",amounts[i]);changes.put("projectNumber",null);
             changes.put("company",new Company("Firma "+(i+1),"123456789"+i,i==5?"OTHER":"MICRO","Anna Kowalska","firma"+i+"@example.org","ul. Demonstracyjna "+(i+1)+", 80-001 Gdańsk",String.format("%09d",100000000+i),"Anna Kowalska – właścicielka"));

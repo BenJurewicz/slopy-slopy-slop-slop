@@ -28,22 +28,22 @@ public class DocumentsApi {
     public DocumentsApi(DocumentCodec codec,DocxDocuments docx,DocumentRepository repo,Workflow workflow){this.codec=codec;this.docx=docx;this.repo=repo;this.workflow=workflow;}
     @Operation(operationId="downloadTemplate")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode="200",description="Plik do pobrania",content=@io.swagger.v3.oas.annotations.media.Content(mediaType="application/vnd.openxmlformats-officedocument.wordprocessingml.document",schema=@io.swagger.v3.oas.annotations.media.Schema(type="string",format="binary")))
-    @GetMapping("/template") public ResponseEntity<byte[]> template(@RequestParam(required=false) String competitionId){
-        var competition=competitionId==null||competitionId.isBlank()?null:repo.get(Type.competition,competitionId,Competition.class);
+    @GetMapping("/template") public ResponseEntity<byte[]> template(){
+        var competition=workflow.competition();
         return download(docx.template(competition),"wniosek-formularz.docx",false);
     }
     @Operation(operationId="downloadApplicationExample")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode="200",description="Wypełniony przykład, nie pusty formularz",content=@io.swagger.v3.oas.annotations.media.Content(mediaType="application/vnd.openxmlformats-officedocument.wordprocessingml.document",schema=@io.swagger.v3.oas.annotations.media.Schema(type="string",format="binary")))
-    @GetMapping("/example") public ResponseEntity<byte[]> example(@RequestParam(required=false) String competitionId){
-        var competition=competitionId==null||competitionId.isBlank()?null:repo.get(Type.competition,competitionId,Competition.class);
+    @GetMapping("/example") public ResponseEntity<byte[]> example(){
+        var competition=workflow.competition();
         return download(docx.example(competition),"wniosek-przyklad.docx",false);
     }
     @PostMapping(value="/import",consumes=MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(operationId="importApplication")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode="200",description="Operacja wykonana",useReturnTypeSchema=true)
-    public ImportPreview preview(@RequestPart("file") MultipartFile file,@RequestParam String competitionId) throws java.io.IOException{
-        var competition=repo.get(Type.competition,competitionId,Competition.class);
-        var application=docx.importApplication(file.getBytes(),competition.id());workflow.validate(Type.application,application);return new ImportPreview(application,List.of("Dokument odczytany i zweryfikowany. Konkurs: "+competition.name()+". Zapisz podgląd jako nowy szkic."));
+    public ImportPreview preview(@RequestPart("file") MultipartFile file) throws java.io.IOException{
+        var competition=workflow.competition();
+        var application=docx.importApplication(file.getBytes(),competition.id());workflow.validate(Type.application,application);return new ImportPreview(application,List.of("Dokument odczytany. Zapisz podgląd jako nowy szkic CloudMigration."));
     }
     @Operation(operationId="downloadXml")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode="200",description="Plik do pobrania",content=@io.swagger.v3.oas.annotations.media.Content(mediaType="application/xml",schema=@io.swagger.v3.oas.annotations.media.Schema(type="string",format="binary")))

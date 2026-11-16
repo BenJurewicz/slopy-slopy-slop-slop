@@ -13,14 +13,14 @@ import pl.cloudmigration.api.AppException;
 public class Funding {
     public record Allocation(String applicationId,String evaluationId,String title,int score,boolean eligible,boolean qualified,
         String requestedAmount,String outcome,String reason,String existingDecisionId,boolean budgetAllows) {}
-    public record Preview(String competitionId,String available,List<Allocation> rows) {}
+    public record Preview(String available,List<Allocation> rows) {}
     public record IssueEntry(String id,int revision) {}
     private final DocumentRepository repo;
     private final BaseXClient client;
     private final Workflow workflow;
     public Funding(DocumentRepository repo,BaseXClient client,Workflow workflow){this.repo=repo;this.client=client;this.workflow=workflow;}
-    public Preview preview(String competitionId) {
-        var c=repo.get(Type.competition,competitionId,Competition.class);
+    public Preview preview() {
+        var c=workflow.competition();var competitionId=c.id();
         var applications=repo.list(Type.application).stream().map(Application.class::cast).filter(a->a.competitionId().equals(competitionId)).toList();
         var appById=new HashMap<String,Application>();applications.forEach(a->appById.put(a.id(),a));
         var evaluations=repo.list(Type.evaluation).stream().map(Evaluation.class::cast).filter(e->"FINAL".equals(e.state())&&appById.containsKey(e.applicationId())).sorted(
@@ -38,10 +38,10 @@ public class Funding {
             if(award)remaining=remaining.subtract(Rules.money(a.requestedAmount()));
             rows.add(new Allocation(a.id(),e.id(),a.title(),e.total(),e.eligible(),qualified,a.requestedAmount(),award?"AWARD":"REJECT",reason,existing==null?null:existing.id(),budgetAllows));
         }
-        return new Preview(competitionId,initial.toPlainString(),List.copyOf(rows));
+        return new Preview(initial.toPlainString(),List.copyOf(rows));
     }
-    public List<Decision> prepare(String competitionId){
-        var rows=preview(competitionId).rows();var results=new ArrayList<Decision>();
+    public List<Decision> prepare(){
+        var rows=preview().rows();var results=new ArrayList<Decision>();
         for(var row:rows) {
             if(row.existingDecisionId()!=null){results.add(repo.get(Type.decision,row.existingDecisionId(),Decision.class));continue;}
             results.add((Decision)workflow.create(Type.decision,new Decision(null,0,row.applicationId(),row.evaluationId(),"DRAFT",java.time.LocalDate.now().toString(),row.outcome(),"AWARD".equals(row.outcome())?row.requestedAmount():"0.00", "PLN",row.reason(),null,row.budgetAllows())));
