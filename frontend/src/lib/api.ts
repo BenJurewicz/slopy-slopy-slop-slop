@@ -26,7 +26,7 @@ async function unwrap<T>(pending: Promise<{ data?: T; error?: unknown; response?
 const complete = <T>(value: T) => value as Complete<T>;
 
 export const api = {
-	listCompetitions: async () => complete(await unwrap(sdk.listCompetitions())),
+	getCompetition: async () => complete(await unwrap(sdk.getCompetition())),
 	listApplications: async () => complete(await unwrap(sdk.listApplications())),
 	listEvaluations: async () => complete(await unwrap(sdk.listEvaluations())),
 	listDecisions: async () => complete(await unwrap(sdk.listDecisions())),
@@ -34,26 +34,25 @@ export const api = {
 	loadDemo: () => unwrap(sdk.loadDemo()),
 	submitApplication: (id: string, revision: number) => unwrap(sdk.submit({ path: { id }, body: { revision } })),
 	finalizeEvaluation: (id: string, revision: number) => unwrap(sdk.finalizeDocument({ path: { id }, body: { revision } })),
-	importApplication: async (file: File, competitionId: string) => complete(await unwrap(sdk.importApplication({ query: { competitionId }, body: { file } }))),
+	importApplication: async (file: File) => complete(await unwrap(sdk.importApplication({ body: { file } }))),
 	calculateBudget: (body: Models.CalculateBudgetData['body'], requestedAmount?: string) => unwrap(sdk.calculateBudget({ body, query: { requestedAmount } })),
-	previewFunding: async (competitionId: string) => complete(await unwrap(sdk.previewFunding({ path: { competitionId } }))),
-	prepareDecisions: (competitionId: string) => unwrap(sdk.prepareDecisions({ path: { competitionId } })),
+	previewFunding: async () => complete(await unwrap(sdk.previewFunding())),
+	prepareDecisions: () => unwrap(sdk.prepareDecisions()),
 	issueDecisions: (body: Models.IssueDecisionsData['body']) => unwrap(sdk.issueDecisions({ body })),
 	executeQuery: async (id: string, body: Models.ExecuteQueryData['body']) => complete(await unwrap(sdk.executeQuery({ path: { id }, body }))),
 	async saveDocument(kind: Kind, value: Record<string, unknown>) {
 		// The schema-driven editor is dynamic; this is its sole transport boundary.
 		const id = typeof value.id === 'string' ? value.id : undefined;
 		switch (kind) {
-			case 'competition': return unwrap(id ? sdk.updateCompetition({ path: { id }, body: value as Models.Competition }) : sdk.createCompetition({ body: value as Models.Competition }));
+			case 'competition': return unwrap(sdk.updateCompetition({ body: value as Models.Competition }));
 			case 'application': return unwrap(id ? sdk.updateApplication({ path: { id }, body: value as Models.Application }) : sdk.createApplication({ body: value as Models.Application }));
 			case 'evaluation': return unwrap(id ? sdk.updateEvaluation({ path: { id }, body: value as Models.Evaluation }) : sdk.createEvaluation({ body: value as Models.Evaluation }));
 			case 'decision': return unwrap(id ? sdk.updateDecision({ path: { id }, body: value as Models.Decision }) : sdk.createDecision({ body: value as Models.Decision }));
 		}
 	},
-	removeDocument(kind: Kind, id: string, revision: number) {
+	removeDocument(kind: Exclude<Kind, 'competition'>, id: string, revision: number) {
 		const options = { path: { id }, query: { revision } };
 		switch (kind) {
-			case 'competition': return unwrap(sdk.deleteCompetition(options));
 			case 'application': return unwrap(sdk.deleteApplication(options));
 			case 'evaluation': return unwrap(sdk.deleteEvaluation(options));
 			case 'decision': return unwrap(sdk.deleteDecision(options));

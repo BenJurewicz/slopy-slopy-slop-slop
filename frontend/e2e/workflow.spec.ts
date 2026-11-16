@@ -1,10 +1,26 @@
 import { test, expect } from '@playwright/test';
 import { writeFile } from 'node:fs/promises';
 
+test('CloudMigration is initialized automatically and its initial settings are editable',async({page,request})=>{
+    const first=await(await request.get('/api/competition')).json();
+    expect(first.name).toBe('CloudMigration');
+    expect((await(await request.get('/api/competition')).json()).id).toBe(first.id);
+    await page.goto('/settings');
+    await expect(page.getByLabel('Budżet konkursu (PLN)',{exact:true})).toBeEnabled();
+    await page.getByLabel('Budżet konkursu (PLN)',{exact:true}).fill('260000.00');
+    await page.getByRole('button',{name:'Zapisz ustawienia',exact:true}).click();
+    await expect(page.getByRole('status')).toContainText('Ustawienia zapisane');
+    expect((await(await request.get('/api/competition')).json()).budget).toBe('260000.00');
+    await page.getByLabel('Budżet konkursu (PLN)',{exact:true}).fill('250000.00');
+    await page.getByRole('button',{name:'Zapisz ustawienia',exact:true}).click();
+    await expect.poll(async()=>(await(await request.get('/api/competition')).json()).budget).toBe('250000.00');
+});
+
 test('DOCX upload → edit → submit → evaluate → issue → export', async ({ page, request }, info) => {
-    const c=await request.post('/api/competitions',{data:{revision:0,name:'Próba przeglądarkowa',description:'Migracja mikrofirm do chmury',currency:'PLN',budget:'250000.00',maxGrant:'150000.00',threshold:60,stage:'OPEN',criteria:[{code:'technical',name:'Wykonalność',maximum:100}]}});
-    expect(c.status()).toBe(201);const competition=await c.json();
-    const template=await request.get(`/api/documents/example?competitionId=${competition.id}`);
+    const initial=await (await request.get('/api/competition')).json();
+    const c=await request.put('/api/competition',{data:{...initial,criteria:[{code:'technical',name:'Wykonalność',maximum:100}]}});
+    expect(c.status()).toBe(200);
+    const template=await request.get('/api/documents/example');
     expect(template.ok()).toBeTruthy();const input=info.outputPath('application.docx');await writeFile(input,await template.body());
     page.on('dialog',dialog=>dialog.accept());
     await page.goto('/');await page.getByRole('button',{name:'Wnioski',exact:true}).click();
@@ -54,8 +70,7 @@ test('HTTP failures stay JSON/404 and bad uploads are actionable',async({page,re
 });
 
 test('draft validation and stale revisions leave saved data unchanged',async({page,request},info)=>{
-    const competitions=await (await request.get('/api/competitions')).json();const competition=competitions[0];
-    const template=await request.get(`/api/documents/example?competitionId=${competition.id}`);const input=info.outputPath('draft.docx');await writeFile(input,await template.body());
+    const template=await request.get('/api/documents/example');const input=info.outputPath('draft.docx');await writeFile(input,await template.body());
     await page.goto('/');await page.getByRole('button',{name:'Wnioski',exact:true}).click();await page.getByLabel('Importuj DOCX').setInputFiles(input);
     await expect(page.getByLabel('Tytuł projektu')).toBeVisible();await page.getByLabel('Tytuł projektu').fill('Sprawdzanie konfliktu');
     await page.getByRole('button',{name:'Zapisz szkic'}).click();await expect(page.getByRole('status').filter({hasText:'Dokument zapisany'})).toBeVisible();
@@ -69,51 +84,64 @@ test('draft validation and stale revisions leave saved data unchanged',async({pa
     expect(current.requestedAmount).toBe('50000.00');
 });
 
-test('competition creation and deletion work from keyboard-accessible forms',async({page})=>{
-    page.on('dialog',dialog=>dialog.accept());
-    await page.goto('/');await page.getByRole('button',{name:'Konkursy',exact:true}).click();
-    await page.getByRole('button',{name:'Nowy konkurs',exact:true}).focus();await page.keyboard.press('Enter');
-    await page.getByLabel('Nazwa konkursu').fill('Konkurs utworzony w formularzu');await page.getByLabel('Nazwa konkursu').press('Tab');
-    await expect(page.getByLabel('Opis programu')).toBeFocused();await page.getByLabel('Opis programu').fill('Program wsparcia mikrofirm');
-    await page.getByRole('button',{name:'Zapisz szkic'}).click();await expect(page.getByRole('status').filter({hasText:'Dokument zapisany'})).toBeVisible();
-    const row=page.getByRole('row').filter({hasText:'Konkurs utworzony w formularzu'});await expect(row).toBeVisible();
-    await row.getByRole('button',{name:'Usuń',exact:true}).click();await expect(page.getByRole('status').filter({hasText:'Szkic usunięty'})).toBeVisible();await expect(row).toHaveCount(0);
+test('CloudMigration settings allow stage changes but protect existing applications',async({page,request})=>{
+    const before=await (await request.get('/api/applications')).json();
+    await page.goto('/settings');
+    await expect(page.getByRole('heading',{name:'Ustawienia CloudMigration',exact:true})).toBeVisible();
+    await expect(page.getByLabel('Budżet konkursu (PLN)',{exact:true})).toBeDisabled();
+    await expect(page.getByRole('button',{name:'Nowy konkurs',exact:true})).toHaveCount(0);
+    await expect(page.getByRole('combobox',{name:'Etap',exact:true})).toBeEnabled();
+    await page.getByRole('combobox',{name:'Etap',exact:true}).focus();await page.keyboard.press('Tab');
+    await page.getByRole('combobox',{name:'Etap',exact:true}).selectOption('EVALUATION');
+    await page.getByRole('button',{name:'Zapisz ustawienia',exact:true}).click();
+    await expect(page.getByRole('status')).toContainText('Ustawienia zapisane');
+    expect((await (await request.get('/api/competition')).json()).stage).toBe('EVALUATION');
+    await page.getByRole('combobox',{name:'Etap',exact:true}).selectOption('OPEN');
+    await page.getByRole('button',{name:'Zapisz ustawienia',exact:true}).click();
+    await expect(page.getByRole('combobox',{name:'Etap',exact:true})).toHaveValue('OPEN');
+    await expect.poll(async()=>(await(await request.get('/api/competition')).json()).stage).toBe('OPEN');
+    expect(await(await request.get('/api/applications')).json()).toEqual(before);
 });
 
 test('known SPA routes render correctly without swallowing API or asset paths',async({page})=>{
-    for(const [route,heading] of [['applications','Wnioski'],['evaluations','Oceny'],['funding','Ranking i dotacje'],['decisions','Decyzje'],['reports','Raporty XQuery'],['competitions','Konkursy']]){
+    for(const [route,heading] of [['applications','Wnioski'],['evaluations','Oceny'],['funding','Ranking i dotacje'],['decisions','Decyzje'],['reports','Raporty XQuery'],['settings','Ustawienia']]){
         await page.goto('/'+route);await expect(page.getByRole('heading',{name:heading,exact:true,level:1})).toBeVisible();
     }
 });
 
-test('blank DOCX and example are separate; import uses the actively selected competition',async({page,request},info)=>{
-    const all=await(await request.get('/api/competitions')).json();const original=all[0];
-    const created=await request.post('/api/competitions',{data:{revision:0,name:'Konkurs wybrany podczas importu',description:'Nabór do sprawdzenia formularza',currency:'PLN',budget:'250000.00',maxGrant:'150000.00',threshold:60,stage:'OPEN',criteria:[{code:'quality',name:'Jakość projektu',maximum:100}]}});
-    expect(created.status()).toBe(201);const selected=await created.json();
-    const template=await request.get(`/api/documents/template?competitionId=${selected.id}`);
+test('blank DOCX and example use CloudMigration without a competition selector',async({page,request},info)=>{
+    const competition=await(await request.get('/api/competition')).json();
+    const template=await request.get('/api/documents/template');
     expect(template.headers()['content-disposition']).toContain('wniosek-formularz.docx');
-    const blank=await request.post(`/api/documents/import?competitionId=${selected.id}`,{multipart:{file:{name:'pusty.docx',mimeType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',buffer:await template.body()}}});
+    const blank=await request.post('/api/documents/import',{multipart:{file:{name:'pusty.docx',mimeType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',buffer:await template.body()}}});
     expect(blank.status()).toBe(422);expect((await blank.json()).message).toContain('Beneficjent');
-    const example=await request.get(`/api/documents/example?competitionId=${original.id}`);expect(example.headers()['content-disposition']).toContain('wniosek-przyklad.docx');
+    const example=await request.get('/api/documents/example');expect(example.headers()['content-disposition']).toContain('wniosek-przyklad.docx');
     const input=info.outputPath('filled-example.docx');await writeFile(input,await example.body());
-    await page.goto('/applications');await page.getByLabel('Aktywny konkurs').selectOption(selected.id);
-    await expect(page.getByRole('link',{name:'Pobierz pusty formularz DOCX'})).toHaveAttribute('href',`/api/documents/template?competitionId=${selected.id}`);
-    await expect(page.getByRole('link',{name:'Zobacz wypełniony przykład'})).toHaveAttribute('href',`/api/documents/example?competitionId=${selected.id}`);
+    await page.goto('/applications');
+    await expect(page.getByLabel('Aktywny konkurs')).toHaveCount(0);
+    await expect(page.getByRole('button',{name:'Konkursy',exact:true})).toHaveCount(0);
+    await expect(page.getByRole('link',{name:'Pobierz pusty formularz DOCX'})).toHaveAttribute('href','/api/documents/template');
     const upload=page.waitForRequest(r=>r.url().includes('/api/documents/import'));
     await page.getByLabel('Importuj DOCX').setInputFiles(input);
-    expect(new URL((await upload).url()).searchParams.get('competitionId')).toBe(selected.id);
-    await expect(page.getByRole('status').filter({hasText:selected.name})).toBeVisible();
+    expect(new URL((await upload).url()).search).toBe('');
+    await expect(page.getByRole('status')).toContainText('CloudMigration');
     await expect(page.getByLabel('Nazwa firmy')).toHaveValue('Biuro Rachunkowe Żółw');
-    await expect(page.getByLabel('Adres beneficjenta')).toHaveValue('ul. Przykładowa 12, 80-001 Gdańsk');
-    await expect(page.getByLabel('REGON',{exact:true})).toHaveValue('123456785');
-    await expect(page.getByLabel('Początek realizacji projektu')).toHaveValue('2026-11-01');
-    await expect(page.getByLabel('Całkowity koszt projektu (PLN)',{exact:true})).toHaveValue('50000.00');
-    await page.getByLabel('Reprezentowany przez').fill('Anna Kowalska – prezeska');
-    await page.getByLabel('Numer projektu',{exact:true}).fill('PR/2026/BROWSER');
-    await page.getByLabel('Wnioskowana dotacja (PLN)').fill('45000.00');
-    await page.getByRole('button',{name:'Przelicz budżet'}).click();
-    await expect(page.getByLabel('Wkład własny Beneficjenta (PLN)',{exact:true})).toHaveValue('5000.00');
-    const before=await(await request.get('/api/applications')).json();expect(before.filter((a:{competitionId:string})=>a.competitionId===selected.id)).toHaveLength(0);
-    await page.getByRole('button',{name:'Zapisz szkic'}).click();await expect(page.getByRole('status').filter({hasText:'Dokument zapisany'})).toBeVisible();
-    const saved=await(await request.get('/api/applications')).json();expect(saved.filter((a:{competitionId:string})=>a.competitionId===selected.id)).toHaveLength(1);
+    const before=await(await request.get('/api/applications')).json();
+    await page.getByRole('button',{name:'Zapisz szkic'}).click();await expect(page.getByRole('status')).toContainText('Dokument zapisany');
+    const saved=await(await request.get('/api/applications')).json();expect(saved).toHaveLength(before.length+1);
+    expect(saved.every((a:{competitionId:string})=>a.competitionId===competition.id)).toBeTruthy();
+});
+
+test('new applications inherit CloudMigration and reject a foreign competition ID',async({page,request})=>{
+    const before=await(await request.get('/api/applications')).json();
+    const draft=before.find((a:{state:string})=>a.state==='DRAFT');
+    const wrong=await request.post('/api/applications',{data:{...draft,id:undefined,revision:0,competitionId:'99999999-0000-0000-0000-000000000001'}});
+    expect(wrong.status()).toBe(422);
+    expect((await request.get('/api/competitions')).status()).toBe(404);
+    expect((await request.post('/api/competition',{data:{}})).status()).toBe(405);
+    expect((await request.delete('/api/competition')).status()).toBe(405);
+    await page.goto('/applications');await page.getByRole('button',{name:'Nowy wniosek',exact:true}).click();
+    await expect(page.getByLabel('Tytuł projektu')).toBeVisible();
+    await expect(page.getByLabel('Aktywny konkurs')).toHaveCount(0);
+    expect(await(await request.get('/api/applications')).json()).toEqual(before);
 });

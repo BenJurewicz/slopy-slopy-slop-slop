@@ -6,5 +6,5 @@ export default defineConfig({
     use: { locale: 'pl-PL', baseURL: 'http://127.0.0.1:8081', trace: 'retain-on-failure', launchOptions: {
         executablePath: process.env.BROWSER_EXECUTABLE ?? (existsSync(chrome) ? chrome : undefined)
     } },
-    webServer: { command: 'python3 ../scripts/e2e-server.py', url: 'http://127.0.0.1:8081/api/competitions', reuseExistingServer: false, timeout: 30000 }
+    webServer: { command: 'python3 ../scripts/e2e-server.py', url: 'http://127.0.0.1:8081/api/competition', reuseExistingServer: false, timeout: 30000 }
 });

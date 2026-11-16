@@ -129,7 +129,6 @@ export type Task = {
 };
 
 export type Parameters = {
-    competitionId?: string;
     threshold?: string;
     offset?: number;
     limit?: number;
@@ -189,7 +188,6 @@ export type Allocation = {
 };
 
 export type Preview = {
-    competitionId?: string;
     available?: string;
     rows?: Array<Allocation>;
 };
@@ -480,62 +478,11 @@ export type UpdateDecisionResponses = {
 
 export type UpdateDecisionResponse = UpdateDecisionResponses[keyof UpdateDecisionResponses];
 
-export type DeleteCompetitionData = {
-    body?: never;
-    path: {
-        id: string;
-    };
-    query: {
-        revision: number;
-    };
-    url: '/api/competitions/{id}';
-};
-
-export type DeleteCompetitionErrors = {
-    /**
-     * Nieprawidłowe żądanie
-     */
-    400: Error;
-    /**
-     * Brak zasobu
-     */
-    404: Error;
-    /**
-     * Konflikt rewizji lub procesu
-     */
-    409: Error;
-    /**
-     * Za duży plik
-     */
-    413: Error;
-    /**
-     * Błąd walidacji
-     */
-    422: Error;
-    /**
-     * Baza niedostępna
-     */
-    503: Error;
-};
-
-export type DeleteCompetitionError = DeleteCompetitionErrors[keyof DeleteCompetitionErrors];
-
-export type DeleteCompetitionResponses = {
-    /**
-     * Operacja wykonana
-     */
-    204: void;
-};
-
-export type DeleteCompetitionResponse = DeleteCompetitionResponses[keyof DeleteCompetitionResponses];
-
 export type GetCompetitionData = {
     body?: never;
-    path: {
-        id: string;
-    };
+    path?: never;
     query?: never;
-    url: '/api/competitions/{id}';
+    url: '/api/competition';
 };
 
 export type GetCompetitionErrors = {
@@ -569,7 +516,7 @@ export type GetCompetitionError = GetCompetitionErrors[keyof GetCompetitionError
 
 export type GetCompetitionResponses = {
     /**
-     * Operacja wykonana
+     * Ustawienia CloudMigration
      */
     200: Competition;
 };
@@ -578,11 +525,9 @@ export type GetCompetitionResponse = GetCompetitionResponses[keyof GetCompetitio
 
 export type UpdateCompetitionData = {
     body: Competition;
-    path: {
-        id: string;
-    };
+    path?: never;
     query?: never;
-    url: '/api/competitions/{id}';
+    url: '/api/competition';
 };
 
 export type UpdateCompetitionErrors = {
@@ -616,7 +561,7 @@ export type UpdateCompetitionError = UpdateCompetitionErrors[keyof UpdateCompeti
 
 export type UpdateCompetitionResponses = {
     /**
-     * Operacja wykonana
+     * Ustawienia zapisane
      */
     200: Competition;
 };
@@ -815,11 +760,9 @@ export type ExecuteQueryResponse = ExecuteQueryResponses[keyof ExecuteQueryRespo
 
 export type PrepareDecisionsData = {
     body?: never;
-    path: {
-        competitionId: string;
-    };
+    path?: never;
     query?: never;
-    url: '/api/funding/{competitionId}/prepare';
+    url: '/api/funding/prepare';
 };
 
 export type PrepareDecisionsErrors = {
@@ -1047,9 +990,7 @@ export type ImportApplicationData = {
         file: Blob | File;
     };
     path?: never;
-    query: {
-        competitionId: string;
-    };
+    query?: never;
     url: '/api/documents/import';
 };
 
@@ -1225,96 +1166,6 @@ export type CreateDecisionResponses = {
 };
 
 export type CreateDecisionResponse = CreateDecisionResponses[keyof CreateDecisionResponses];
-
-export type ListCompetitionsData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/competitions';
-};
-
-export type ListCompetitionsErrors = {
-    /**
-     * Nieprawidłowe żądanie
-     */
-    400: Error;
-    /**
-     * Brak zasobu
-     */
-    404: Error;
-    /**
-     * Konflikt rewizji lub procesu
-     */
-    409: Error;
-    /**
-     * Za duży plik
-     */
-    413: Error;
-    /**
-     * Błąd walidacji
-     */
-    422: Error;
-    /**
-     * Baza niedostępna
-     */
-    503: Error;
-};
-
-export type ListCompetitionsError = ListCompetitionsErrors[keyof ListCompetitionsErrors];
-
-export type ListCompetitionsResponses = {
-    /**
-     * Operacja wykonana
-     */
-    200: Array<Competition>;
-};
-
-export type ListCompetitionsResponse = ListCompetitionsResponses[keyof ListCompetitionsResponses];
-
-export type CreateCompetitionData = {
-    body: Competition;
-    path?: never;
-    query?: never;
-    url: '/api/competitions';
-};
-
-export type CreateCompetitionErrors = {
-    /**
-     * Nieprawidłowe żądanie
-     */
-    400: Error;
-    /**
-     * Brak zasobu
-     */
-    404: Error;
-    /**
-     * Konflikt rewizji lub procesu
-     */
-    409: Error;
-    /**
-     * Za duży plik
-     */
-    413: Error;
-    /**
-     * Błąd walidacji
-     */
-    422: Error;
-    /**
-     * Baza niedostępna
-     */
-    503: Error;
-};
-
-export type CreateCompetitionError = CreateCompetitionErrors[keyof CreateCompetitionErrors];
-
-export type CreateCompetitionResponses = {
-    /**
-     * Operacja wykonana
-     */
-    201: Competition;
-};
-
-export type CreateCompetitionResponse = CreateCompetitionResponses[keyof CreateCompetitionResponses];
 
 export type CalculateBudgetData = {
     body: Array<BudgetLine>;
@@ -1547,11 +1398,9 @@ export type ListQueriesResponse = ListQueriesResponses[keyof ListQueriesResponse
 
 export type PreviewFundingData = {
     body?: never;
-    path: {
-        competitionId: string;
-    };
+    path?: never;
     query?: never;
-    url: '/api/funding/{competitionId}';
+    url: '/api/funding';
 };
 
 export type PreviewFundingErrors = {
@@ -1691,9 +1540,7 @@ export type DownloadDocxResponse = DownloadDocxResponses[keyof DownloadDocxRespo
 export type DownloadTemplateData = {
     body?: never;
     path?: never;
-    query?: {
-        competitionId?: string;
-    };
+    query?: never;
     url: '/api/documents/template';
 };
 
@@ -1738,9 +1585,7 @@ export type DownloadTemplateResponse = DownloadTemplateResponses[keyof DownloadT
 export type DownloadApplicationExampleData = {
     body?: never;
     path?: never;
-    query?: {
-        competitionId?: string;
-    };
+    query?: never;
     url: '/api/documents/example';
 };
 

@@ -15,10 +15,10 @@ beforeEach(() => {
 
 describe('generated API integration', () => {
 	it('lists documents through the generated endpoint', async () => {
-		fetcher.mockResolvedValue(json([{ id: 'competition-1', name: 'Konkurs' }]));
-		const result = await api.listCompetitions();
-		expect(sent().url).toBe('http://cloudmigration.test/api/competitions');
-		expect(result[0].id).toBe('competition-1');
+		fetcher.mockResolvedValue(json({ id: 'competition-1', name: 'CloudMigration' }));
+		const result = await api.getCompetition();
+		expect(sent().url).toBe('http://cloudmigration.test/api/competition');
+		expect(result.id).toBe('competition-1');
 	});
 	it('creates and updates using generated request bodies', async () => {
 		fetcher.mockResolvedValue(json({ id: 'application-1', revision: 1 }, 201));
@@ -39,8 +39,8 @@ describe('generated API integration', () => {
 	});
 	it('serializes DOCX uploads as multipart form data', async () => {
 		fetcher.mockResolvedValue(json({ application: { id: 'preview-1' }, diagnostics: [] }));
-		await api.importApplication(new File(['docx'], 'wniosek.docx'), 'competition-1');
-		expect(sent().url).toContain('/api/documents/import?competitionId=competition-1');
+		await api.importApplication(new File(['docx'], 'wniosek.docx'));
+		expect(sent().url).toContain('/api/documents/import');
 		expect(sent().headers.get('Content-Type')).toMatch(/^multipart\/form-data; boundary=/);
 		const form = await sent().formData();
 		expect((form.get('file') as File).name).toBe('wniosek.docx');

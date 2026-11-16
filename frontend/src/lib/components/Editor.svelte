@@ -2,7 +2,7 @@
 	import Fields from './Fields.svelte';
 	import { fields, type Data } from '../forms';
 	import { api, type Kind } from '../api';
-	let { kind, value, save, close, busy = false }: { kind: Kind; value: Data; save: (value:Data)=>Promise<void>; close:()=>void; busy?:boolean } = $props();
+	let { kind, value, save, close, busy = false, settingsLocked = false }: { kind: Kind; value: Data; save: (value:Data)=>Promise<void>; close:()=>void; busy?:boolean; settingsLocked?:boolean } = $props();
 	let draft = $state<Data>({});
 	$effect(() => { draft = structuredClone($state.snapshot(value)); });
 	let error = $state('');let calculating = $state(false);
@@ -20,12 +20,15 @@
 	}
 </script>
 <section class="panel editor">
-	<header class="section-heading"><div><h2>{({competition:'Konkurs',application:'Wniosek',evaluation:'Ocena',decision:'Decyzja'})[kind]}</h2></div><button class="quiet" onclick={close}>Zamknij</button></header>
+	<header class="section-heading"><div><h2>{({competition:'Ustawienia CloudMigration',application:'Wniosek',evaluation:'Ocena',decision:'Decyzja'})[kind]}</h2></div><button class="quiet" onclick={close}>Zamknij</button></header>
 	{#if readonly}<p class="notice">Zatwierdzony: tylko do odczytu.</p>{/if}
 	{#if error}<p class="error" role="alert">{error}</p>{/if}
 	<form onsubmit={submit}>
-		<Fields bind:value={draft} spec={fields[kind]} disabled={Boolean(readonly)||busy}/>
+		{#if kind==='competition' && settingsLocked}
+            <Fields bind:value={draft} spec={fields.competition.filter(f=>f.key!=='stage')} disabled/>
+            <Fields bind:value={draft} spec={fields.competition.filter(f=>f.key==='stage')} disabled={busy}/>
+        {:else}<Fields bind:value={draft} spec={fields[kind]} disabled={Boolean(readonly)||busy}/>{/if}
 		{#if kind==='application'&&!readonly}<div class="notice">Kwoty netto w PLN. Po zmianie kosztów lub dotacji przelicz budżet. <button type="button" class="secondary" disabled={calculating||busy} onclick={calculate}>{calculating?'Przeliczanie...':'Przelicz budżet'}</button></div>{/if}
-		{#if !readonly}<div class="form-actions"><button class="primary" disabled={busy||calculating} type="submit">{busy?'Zapisywanie…':'Zapisz szkic'}</button><button class="secondary" type="button" onclick={close}>Anuluj</button></div>{/if}
+		{#if !readonly}<div class="form-actions"><button class="primary" disabled={busy||calculating} type="submit">{busy?'Zapisywanie...':kind==='competition'?'Zapisz ustawienia':'Zapisz szkic'}</button><button class="secondary" type="button" onclick={close}>Anuluj</button></div>{/if}
 	</form>
 </section>

@@ -2,7 +2,7 @@
 
 import { type Client, type ClientMeta, formDataBodySerializer, type Options as Options2, type RequestResult, type TDataShape } from './client';
 import { client } from './client.gen';
-import type { CalculateBudgetData, CalculateBudgetErrors, CalculateBudgetResponses, CreateApplicationData, CreateApplicationErrors, CreateApplicationResponses, CreateCompetitionData, CreateCompetitionErrors, CreateCompetitionResponses, CreateDecisionData, CreateDecisionErrors, CreateDecisionResponses, CreateEvaluationData, CreateEvaluationErrors, CreateEvaluationResponses, DeleteApplicationData, DeleteApplicationErrors, DeleteApplicationResponses, DeleteCompetitionData, DeleteCompetitionErrors, DeleteCompetitionResponses, DeleteDecisionData, DeleteDecisionErrors, DeleteDecisionResponses, DeleteEvaluationData, DeleteEvaluationErrors, DeleteEvaluationResponses, DownloadApplicationExampleData, DownloadApplicationExampleErrors, DownloadApplicationExampleResponses, DownloadDocxData, DownloadDocxErrors, DownloadDocxResponses, DownloadTemplateData, DownloadTemplateErrors, DownloadTemplateResponses, DownloadXmlData, DownloadXmlErrors, DownloadXmlResponses, ExecuteQueryData, ExecuteQueryErrors, ExecuteQueryResponses, FinalizeDocumentData, FinalizeDocumentErrors, FinalizeDocumentResponses, GetApplicationData, GetApplicationErrors, GetApplicationResponses, GetCompetitionData, GetCompetitionErrors, GetCompetitionResponses, GetDecisionData, GetDecisionErrors, GetDecisionResponses, GetEvaluationData, GetEvaluationErrors, GetEvaluationResponses, ImportApplicationData, ImportApplicationErrors, ImportApplicationResponses, IssueDecisionsData, IssueDecisionsErrors, IssueDecisionsResponses, ListApplicationsData, ListApplicationsErrors, ListApplicationsResponses, ListCompetitionsData, ListCompetitionsErrors, ListCompetitionsResponses, ListDecisionsData, ListDecisionsErrors, ListDecisionsResponses, ListEvaluationsData, ListEvaluationsErrors, ListEvaluationsResponses, ListQueriesData, ListQueriesErrors, ListQueriesResponses, LoadDemoData, LoadDemoErrors, LoadDemoResponses, PrepareDecisionsData, PrepareDecisionsErrors, PrepareDecisionsResponses, PreviewFundingData, PreviewFundingErrors, PreviewFundingResponses, SubmitData, SubmitErrors, SubmitResponses, UpdateApplicationData, UpdateApplicationErrors, UpdateApplicationResponses, UpdateCompetitionData, UpdateCompetitionErrors, UpdateCompetitionResponses, UpdateDecisionData, UpdateDecisionErrors, UpdateDecisionResponses, UpdateEvaluationData, UpdateEvaluationErrors, UpdateEvaluationResponses } from './types.gen';
+import type { CalculateBudgetData, CalculateBudgetErrors, CalculateBudgetResponses, CreateApplicationData, CreateApplicationErrors, CreateApplicationResponses, CreateDecisionData, CreateDecisionErrors, CreateDecisionResponses, CreateEvaluationData, CreateEvaluationErrors, CreateEvaluationResponses, DeleteApplicationData, DeleteApplicationErrors, DeleteApplicationResponses, DeleteDecisionData, DeleteDecisionErrors, DeleteDecisionResponses, DeleteEvaluationData, DeleteEvaluationErrors, DeleteEvaluationResponses, DownloadApplicationExampleData, DownloadApplicationExampleErrors, DownloadApplicationExampleResponses, DownloadDocxData, DownloadDocxErrors, DownloadDocxResponses, DownloadTemplateData, DownloadTemplateErrors, DownloadTemplateResponses, DownloadXmlData, DownloadXmlErrors, DownloadXmlResponses, ExecuteQueryData, ExecuteQueryErrors, ExecuteQueryResponses, FinalizeDocumentData, FinalizeDocumentErrors, FinalizeDocumentResponses, GetApplicationData, GetApplicationErrors, GetApplicationResponses, GetCompetitionData, GetCompetitionErrors, GetCompetitionResponses, GetDecisionData, GetDecisionErrors, GetDecisionResponses, GetEvaluationData, GetEvaluationErrors, GetEvaluationResponses, ImportApplicationData, ImportApplicationErrors, ImportApplicationResponses, IssueDecisionsData, IssueDecisionsErrors, IssueDecisionsResponses, ListApplicationsData, ListApplicationsErrors, ListApplicationsResponses, ListDecisionsData, ListDecisionsErrors, ListDecisionsResponses, ListEvaluationsData, ListEvaluationsErrors, ListEvaluationsResponses, ListQueriesData, ListQueriesErrors, ListQueriesResponses, LoadDemoData, LoadDemoErrors, LoadDemoResponses, PrepareDecisionsData, PrepareDecisionsErrors, PrepareDecisionsResponses, PreviewFundingData, PreviewFundingErrors, PreviewFundingResponses, SubmitData, SubmitErrors, SubmitResponses, UpdateApplicationData, UpdateApplicationErrors, UpdateApplicationResponses, UpdateCompetitionData, UpdateCompetitionErrors, UpdateCompetitionResponses, UpdateDecisionData, UpdateDecisionErrors, UpdateDecisionResponses, UpdateEvaluationData, UpdateEvaluationErrors, UpdateEvaluationResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -44,12 +44,10 @@ export const updateDecision = <ThrowOnError extends boolean = false>(options: Op
     }
 });
 
-export const deleteCompetition = <ThrowOnError extends boolean = false>(options: Options<DeleteCompetitionData, ThrowOnError>): RequestResult<DeleteCompetitionResponses, DeleteCompetitionErrors, ThrowOnError> => (options.client ?? client).delete<DeleteCompetitionResponses, DeleteCompetitionErrors, ThrowOnError>({ url: '/api/competitions/{id}', ...options });
-
-export const getCompetition = <ThrowOnError extends boolean = false>(options: Options<GetCompetitionData, ThrowOnError>): RequestResult<GetCompetitionResponses, GetCompetitionErrors, ThrowOnError> => (options.client ?? client).get<GetCompetitionResponses, GetCompetitionErrors, ThrowOnError>({ url: '/api/competitions/{id}', ...options });
+export const getCompetition = <ThrowOnError extends boolean = false>(options?: Options<GetCompetitionData, ThrowOnError>): RequestResult<GetCompetitionResponses, GetCompetitionErrors, ThrowOnError> => (options?.client ?? client).get<GetCompetitionResponses, GetCompetitionErrors, ThrowOnError>({ url: '/api/competition', ...options });
 
 export const updateCompetition = <ThrowOnError extends boolean = false>(options: Options<UpdateCompetitionData, ThrowOnError>): RequestResult<UpdateCompetitionResponses, UpdateCompetitionErrors, ThrowOnError> => (options.client ?? client).put<UpdateCompetitionResponses, UpdateCompetitionErrors, ThrowOnError>({
-    url: '/api/competitions/{id}',
+    url: '/api/competition',
     ...options,
     headers: {
         'Content-Type': 'application/json',
@@ -79,7 +77,7 @@ export const executeQuery = <ThrowOnError extends boolean = false>(options: Opti
     }
 });
 
-export const prepareDecisions = <ThrowOnError extends boolean = false>(options: Options<PrepareDecisionsData, ThrowOnError>): RequestResult<PrepareDecisionsResponses, PrepareDecisionsErrors, ThrowOnError> => (options.client ?? client).post<PrepareDecisionsResponses, PrepareDecisionsErrors, ThrowOnError>({ url: '/api/funding/{competitionId}/prepare', ...options });
+export const prepareDecisions = <ThrowOnError extends boolean = false>(options?: Options<PrepareDecisionsData, ThrowOnError>): RequestResult<PrepareDecisionsResponses, PrepareDecisionsErrors, ThrowOnError> => (options?.client ?? client).post<PrepareDecisionsResponses, PrepareDecisionsErrors, ThrowOnError>({ url: '/api/funding/prepare', ...options });
 
 export const issueDecisions = <ThrowOnError extends boolean = false>(options: Options<IssueDecisionsData, ThrowOnError>): RequestResult<IssueDecisionsResponses, IssueDecisionsErrors, ThrowOnError> => (options.client ?? client).post<IssueDecisionsResponses, IssueDecisionsErrors, ThrowOnError>({
     url: '/api/funding/issue',
@@ -110,13 +108,13 @@ export const finalizeDocument = <ThrowOnError extends boolean = false>(options: 
     }
 });
 
-export const importApplication = <ThrowOnError extends boolean = false>(options: Options<ImportApplicationData, ThrowOnError>): RequestResult<ImportApplicationResponses, ImportApplicationErrors, ThrowOnError> => (options.client ?? client).post<ImportApplicationResponses, ImportApplicationErrors, ThrowOnError>({
+export const importApplication = <ThrowOnError extends boolean = false>(options?: Options<ImportApplicationData, ThrowOnError>): RequestResult<ImportApplicationResponses, ImportApplicationErrors, ThrowOnError> => (options?.client ?? client).post<ImportApplicationResponses, ImportApplicationErrors, ThrowOnError>({
     ...formDataBodySerializer,
     url: '/api/documents/import',
     ...options,
     headers: {
         'Content-Type': null,
-        ...options.headers
+        ...options?.headers
     }
 });
 
@@ -126,17 +124,6 @@ export const listDecisions = <ThrowOnError extends boolean = false>(options?: Op
 
 export const createDecision = <ThrowOnError extends boolean = false>(options: Options<CreateDecisionData, ThrowOnError>): RequestResult<CreateDecisionResponses, CreateDecisionErrors, ThrowOnError> => (options.client ?? client).post<CreateDecisionResponses, CreateDecisionErrors, ThrowOnError>({
     url: '/api/decisions',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-export const listCompetitions = <ThrowOnError extends boolean = false>(options?: Options<ListCompetitionsData, ThrowOnError>): RequestResult<ListCompetitionsResponses, ListCompetitionsErrors, ThrowOnError> => (options?.client ?? client).get<ListCompetitionsResponses, ListCompetitionsErrors, ThrowOnError>({ url: '/api/competitions', ...options });
-
-export const createCompetition = <ThrowOnError extends boolean = false>(options: Options<CreateCompetitionData, ThrowOnError>): RequestResult<CreateCompetitionResponses, CreateCompetitionErrors, ThrowOnError> => (options.client ?? client).post<CreateCompetitionResponses, CreateCompetitionErrors, ThrowOnError>({
-    url: '/api/competitions',
     ...options,
     headers: {
         'Content-Type': 'application/json',
@@ -175,7 +162,7 @@ export const submit = <ThrowOnError extends boolean = false>(options: Options<Su
 
 export const listQueries = <ThrowOnError extends boolean = false>(options?: Options<ListQueriesData, ThrowOnError>): RequestResult<ListQueriesResponses, ListQueriesErrors, ThrowOnError> => (options?.client ?? client).get<ListQueriesResponses, ListQueriesErrors, ThrowOnError>({ url: '/api/queries', ...options });
 
-export const previewFunding = <ThrowOnError extends boolean = false>(options: Options<PreviewFundingData, ThrowOnError>): RequestResult<PreviewFundingResponses, PreviewFundingErrors, ThrowOnError> => (options.client ?? client).get<PreviewFundingResponses, PreviewFundingErrors, ThrowOnError>({ url: '/api/funding/{competitionId}', ...options });
+export const previewFunding = <ThrowOnError extends boolean = false>(options?: Options<PreviewFundingData, ThrowOnError>): RequestResult<PreviewFundingResponses, PreviewFundingErrors, ThrowOnError> => (options?.client ?? client).get<PreviewFundingResponses, PreviewFundingErrors, ThrowOnError>({ url: '/api/funding', ...options });
 
 export const downloadXml = <ThrowOnError extends boolean = false>(options: Options<DownloadXmlData, ThrowOnError>): RequestResult<DownloadXmlResponses, DownloadXmlErrors, ThrowOnError> => (options.client ?? client).get<DownloadXmlResponses, DownloadXmlErrors, ThrowOnError>({ url: '/api/documents/{type}/{id}/xml', ...options });
 
