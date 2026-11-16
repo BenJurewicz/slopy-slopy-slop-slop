@@ -1,299 +1,14 @@
 <script lang="ts">
     import { onMount } from 'svelte';
-    import { reportLabels, formatReportCell } from '../lib/report-display';
-    import { navigation, type View } from '../lib/navigation';
     import Editor from '../lib/components/Editor.svelte';
-    import {
-        api,
-        money,
-        status,
-        type Competition,
-        type Application,
-        type Evaluation,
-        type Decision,
-        type Kind,
-        type Query,
-        type Preview,
-    } from '../lib/api';
-    import { newApplication, newEvaluation, type Data } from '../lib/forms';
-    let view = $state<View>('overview');
-    let loading = $state(true);
-    let busy = $state(false);
-    let error = $state('');
-    let message = $state('');
-    let competition = $state<Competition | null>(null);
-    let applications = $state<Application[]>([]);
-    let evaluations = $state<Evaluation[]>([]);
-    let decisions = $state<Decision[]>([]);
-    let queries = $state<Query[]>([]);
-    let search = $state('');
-    let filter = $state('');
-    let page = $state(0);
-    let editor = $state<{ kind: Kind; value: Data } | null>(null);
-    let preview = $state<Preview | null>(null);
-    let summary = $state<Record<string, unknown>>({});
-    let queryId = $state('summary');
-    let threshold = $state('0');
-    let report = $state<{
-        total: number;
-        rows: Record<string, unknown>[];
-    } | null>(null);
-    const apps = $derived(applications);
-    const appIds = $derived(new Set(apps.map((a) => a.id)));
-    const evals = $derived(
-        evaluations.filter((e) => appIds.has(e.applicationId)),
-    );
-    const decs = $derived(decisions.filter((d) => appIds.has(d.applicationId)));
-    const filtered = $derived(
-        apps.filter(
-            (a) =>
-                (!filter || a.state === filter) &&
-                `${a.title} ${a.company.name}`
-                    .toLocaleLowerCase('pl')
-                    .includes(search.toLocaleLowerCase('pl')),
-        ),
-    );
+    import { api, money, status } from '../lib/api';
+    import { newApplication } from '../lib/forms';
+    import { navigation } from '../lib/navigation';
+    import { reportLabels, formatReportCell } from '../lib/report-display';
+    import { Workspace } from '../lib/workspace.svelte';
 
-    // Financial totals come from the parameterized BaseX summary query.
-    const awardedDisplay = $derived(String(summary.awarded ?? '0'));
-    const remainingDisplay = $derived(
-        String(summary.remaining ?? competition?.budget ?? '0'),
-    );
-    const selectedQuery = $derived(queries.find((q) => q.id === queryId));
-    const selectedApp = $derived(
-        editor?.kind === 'application'
-            ? applications.find((a) => a.id === editor?.value.id)
-            : undefined,
-    );
-    onMount(() => {
-        const route = window.location.pathname.slice(1);
-        if (navigation.some((item) => item.id === route)) view = route as View;
-        void refresh();
-    });
-    async function refresh() {
-        loading = true;
-        error = '';
-        try {
-            const [c, a, e, d, q] = await Promise.all([
-                api.getCompetition(),
-                api.listApplications(),
-                api.listEvaluations(),
-                api.listDecisions(),
-                api.listQueries(),
-            ]);
-            competition = c;
-            applications = a;
-            evaluations = e;
-            decisions = d;
-            queries = q;
-            summary =
-                (
-                    await api.executeQuery('summary', {
-                        threshold: '0',
-                        offset: 0,
-                        limit: 1,
-                    })
-                ).rows[0] ?? {};
-        } catch (e) {
-            error = (e as Error).message;
-        } finally {
-            loading = false;
-        }
-    }
-    function navigate(next: View) {
-        view = next;
-        editor = null;
-        error = '';
-        message = '';
-        preview = null;
-        report = null;
-        page = 0;
-    }
-    async function run(action: () => Promise<unknown>, success: string) {
-        busy = true;
-        error = '';
-        message = '';
-        try {
-            await action();
-            await refresh();
-            message = success;
-        } catch (e) {
-            error = (e as Error).message;
-        } finally {
-            busy = false;
-        }
-    }
-    async function loadDemo() {
-        if (
-            !window.confirm(
-                'Czy napewno chcesz usunąć obecne dane i wczytać dane demonstracyjne?',
-            )
-        )
-            return;
-        await run(() => api.loadDemo(), 'Wczytano dane demonstracyjne.');
-    }
-    async function resetData() {
-        if (
-            !window.confirm(
-                'Usunąć wszystkie wnioski, oceny i decyzje? Tej operacji nie można cofnąć. Ustawienia CloudMigration zostaną zachowane.',
-            )
-        )
-            return;
-        await run(
-            () => api.resetData(),
-            'Usunięto wszystkie wnioski, oceny i decyzje.',
-        );
-    }
-    function open(kind: Kind, value: object) {
-        editor = {
-            kind,
-            value: structuredClone($state.snapshot(value)) as Data,
-        };
-        message = '';
-        error = '';
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-    async function save(value: Data) {
-        if (!editor) return;
-        busy = true;
-        message = '';
-        try {
-            await api.saveDocument(editor.kind, value);
-            editor = null;
-            await refresh();
-            message = 'Dokument zapisany.';
-        } finally {
-            busy = false;
-        }
-    }
-    async function saveSettings(value: Data) {
-        busy = true;
-        message = '';
-        try {
-            await api.saveDocument('competition', value);
-            await refresh();
-            message = 'Ustawienia zapisane.';
-        } finally {
-            busy = false;
-        }
-    }
-    async function remove(
-        kind: Exclude<Kind, 'competition'>,
-        value: { id: string; revision: number },
-    ) {
-        if (!window.confirm('Usunąć szkic? Tej operacji nie można cofnąć.'))
-            return;
-        await run(
-            () => api.removeDocument(kind, value.id, value.revision),
-            'Szkic usunięty.',
-        );
-    }
-    async function submit(a: Application) {
-        if (
-            !window.confirm(
-                'Złożyć wniosek? Po złożeniu nie będzie można zmienić danych.',
-            )
-        )
-            return;
-        await run(
-            () => api.submitApplication(a.id, a.revision),
-            'Wniosek złożony.',
-        );
-        editor = null;
-    }
-    async function finalize(e: Evaluation) {
-        if (
-            !window.confirm(
-                'Zatwierdzić ocenę? Punktacja zostanie zablokowana.',
-            )
-        )
-            return;
-        await run(
-            () => api.finalizeEvaluation(e.id, e.revision),
-            'Ocena zatwierdzona.',
-        );
-    }
-    function evaluate(a: Application) {
-        if (competition) {
-            view = 'evaluations';
-            open('evaluation', newEvaluation(a, competition));
-        }
-    }
-    async function upload(event: Event) {
-        const input = event.currentTarget as HTMLInputElement;
-        const file = input.files?.[0];
-        if (!file) return;
-        busy = true;
-        error = '';
-        message = '';
-        try {
-            const result = await api.importApplication(file);
-            const data = { ...result.application, id: undefined, revision: 0 };
-            open('application', data);
-            message = result.diagnostics.join(' ');
-        } catch (e) {
-            error = (e as Error).message;
-        } finally {
-            busy = false;
-            input.value = '';
-        }
-    }
-    async function loadPreview() {
-        busy = true;
-        error = '';
-        try {
-            preview = await api.previewFunding();
-        } catch (e) {
-            error = (e as Error).message;
-        } finally {
-            busy = false;
-        }
-    }
-    async function issue() {
-        const draft = decs.filter((d) => d.state === 'DRAFT');
-        if (!draft.length) return;
-        if (
-            !window.confirm(
-                `Wydać ${draft.length} decyzji? Wydanych decyzji nie można edytować.`,
-            )
-        )
-            return;
-        await run(
-            () =>
-                api.issueDecisions(
-                    draft.map((d) => ({ id: d.id, revision: d.revision })),
-                ),
-            'Decyzje wydane.',
-        );
-        preview = null;
-    }
-    async function executeQuery() {
-        busy = true;
-        error = '';
-        try {
-            report = await api.executeQuery(queryId, {
-                threshold: queryId === 'over-budget' ? threshold : '0',
-                offset: 0,
-                limit: 500,
-            });
-        } catch (e) {
-            error = (e as Error).message;
-        } finally {
-            busy = false;
-        }
-    }
-    function title(id: string) {
-        return applications.find((a) => a.id === id)?.title ?? id;
-    }
-    function appState(a: Application) {
-        return decs.some(
-            (d) => d.applicationId === a.id && d.state === 'ISSUED',
-        )
-            ? 'Decyzja wydana'
-            : evals.some((e) => e.applicationId === a.id && e.state === 'FINAL')
-              ? 'Oceniony'
-              : status(a.state);
-    }
+    const workspace = new Workspace();
+    onMount(workspace.initialize);
 </script>
 
 <svelte:head
@@ -307,9 +22,12 @@
         <strong>CloudMigration</strong>
         <nav aria-label="Główna nawigacja">
             {#each navigation as item (item.id)}<button
-                    class:active={view === item.id}
-                    aria-current={view === item.id ? 'page' : undefined}
-                    onclick={() => navigate(item.id)}>{item.label}</button
+                    class:active={workspace.view === item.id}
+                    aria-current={workspace.view === item.id
+                        ? 'page'
+                        : undefined}
+                    onclick={() => workspace.navigate(item.id)}
+                    >{item.label}</button
                 >{/each}
         </nav>
         <a href="/swagger-ui.html" target="_blank" rel="external noreferrer"
@@ -318,112 +36,140 @@
     </header>
     <main class="main">
         <header class="topbar">
-            <h1>{navigation.find((n) => n.id === view)?.label}</h1>
+            <h1>{navigation.find((n) => n.id === workspace.view)?.label}</h1>
         </header>
-        {#if error}<div class="error" role="alert">
-                {error}
-                <button class="quiet" onclick={refresh}>Odśwież dane</button>
+        {#if workspace.error}<div class="error" role="alert">
+                {workspace.error}
+                <button class="quiet" onclick={workspace.refresh}
+                    >Odśwież dane</button
+                >
             </div>{/if}
-        {#if message}<p class="success" role="status">{message}</p>{/if}
-        {#if loading}<p class="notice" role="status">
+        {#if workspace.message}<p class="success" role="status">
+                {workspace.message}
+            </p>{/if}
+        {#if workspace.loading}<p class="notice" role="status">
                 Wczytywanie dokumentów...
             </p>{/if}
-        {#if editor}
-            {#if selectedApp}<div class="toolbar">
-                    <span class="badge">{appState(selectedApp)}</span>
+        {#if workspace.editor}
+            {#if workspace.selectedApplication}<div class="toolbar">
+                    <span class="badge"
+                        >{workspace.applicationStatus(
+                            workspace.selectedApplication,
+                        )}</span
+                    >
                     <div class="actions">
                         <a
                             rel="external"
-                            href={`/api/documents/application/${selectedApp.id}/xml`}
+                            href={`/api/documents/application/${workspace.selectedApplication.id}/xml`}
                             >Pobierz XML</a
                         ><a
                             rel="external"
-                            href={`/api/documents/application/${selectedApp.id}/docx`}
+                            href={`/api/documents/application/${workspace.selectedApplication.id}/docx`}
                             >Pobierz DOCX</a
-                        >{#if selectedApp.state === 'DRAFT'}<button
+                        >{#if workspace.selectedApplication.state === 'DRAFT'}<button
                                 class="primary"
-                                disabled={busy}
-                                onclick={() => submit(selectedApp!)}
-                                >Złóż wniosek</button
-                            >{:else if !evals.some((e) => e.applicationId === selectedApp?.id)}<button
+                                disabled={workspace.busy}
+                                onclick={() =>
+                                    workspace.submitApplication(
+                                        workspace.selectedApplication!,
+                                    )}>Złóż wniosek</button
+                            >{:else if !workspace.linkedEvaluations.some((e) => e.applicationId === workspace.selectedApplication?.id)}<button
                                 class="primary"
-                                onclick={() => evaluate(selectedApp!)}
-                                >Oceń wniosek</button
+                                onclick={() =>
+                                    workspace.startEvaluation(
+                                        workspace.selectedApplication!,
+                                    )}>Oceń wniosek</button
                             >{/if}
                     </div>
                 </div>{/if}
-            {#if editor.kind === 'evaluation' && competition}<p class="notice">
-                    {competition.criteria
+            {#if workspace.editor.kind === 'evaluation' && workspace.competition}<p
+                    class="notice"
+                >
+                    {workspace.competition.criteria
                         .map((c) => `${c.name}: maks. ${c.maximum} pkt`)
                         .join(' | ')}
                 </p>{/if}
-            {#if selectedApp}<div class="actions">
-                    {#each evals.filter((e) => e.applicationId === selectedApp?.id) as e (e.id)}<button
+            {#if workspace.selectedApplication}<div class="actions">
+                    {#each workspace.linkedEvaluations.filter((e) => e.applicationId === workspace.selectedApplication?.id) as e (e.id)}<button
                             class="secondary"
-                            onclick={() => open('evaluation', e)}
+                            onclick={() =>
+                                workspace.openEditor('evaluation', e)}
                             >Powiązana ocena</button
-                        >{/each}{#each decs.filter((d) => d.applicationId === selectedApp?.id) as d (d.id)}<button
+                        >{/each}{#each workspace.linkedDecisions.filter((d) => d.applicationId === workspace.selectedApplication?.id) as d (d.id)}<button
                             class="secondary"
-                            onclick={() => open('decision', d)}
+                            onclick={() => workspace.openEditor('decision', d)}
                             >Powiązana decyzja</button
                         >{/each}
                 </div>{/if}
-            {#key `${editor.kind}-${editor.value.id ?? 'new'}`}<Editor
-                    kind={editor.kind}
-                    value={editor.value}
-                    {save}
-                    close={() => (editor = null)}
-                    {busy}
+            {#key `${workspace.editor.kind}-${workspace.editor.value.id ?? 'new'}`}<Editor
+                    kind={workspace.editor.kind}
+                    value={workspace.editor.value}
+                    save={workspace.saveDocument}
+                    close={() => (workspace.editor = null)}
+                    busy={workspace.busy}
                 />{/key}
-        {:else if view === 'overview' && competition}
+        {:else if workspace.view === 'overview' && workspace.competition}
             <dl class="summary">
                 <dt>Etap</dt>
-                <dd>{status(competition.stage)}</dd>
+                <dd>{status(workspace.competition.stage)}</dd>
                 <dt>Pozostały budżet</dt>
-                <dd>{money(remainingDisplay)}</dd>
+                <dd>{money(workspace.remainingDisplay)}</dd>
                 <dt>Przyznane środki</dt>
-                <dd>{money(awardedDisplay)}</dd>
+                <dd>{money(workspace.awardedDisplay)}</dd>
                 <dt>Wnioski</dt>
-                <dd>{apps.length}</dd>
+                <dd>{workspace.applications.length}</dd>
                 <dt>Szkice wniosków</dt>
-                <dd>{apps.filter((a) => a.state === 'DRAFT').length}</dd>
+                <dd>
+                    {workspace.applications.filter((a) => a.state === 'DRAFT')
+                        .length}
+                </dd>
                 <dt>Oceny końcowe</dt>
-                <dd>{evals.filter((e) => e.state === 'FINAL').length}</dd>
+                <dd>
+                    {workspace.linkedEvaluations.filter(
+                        (e) => e.state === 'FINAL',
+                    ).length}
+                </dd>
                 <dt>Wydane decyzje</dt>
-                <dd>{decs.filter((d) => d.state === 'ISSUED').length}</dd>
+                <dd>
+                    {workspace.linkedDecisions.filter(
+                        (d) => d.state === 'ISSUED',
+                    ).length}
+                </dd>
             </dl>
-        {:else if view === 'settings' && competition}
-            {#if !apps.length}<p class="notice">
+        {:else if workspace.view === 'settings' && workspace.competition}
+            {#if !workspace.applications.length}<p class="notice">
                     Ustawienia można zmieniać do utworzenia pierwszego wniosku.
                 </p>{/if}
-            {#key competition.revision}<Editor
+            {#key workspace.competition.revision}<Editor
                     kind="competition"
-                    settingsLocked={apps.length > 0}
-                    value={{ ...competition }}
-                    save={saveSettings}
-                    close={() => navigate('overview')}
-                    {busy}
+                    settingsLocked={workspace.applications.length > 0}
+                    value={{ ...workspace.competition }}
+                    save={workspace.saveSettings}
+                    close={() => workspace.navigate('overview')}
+                    busy={workspace.busy}
                 />{/key}
             <a
                 rel="external"
-                href={`/api/documents/competition/${competition.id}/xml`}
+                href={`/api/documents/competition/${workspace.competition.id}/xml`}
                 >Pobierz ustawienia XML</a
             >
             <section>
                 <h2>Dane testowe</h2>
                 <div class="actions">
-                    <button disabled={busy || loading} onclick={loadDemo}
+                    <button
+                        disabled={workspace.busy || workspace.loading}
+                        onclick={workspace.loadDemo}
                         >Wczytaj dane demonstracyjne</button
                     >
                     <button
                         class="danger"
-                        disabled={busy || loading}
-                        onclick={resetData}
+                        disabled={workspace.busy || workspace.loading}
+                        onclick={workspace.resetData}
                         >Usuń wszystkie wnioski, oceny i decyzje</button
                     >
                 </div>
             </section>
-        {:else if view === 'applications'}
+        {:else if workspace.view === 'applications'}
             <div class="toolbar">
                 <div class="actions">
                     <a
@@ -441,15 +187,16 @@
                             aria-label="Importuj DOCX"
                             type="file"
                             accept=".docx"
-                            disabled={busy || !competition}
-                            onchange={upload}
+                            disabled={workspace.busy || !workspace.competition}
+                            onchange={workspace.importApplication}
                         /></label
                     >
                 </div>
                 <button
                     class="primary"
-                    disabled={!competition}
-                    onclick={() => open('application', newApplication())}
+                    disabled={!workspace.competition}
+                    onclick={() =>
+                        workspace.openEditor('application', newApplication())}
                     >Nowy wniosek</button
                 >
             </div>
@@ -459,19 +206,19 @@
                     class="search"
                     aria-label="Szukaj wniosków"
                     placeholder="Szukaj projektu lub firmy..."
-                    bind:value={search}
-                    oninput={() => (page = 0)}
+                    bind:value={workspace.searchText}
+                    oninput={() => (workspace.pageIndex = 0)}
                 /><select
                     style="max-width:200px"
                     aria-label="Status wniosku"
-                    bind:value={filter}
-                    onchange={() => (page = 0)}
+                    bind:value={workspace.statusFilter}
+                    onchange={() => (workspace.pageIndex = 0)}
                     ><option value="">Wszystkie statusy</option><option
                         value="DRAFT">Szkice</option
                     ><option value="SUBMITTED">Złożone</option></select
                 >
             </div>
-            {#if !filtered.length}<div class="empty">
+            {#if !workspace.filteredApplications.length}<div class="empty">
                     <p>Brak wniosków dla wybranych filtrów.</p>
                 </div>{:else}<section class="panel table-scroll">
                     <table>
@@ -482,7 +229,7 @@
                                 ><th>Działania</th></tr
                             ></thead
                         ><tbody
-                            >{#each filtered.slice(page * 10, (page + 1) * 10) as a (a.id)}<tr
+                            >{#each workspace.filteredApplications.slice(workspace.pageIndex * 10, (workspace.pageIndex + 1) * 10) as a (a.id)}<tr
                                     ><td
                                         ><strong>{a.title}</strong><small
                                             >{a.company.name}</small
@@ -491,26 +238,32 @@
                                         ><span
                                             class="badge"
                                             class:good={a.state === 'SUBMITTED'}
-                                            >{appState(a)}</span
+                                            >{workspace.applicationStatus(
+                                                a,
+                                            )}</span
                                         ></td
                                     ><td
                                         ><div class="actions">
                                             <button
                                                 class="secondary"
                                                 onclick={() =>
-                                                    open('application', a)}
-                                                >Otwórz</button
+                                                    workspace.openEditor(
+                                                        'application',
+                                                        a,
+                                                    )}>Otwórz</button
                                             >{#if a.state === 'DRAFT'}<button
                                                     class="quiet danger"
                                                     onclick={() =>
-                                                        remove(
+                                                        workspace.remove(
                                                             'application',
                                                             a,
                                                         )}>Usuń</button
-                                                >{:else if !evals.some((e) => e.applicationId === a.id)}<button
+                                                >{:else if !workspace.linkedEvaluations.some((e) => e.applicationId === a.id)}<button
                                                     class="primary"
-                                                    onclick={() => evaluate(a)}
-                                                    >Oceń</button
+                                                    onclick={() =>
+                                                        workspace.startEvaluation(
+                                                            a,
+                                                        )}>Oceń</button
                                                 >{/if}
                                         </div></td
                                     ></tr
@@ -520,25 +273,28 @@
                     <div class="pagination">
                         <button
                             class="quiet"
-                            disabled={page === 0}
-                            onclick={() => page--}>Poprzednia</button
+                            disabled={workspace.pageIndex === 0}
+                            onclick={() => workspace.pageIndex--}
+                            >Poprzednia</button
                         ><span
-                            >Strona {page + 1} z {Math.ceil(
-                                filtered.length / 10,
+                            >Strona {workspace.pageIndex + 1} z {Math.ceil(
+                                workspace.filteredApplications.length / 10,
                             )}</span
                         ><button
                             class="quiet"
-                            disabled={(page + 1) * 10 >= filtered.length}
-                            onclick={() => page++}>Następna</button
+                            disabled={(workspace.pageIndex + 1) * 10 >=
+                                workspace.filteredApplications.length}
+                            onclick={() => workspace.pageIndex++}
+                            >Następna</button
                         >
                     </div>
                 </section>{/if}
-        {:else if view === 'evaluations'}
-            {#if !evals.length}<div class="empty">
+        {:else if workspace.view === 'evaluations'}
+            {#if !workspace.linkedEvaluations.length}<div class="empty">
                     <h2>Brak ocen</h2>
                     <button
                         class="primary"
-                        onclick={() => navigate('applications')}
+                        onclick={() => workspace.navigate('applications')}
                         >Wybierz wniosek do oceny</button
                     >
                 </div>{:else}<section class="panel table-scroll">
@@ -550,10 +306,12 @@
                                 ><th>Status</th><th>Działania</th></tr
                             ></thead
                         ><tbody
-                            >{#each evals as e (e.id)}<tr
+                            >{#each workspace.linkedEvaluations as e (e.id)}<tr
                                     ><td
                                         ><strong
-                                            >{title(e.applicationId)}</strong
+                                            >{workspace.applicationTitle(
+                                                e.applicationId,
+                                            )}</strong
                                         ><small
                                             >{e.eligible
                                                 ? 'Kwalifikowalny'
@@ -570,18 +328,25 @@
                                             <button
                                                 class="secondary"
                                                 onclick={() =>
-                                                    open('evaluation', e)}
-                                                >Otwórz</button
+                                                    workspace.openEditor(
+                                                        'evaluation',
+                                                        e,
+                                                    )}>Otwórz</button
                                             >{#if e.state === 'DRAFT'}<button
                                                     class="primary"
-                                                    disabled={busy}
-                                                    onclick={() => finalize(e)}
+                                                    disabled={workspace.busy}
+                                                    onclick={() =>
+                                                        workspace.finalizeEvaluation(
+                                                            e,
+                                                        )}
                                                     >Zatwierdź ocenę</button
                                                 ><button
                                                     class="quiet danger"
                                                     onclick={() =>
-                                                        remove('evaluation', e)}
-                                                    >Usuń</button
+                                                        workspace.remove(
+                                                            'evaluation',
+                                                            e,
+                                                        )}>Usuń</button
                                                 >{/if}<a
                                                 rel="external"
                                                 href={`/api/documents/evaluation/${e.id}/docx`}
@@ -597,25 +362,31 @@
                         >
                     </table>
                 </section>{/if}
-        {:else if view === 'funding'}
+        {:else if workspace.view === 'funding'}
             <div class="toolbar">
                 <p class="muted">
                     Tylko pełne dotacje; projekty ponad budżet są pomijane.
                 </p>
                 <button
                     class="primary"
-                    disabled={busy || !competition}
-                    onclick={loadPreview}>Przelicz ranking</button
+                    disabled={workspace.busy || !workspace.competition}
+                    onclick={workspace.loadFundingPreview}
+                    >Przelicz ranking</button
                 >
             </div>
-            {#if preview}<section class="panel">
+            {#if workspace.fundingPreview}<section class="panel">
                     <header class="section-heading">
-                        <h2>Dostępne: {money(preview.available)}</h2>
+                        <h2>
+                            Dostępne: {money(
+                                workspace.fundingPreview.available,
+                            )}
+                        </h2>
                         <button
                             class="primary"
-                            disabled={busy || !preview.rows.length}
+                            disabled={workspace.busy ||
+                                !workspace.fundingPreview.rows.length}
                             onclick={() =>
-                                run(
+                                workspace.runAction(
                                     () => api.prepareDecisions(),
                                     'Przygotowano szkice decyzji.',
                                 )}>Przygotuj decyzje</button
@@ -631,7 +402,7 @@
                                     ></tr
                                 ></thead
                             ><tbody
-                                >{#each preview.rows as row, index (row.applicationId)}<tr
+                                >{#each workspace.fundingPreview.rows as row, index (row.applicationId)}<tr
                                         ><td
                                             ><strong
                                                 >{index + 1}. {row.title}</strong
@@ -653,7 +424,7 @@
                 </section>{:else}<div class="empty">
                     <p>Kliknij "Przelicz ranking", aby zobaczyć propozycje.</p>
                 </div>{/if}
-        {:else if view === 'decisions'}
+        {:else if workspace.view === 'decisions'}
             <div class="toolbar">
                 <p class="muted">
                     Szkice nie obciążają budżetu. Wydanie decyzji jest
@@ -661,13 +432,18 @@
                 </p>
                 <button
                     class="primary"
-                    disabled={busy || !decs.some((d) => d.state === 'DRAFT')}
-                    onclick={issue}>Wydaj decyzje</button
+                    disabled={workspace.busy ||
+                        !workspace.linkedDecisions.some(
+                            (d) => d.state === 'DRAFT',
+                        )}
+                    onclick={workspace.issueDecisions}>Wydaj decyzje</button
                 >
             </div>
-            {#if !decs.length}<div class="empty">
+            {#if !workspace.linkedDecisions.length}<div class="empty">
                     <h2>Brak decyzji</h2>
-                    <button class="primary" onclick={() => navigate('funding')}
+                    <button
+                        class="primary"
+                        onclick={() => workspace.navigate('funding')}
                         >Przygotuj finansowanie</button
                     >
                 </div>{:else}<section class="panel table-scroll">
@@ -679,10 +455,12 @@
                                 ><th>Działania</th></tr
                             ></thead
                         ><tbody
-                            >{#each decs as d (d.id)}<tr
+                            >{#each workspace.linkedDecisions as d (d.id)}<tr
                                     ><td
                                         ><strong
-                                            >{title(d.applicationId)}</strong
+                                            >{workspace.applicationTitle(
+                                                d.applicationId,
+                                            )}</strong
                                         ><small>{d.reason}</small></td
                                     ><td
                                         ><span
@@ -697,13 +475,17 @@
                                             <button
                                                 class="secondary"
                                                 onclick={() =>
-                                                    open('decision', d)}
-                                                >Otwórz</button
+                                                    workspace.openEditor(
+                                                        'decision',
+                                                        d,
+                                                    )}>Otwórz</button
                                             >{#if d.state === 'DRAFT'}<button
                                                     class="quiet danger"
                                                     onclick={() =>
-                                                        remove('decision', d)}
-                                                    >Usuń</button
+                                                        workspace.remove(
+                                                            'decision',
+                                                            d,
+                                                        )}>Usuń</button
                                                 >{/if}<a
                                                 rel="external"
                                                 href={`/api/documents/decision/${d.id}/docx`}
@@ -719,54 +501,57 @@
                         >
                     </table>
                 </section>{/if}
-        {:else if view === 'reports'}
+        {:else if workspace.view === 'reports'}
             <section class="panel">
                 <label
                     ><span>Raport</span><select
                         aria-label="Raport"
                         aria-describedby="report-description"
-                        bind:value={queryId}
-                        onchange={() => (report = null)}
-                        >{#each queries as q (q.id)}<option value={q.id}
-                                >{q.name}</option
+                        bind:value={workspace.selectedQueryId}
+                        onchange={() => (workspace.report = null)}
+                        >{#each workspace.queries as q (q.id)}<option
+                                value={q.id}>{q.name}</option
                             >{/each}</select
                     ></label
                 >
-                <p id="report-description">{selectedQuery?.description}</p>
+                <p id="report-description">
+                    {workspace.selectedQuery?.description}
+                </p>
                 <div class="toolbar">
-                    {#if queryId === 'over-budget'}<label
+                    {#if workspace.selectedQueryId === 'over-budget'}<label
                             ><span>Dotacja większa niż (PLN)</span><input
                                 inputmode="decimal"
                                 placeholder="np. 50000"
-                                bind:value={threshold}
-                                oninput={() => (report = null)}
+                                bind:value={workspace.reportThreshold}
+                                oninput={() => (workspace.report = null)}
                             /></label
                         >{/if}
                     <button
                         class="primary"
-                        disabled={busy || !competition}
-                        onclick={executeQuery}>Pokaż wyniki</button
+                        disabled={workspace.busy || !workspace.competition}
+                        onclick={workspace.runReport}>Pokaż wyniki</button
                     >
                 </div>
                 <details>
                     <summary>Pokaż kod XQuery</summary>
-                    <pre class="query-code">{selectedQuery?.source}</pre>
+                    <pre class="query-code">{workspace.selectedQuery
+                            ?.source}</pre>
                 </details>
             </section>
-            {#if report}<section class="panel">
-                    <h2>Wyniki: {report.total}</h2>
-                    {#if !report.rows.length}<p class="muted">
+            {#if workspace.report}<section class="panel">
+                    <h2>Wyniki: {workspace.report.total}</h2>
+                    {#if !workspace.report.rows.length}<p class="muted">
                             Brak danych dla wybranych parametrów.
                         </p>{:else}<div class="table-scroll">
                             <table>
                                 <thead
                                     ><tr
-                                        >{#each Object.keys(report.rows[0]) as key (key)}<th
+                                        >{#each Object.keys(workspace.report.rows[0]) as key (key)}<th
                                                 >{reportLabels[key] ?? key}</th
                                             >{/each}</tr
                                     ></thead
                                 ><tbody
-                                    >{#each report.rows as row, index (index)}<tr
+                                    >{#each workspace.report.rows as row, index (index)}<tr
                                             >{#each Object.entries(row) as [key, value] (key)}<td
                                                     >{formatReportCell(
                                                         key,
