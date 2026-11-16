@@ -124,14 +124,14 @@ public class DocumentCodec {
 
     public String encode(Type type, Object dto) {
         try {
-            var f = DocumentBuilderFactory.newInstance();
-            f.setNamespaceAware(true);
-            var doc = f.newDocumentBuilder().newDocument();
-            var root = doc.createElementNS(type.namespace(), type.name());
-            doc.appendChild(root);
-            append(doc, root, dto, type.namespace(), true);
-            return writeGenerated(type,
-                    context.createUnmarshaller().unmarshal(new DOMSource(doc)));
+            var factory = DocumentBuilderFactory.newInstance();
+            factory.setNamespaceAware(true);
+            var document = factory.newDocumentBuilder().newDocument();
+            var root = document.createElementNS(type.namespace(), type.name());
+            document.appendChild(root);
+            append(document, root, dto, type.namespace(), true);
+            return writeGenerated(type, context.createUnmarshaller()
+                    .unmarshal(new DOMSource(document)));
         } catch (AppException e) {
             throw e;
         } catch (Exception e) {
@@ -155,70 +155,99 @@ public class DocumentCodec {
         }
     }
 
-    private void append(Document doc, Element parent, Object value, String ns,
-            boolean root) throws Exception {
-        for (var field : value.getClass().getRecordComponents()) {
-            var v = field.getAccessor().invoke(value);
-            if (v == null)
+    private void append(Document document, Element parent, Object value,
+            String namespace, boolean isRoot) throws Exception {
+        for (var component : value.getClass().getRecordComponents()) {
+            var fieldValue = component.getAccessor().invoke(value);
+            if (fieldValue == null)
                 continue;
-            if (root && (field.getName().equals("id")
-                    || field.getName().equals("revision"))) {
-                parent.setAttribute(field.getName(), v.toString());
+
+            if (isRoot && (component.getName().equals("id")
+                    || component.getName().equals("revision"))) {
+                parent.setAttribute(component.getName(), fieldValue.toString());
                 continue;
             }
-            var values = v instanceof List<?> list ? list : List.of(v);
-            for (var item : values) {
-                if (item == null)
-                    throw AppException.invalid("Lista zawiera pusty element.");
-                var child = doc.createElementNS(ns, field.getName());
-                parent.appendChild(child);
-                if (item.getClass().isRecord())
-                    append(doc, child, item, "urn:cloudmigration:common:v2",
-                            false);
-                else
-                    child.setTextContent(item.toString());
-            }
+
+            var items = fieldValue instanceof List<?> list
+                    ? list
+                    : List.of(fieldValue);
+            for (var item : items)
+                appendElement(document, parent, component.getName(), item,
+                        namespace);
         }
     }
 
-    private Object record(Element element, Class<?> clazz) throws Exception {
-        var components = clazz.getRecordComponents();
-        var values = new Object[components.length];
-        var classes = new Class<?>[components.length];
-        for (int i = 0; i < components.length; i++) {
-            var c = components[i];
-            classes[i] = c.getType();
-            var children = new ArrayList<Element>();
-            for (var node = element.getFirstChild(); node != null; node = node
-                    .getNextSibling())
-                if (node instanceof Element e
-                        && c.getName().equals(e.getLocalName()))
-                    children.add(e);
-            if (c.getType() == List.class) {
-                Class<?> item = (Class<?>) ((ParameterizedType) c
-                        .getGenericType()).getActualTypeArguments()[0];
-                var list = new ArrayList<Object>();
-                for (var child : children)
-                    list.add(record(child, item));
-                values[i] = List.copyOf(list);
-            } else if (c.getType().isRecord())
-                values[i] = children.isEmpty()
-                        ? null
-                        : record(children.getFirst(), c.getType());
-            else {
-                var text = element.hasAttribute(c.getName())
-                        ? element.getAttribute(c.getName())
-                        : children.isEmpty()
-                                ? null
-                                : children.getFirst().getTextContent();
-                values[i] = c.getType() == int.class
-                        ? Integer.parseInt(text)
-                        : c.getType() == boolean.class
-                                ? Boolean.parseBoolean(text)
-                                : text;
-            }
+    private void appendElement(Document document, Element parent, String name,
+            Object value, String namespace) throws Exception {
+        if (value == null)
+            throw AppException.invalid("Lista zawiera pusty element.");
+
+        var child = document.createElementNS(namespace, name);
+        parent.appendChild(child);
+        if (value.getClass().isRecord()) {
+            append(document, child, value, "urn:cloudmigration:common:v2",
+                    false);
+            return;
         }
-        return clazz.getDeclaredConstructor(classes).newInstance(values);
+        child.setTextContent(value.toString());
+    }
+
+    private Object record(Element element, Class<?> target) throws Exception {
+        var components = target.getRecordComponents();
+        var values = new Object[components.length];
+        var parameterTypes = new Class<?>[components.length];
+        for (int index = 0; index < components.length; index++) {
+            var component = components[index];
+            parameterTypes[index] = component.getType();
+            values[index] = componentValue(element, component);
+        }
+        return target.getDeclaredConstructor(parameterTypes)
+                .newInstance(values);
+    }
+
+    private Object componentValue(Element element, RecordComponent component)
+            throws Exception {
+        var children = matchingChildren(element, component.getName());
+        var type = component.getType();
+        if (type == List.class) {
+            var itemType = (Class<?>) ((ParameterizedType) component
+                    .getGenericType()).getActualTypeArguments()[0];
+            var items = new ArrayList<Object>();
+            for (var child : children)
+                items.add(record(child, itemType));
+            return List.copyOf(items);
+        }
+        if (type.isRecord())
+            return children.isEmpty()
+                    ? null
+                    : record(children.getFirst(), type);
+
+        var text = componentText(element, component.getName(), children);
+        if (type == int.class)
+            return Integer.parseInt(text);
+        if (type == boolean.class)
+            return Boolean.parseBoolean(text);
+        return text;
+    }
+
+    private List<Element> matchingChildren(Element parent, String name) {
+        var children = new ArrayList<Element>();
+        for (var node = parent.getFirstChild(); node != null; node = node
+                .getNextSibling()) {
+            if (node instanceof Element child
+                    && name.equals(child.getLocalName()))
+                children.add(child);
+        }
+        return children;
+    }
+
+    private String componentText(Element element, String name,
+            List<Element> children) {
+        if (element.hasAttribute(name))
+            return element.getAttribute(name);
+        if (children.isEmpty())
+            return null;
+        return children.getFirst().getTextContent();
     }
 
     private static String rootMessage(Throwable e) {
