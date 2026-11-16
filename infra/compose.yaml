@@ -1,13 +1,13 @@
 name: cloudmigration
 services:
-  basex:
-    image: ghcr.io/basexdb/basex@sha256:300d9225dd89c06960978c7f08774cb058b7f9a2646cfa790b7df4bb54ed3e52
-    ports:
-      - "127.0.0.1:8984:8080"
-    environment:
-      BASEX_ADMIN_PASSWORD: ${BASEX_PASSWORD:?Set BASEX_PASSWORD in infra/.env}
-    volumes:
-      - basex-data:/opt/basex/data
-    restart: unless-stopped
+    basex:
+        image: ghcr.io/basexdb/basex@sha256:300d9225dd89c06960978c7f08774cb058b7f9a2646cfa790b7df4bb54ed3e52
+        ports:
+            - '127.0.0.1:8984:8080'
+        environment:
+            BASEX_ADMIN_PASSWORD: ${BASEX_PASSWORD:?Set BASEX_PASSWORD in infra/.env}
+        volumes:
+            - basex-data:/opt/basex/data
+        restart: unless-stopped
 volumes:
-  basex-data:
+    basex-data:
