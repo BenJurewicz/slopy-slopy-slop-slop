@@ -40,7 +40,7 @@ test('a rejected submission preserves the editor and unsaved edits', async ({
     ).toHaveValue('Unsaved changes');
 });
 
-test('deleting the only row on the last page still leaves an out-of-range page', async ({
+test('deleting the last row returns to the previous available page', async ({
     page,
 }) => {
     const applications = Array.from({ length: 11 }, (_, index) =>
@@ -64,9 +64,9 @@ test('deleting the only row on the last page still leaves an out-of-range page',
     await page.getByRole('button', { name: 'Usuń', exact: true }).click();
 
     await expect(page.getByRole('status')).toContainText('Szkic usunięty.');
-    await expect(page.getByText('Strona 2 z 1', { exact: true })).toBeVisible();
-    await expect(page.locator('tbody tr')).toHaveCount(0);
+    await expect(page.getByText('Strona 1 z 1', { exact: true })).toBeVisible();
+    await expect(page.locator('tbody tr')).toHaveCount(10);
     await expect(
         page.getByRole('button', { name: 'Poprzednia', exact: true }),
-    ).toBeEnabled();
+    ).toBeDisabled();
 });

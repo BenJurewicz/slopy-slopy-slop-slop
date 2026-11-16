@@ -106,6 +106,13 @@ export class Workspace {
             this.evaluations = evaluations;
             this.decisions = decisions;
             this.queries = queries;
+            this.pageIndex = Math.min(
+                this.pageIndex,
+                Math.max(
+                    0,
+                    Math.ceil(this.filteredApplications.length / 10) - 1,
+                ),
+            );
             this.financialSummary =
                 (
                     await api.executeQuery('summary', {
