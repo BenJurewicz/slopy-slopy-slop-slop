@@ -55,7 +55,7 @@ test('DOCX upload → edit → submit → evaluate → issue → export', async 
     await page.getByRole('button',{name:'Decyzje',exact:true}).click();await page.getByRole('button',{name:'Wydaj decyzje'}).click();await expect(page.getByRole('status').filter({hasText:'Decyzje wydane'})).toBeVisible();
     await expect(page.getByRole('cell',{name:'Wydana',exact:true})).toBeVisible();
     const docxDownload=page.waitForEvent('download');await page.getByRole('link',{name:'DOCX',exact:true}).click();expect((await docxDownload).suggestedFilename()).toMatch(/\.docx$/);
-    await page.getByRole('button',{name:'Raporty XQuery',exact:true}).click();await page.getByRole('button',{name:'Wykonaj XQuery'}).click();await expect(page.getByRole('heading',{name:'Wyniki: 1'})).toBeVisible();
+    await page.getByRole('button',{name:'Raporty XQuery',exact:true}).click();await page.getByRole('button',{name:'Pokaż wyniki'}).click();await expect(page.getByRole('heading',{name:'Wyniki: 1'})).toBeVisible();
     await page.screenshot({path:info.outputPath('desktop.png'),fullPage:true});
     await page.setViewportSize({width:390,height:844});await page.getByRole('button',{name:'Wnioski',exact:true}).click();await page.screenshot({path:info.outputPath('mobile.png'),fullPage:true});
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBeTruthy();
@@ -89,6 +89,7 @@ test('CloudMigration settings allow stage changes but protect existing applicati
     await page.goto('/settings');
     await expect(page.getByRole('heading',{name:'Ustawienia CloudMigration',exact:true})).toBeVisible();
     await expect(page.getByLabel('Budżet konkursu (PLN)',{exact:true})).toBeDisabled();
+    await expect(page.getByText('Budżet i kryteria są zablokowane, ponieważ istnieją już wnioski. Możesz zmienić etap konkursu.')).toHaveCount(0);
     await expect(page.getByRole('button',{name:'Nowy konkurs',exact:true})).toHaveCount(0);
     await expect(page.getByRole('combobox',{name:'Etap',exact:true})).toBeEnabled();
     await page.getByRole('combobox',{name:'Etap',exact:true}).focus();await page.keyboard.press('Tab');
@@ -143,5 +144,32 @@ test('new applications inherit CloudMigration and reject a foreign competition I
     await page.goto('/applications');await page.getByRole('button',{name:'Nowy wniosek',exact:true}).click();
     await expect(page.getByLabel('Tytuł projektu')).toBeVisible();
     await expect(page.getByLabel('Aktywny konkurs')).toHaveCount(0);
+    expect(await(await request.get('/api/applications')).json()).toEqual(before);
+});
+
+
+test('reports explain their purpose and only show the amount filter when relevant',async({page,request})=>{
+    const before=await(await request.get('/api/applications')).json();
+    const catalogue=await(await request.get('/api/queries')).json();
+    await page.goto('/reports');
+    const amount=page.getByLabel('Dotacja większa niż (PLN)',{exact:true});
+    await expect(page.locator('#report-description')).toContainText('Liczba wniosków');
+    await expect(amount).toHaveCount(0);
+    for(const report of catalogue){
+        await page.getByRole('combobox',{name:'Raport',exact:true}).selectOption(report.id);
+        await expect(page.locator('#report-description')).toHaveText(report.description);
+        if(report.id==='over-budget')await expect(amount).toBeVisible();
+        else await expect(amount).toHaveCount(0);
+    }
+    await page.getByRole('combobox',{name:'Raport',exact:true}).selectOption('over-budget');
+    await amount.fill('45000');
+    await expect(page.locator('#report-description')).toContainText('dokładnie tę kwotę są pomijane');
+    await page.getByRole('button',{name:'Pokaż wyniki',exact:true}).click();
+    const count=before.filter((a:{requestedAmount:string})=>Number(a.requestedAmount)>45000).length;
+    await expect(page.getByRole('heading',{name:`Wyniki: ${count}`,exact:true})).toBeVisible();
+    await amount.fill('invalid');
+    await page.getByRole('combobox',{name:'Raport',exact:true}).selectOption('summary');
+    await page.getByRole('button',{name:'Pokaż wyniki',exact:true}).click();
+    await expect(page.getByRole('heading',{name:'Wyniki: 1',exact:true})).toBeVisible();
     expect(await(await request.get('/api/applications')).json()).toEqual(before);
 });

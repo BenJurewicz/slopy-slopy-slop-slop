@@ -66,7 +66,7 @@
 		if(!window.confirm(`Wydać ${draft.length} decyzji? Wydanych decyzji nie można edytować.`))return;
 		await run(()=>api.issueDecisions(draft.map(d=>({id:d.id,revision:d.revision}))),'Decyzje wydane.');preview=null;
 	}
-	async function executeQuery(){busy=true;error='';try{report=await api.executeQuery(queryId,{threshold,offset:0,limit:500});}catch(e){error=(e as Error).message;}finally{busy=false;}}
+	async function executeQuery(){busy=true;error='';try{report=await api.executeQuery(queryId,{threshold:queryId==='over-budget'?threshold:'0',offset:0,limit:500});}catch(e){error=(e as Error).message;}finally{busy=false;}}
 	function title(id:string){return applications.find(a=>a.id===id)?.title??id;}
 	function appState(a:Application){return decs.some(d=>d.applicationId===a.id&&d.state==='ISSUED')?'Decyzja wydana':evals.some(e=>e.applicationId===a.id&&e.state==='FINAL')?'Oceniony':status(a.state);}
 </script>
@@ -98,7 +98,7 @@
 			</dl>
 			{#if !apps.length}<button disabled={busy} onclick={()=>run(()=>api.loadDemo(),'Wczytano dane demonstracyjne.')}>Wczytaj przykład</button>{/if}
 		{:else if view==='settings' && competition}
-			<p class="notice">Po dodaniu wniosku można zmienić tylko etap konkursu.</p>
+			{#if !apps.length}<p class="notice">Ustawienia można zmieniać do utworzenia pierwszego wniosku.</p>{/if}
 			{#key competition.revision}<Editor kind="competition" settingsLocked={apps.length>0} value={{...competition}} save={saveSettings} close={()=>navigate('overview')} {busy}/>{/key}
 			<a href={`/api/documents/competition/${competition.id}/xml`}>Pobierz ustawienia XML</a>
 		{:else if view==='applications'}
@@ -116,7 +116,15 @@
 			<div class="toolbar"><p class="muted">Szkice nie obciążają budżetu. Wydanie decyzji jest nieodwracalne.</p><button class="primary" disabled={busy||!decs.some(d=>d.state==='DRAFT')} onclick={issue}>Wydaj decyzje</button></div>
 			{#if !decs.length}<div class="empty"><h2>Brak decyzji</h2><button class="primary" onclick={()=>navigate('funding')}>Przygotuj finansowanie</button></div>{:else}<section class="panel table-scroll"><table><thead><tr><th>Projekt</th><th>Wynik</th><th>Kwota</th><th>Status</th><th>Działania</th></tr></thead><tbody>{#each decs as d}<tr><td><strong>{title(d.applicationId)}</strong><small>{d.reason}</small></td><td><span class="badge" class:good={d.outcome==='AWARD'}>{status(d.outcome)}</span></td><td>{money(d.amount)}</td><td>{status(d.state)}</td><td><div class="actions"><button class="secondary" onclick={()=>open('decision',d)}>Otwórz</button>{#if d.state==='DRAFT'}<button class="quiet danger" onclick={()=>remove('decision',d)}>Usuń</button>{/if}<a href={`/api/documents/decision/${d.id}/docx`}>DOCX</a><a href={`/api/documents/decision/${d.id}/xml`}>XML</a></div></td></tr>{/each}</tbody></table></section>{/if}
 		{:else if view==='reports'}
-			<section class="panel"><div class="toolbar"><label><span>Zapytanie</span><select bind:value={queryId} onchange={()=>report=null}>{#each queries as q}<option value={q.id}>{q.name}</option>{/each}</select></label><label><span>Próg kwoty (PLN)</span><input bind:value={threshold}/></label><button class="primary" disabled={busy||!competition} onclick={executeQuery}>Wykonaj XQuery</button></div><details><summary>Pokaż kod XQuery</summary><pre class="query-code">{selectedQuery?.source}</pre></details></section>
+			<section class="panel">
+                <label><span>Raport</span><select aria-label="Raport" aria-describedby="report-description" bind:value={queryId} onchange={()=>report=null}>{#each queries as q}<option value={q.id}>{q.name}</option>{/each}</select></label>
+                <p id="report-description">{selectedQuery?.description}</p>
+                <div class="toolbar">
+                    {#if queryId==='over-budget'}<label><span>Dotacja większa niż (PLN)</span><input inputmode="decimal" placeholder="np. 50000" bind:value={threshold} oninput={()=>report=null}/></label>{/if}
+                    <button class="primary" disabled={busy||!competition} onclick={executeQuery}>Pokaż wyniki</button>
+                </div>
+                <details><summary>Pokaż kod XQuery</summary><pre class="query-code">{selectedQuery?.source}</pre></details>
+            </section>
 			{#if report}<section class="panel"><h2>Wyniki: {report.total}</h2>{#if !report.rows.length}<p class="muted">Brak danych dla wybranych parametrów.</p>{:else}<div class="table-scroll"><table><thead><tr>{#each Object.keys(report.rows[0]) as key}<th>{reportLabels[key]??key}</th>{/each}</tr></thead><tbody>{#each report.rows as row}<tr>{#each Object.entries(row) as [key,value]}<td>{['awarded','remaining','remainingAfter','amount','requestedAmount'].includes(key)?money(String(value)):['state','outcome'].includes(key)?status(String(value)):typeof value==='boolean'?(value?'Tak':'Nie'):String(value)}</td>{/each}</tr>{/each}</tbody></table></div>{/if}</section>{/if}
 		{/if}
 	</main>
