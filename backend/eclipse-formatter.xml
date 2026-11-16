@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<profiles version="23">
+    <profile kind="CodeFormatterProfile" name="CloudMigration" version="23">
+        <setting
+            id="org.eclipse.jdt.core.formatter.tabulation.char"
+            value="space"
+        />
+        <setting
+            id="org.eclipse.jdt.core.formatter.tabulation.size"
+            value="4"
+        />
+        <setting
+            id="org.eclipse.jdt.core.formatter.indentation.size"
+            value="4"
+        />
+        <setting id="org.eclipse.jdt.core.formatter.lineSplit" value="80" />
+        <setting
+            id="org.eclipse.jdt.core.formatter.comment.line_length"
+            value="80"
+        />
+        <setting id="org.eclipse.jdt.core.compiler.source" value="23" />
+        <setting id="org.eclipse.jdt.core.compiler.compliance" value="23" />
+        <setting
+            id="org.eclipse.jdt.core.compiler.codegen.targetPlatform"
+            value="23"
+        />
+    </profile>
+</profiles>
