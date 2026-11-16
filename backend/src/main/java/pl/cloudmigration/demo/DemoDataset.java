@@ -51,70 +51,78 @@ public class DemoDataset {
             new Example("10000.00", null, true, true),
             new Example("5000.00", null, true, false));
     public DemoResult replace() {
-        var c = Records.with(Examples.competition(), Map.of("id",
+        var competition = Records.with(Examples.competition(), Map.of("id",
                 UUID.randomUUID().toString(), "name", "CloudMigration"));
-        Rules.competition(c);
+        Rules.competition(competition);
         var batch = new StringBuilder("<replacement>");
-        append(batch, Type.competition, c);
+        append(batch, Type.competition, competition);
         var submittedAt = Instant.now();
-        for (int i = 0; i < EXAMPLES.size(); i++) {
-            var example = EXAMPLES.get(i);
-            String id = UUID.randomUUID().toString();
-            var changes = new HashMap<String, Object>();
-            changes.put("id", id);
-            changes.put("revision", example.submitted() ? 2 : 1);
-            changes.put("competitionId", c.id());
-            changes.put("state", example.submitted() ? "SUBMITTED" : "DRAFT");
-            changes.put("submittedAt",
-                    example.submitted()
-                            ? submittedAt.plusMillis(i).toString()
-                            : null);
-            changes.put("title", String.format("Projekt testowy %02d", i + 1));
-            changes.put("requestedAmount", example.amount());
-            changes.put("number", Workflow.number("WN", id));
-            changes.put("projectNumber", Workflow.number("PR", id));
-            changes.put("projectCost", example.amount());
-            changes.put("ownContribution", "0.00");
-            changes.put("company", new Company("Firma " + (i + 1),
-                    String.format("%010d", 1000000000L + i),
-                    example.eligible() ? "MICRO" : "OTHER", "Anna Kowalska",
-                    "firma" + i + "@example.org",
-                    "ul. Testowa " + (i + 1) + ", 80-001 Gdańsk",
-                    String.format("%09d", 100000000 + i), "Anna Kowalska"));
-            changes.put("budget",
-                    List.of(new BudgetLine("Migracja i konfiguracja", "Usługi",
-                            "1", "projekt", example.amount(),
-                            example.amount())));
-            var a = Records.with(Examples.application(), changes);
-            Rules.application(a, c);
-            append(batch, Type.application, a);
+        for (int index = 0; index < EXAMPLES.size(); index++) {
+            var example = EXAMPLES.get(index);
+            var application = exampleApplication(competition, example, index,
+                    submittedAt);
+            Rules.application(application, competition);
+            append(batch, Type.application, application);
             if (example.score() == null)
                 continue;
-            var points = new ArrayList<Score>();
-            int remaining = example.score();
-            for (var criterion : c.criteria()) {
-                int score = Math.min(criterion.maximum(), remaining);
-                remaining -= score;
-                points.add(new Score(criterion.code(), score,
-                        "Ocena demonstracyjna"));
-            }
-            String evaluationId = UUID.randomUUID().toString();
-            var evaluation = new Evaluation(evaluationId,
-                    example.finalized() ? 2 : 1, a.id(),
-                    example.finalized() ? "FINAL" : "DRAFT", "Jan Nowak",
-                    LocalDate.now().toString(), example.eligible(),
-                    example.eligible()
-                            ? "Warunki spełnione."
-                            : "Firma nie jest mikro ani małym przedsiębiorstwem.",
-                    points, example.score(),
-                    Workflow.number("OC", evaluationId));
-            Rules.evaluation(evaluation, a, c);
+            var evaluation = exampleEvaluation(competition, application,
+                    example);
+            Rules.evaluation(evaluation, application, competition);
             append(batch, Type.evaluation, evaluation);
         }
         batch.append("</replacement>");
         client.execute(client.resource("replace-demo"),
                 Map.of("batch", batch.toString()));
-        return new DemoResult(c.id(), EXAMPLES.size());
+        return new DemoResult(competition.id(), EXAMPLES.size());
+    }
+
+    private Application exampleApplication(Competition competition,
+            Example example, int index, Instant submittedAt) {
+        String id = UUID.randomUUID().toString();
+        var changes = new HashMap<String, Object>();
+        changes.put("id", id);
+        changes.put("revision", example.submitted() ? 2 : 1);
+        changes.put("competitionId", competition.id());
+        changes.put("state", example.submitted() ? "SUBMITTED" : "DRAFT");
+        changes.put("submittedAt",
+                example.submitted()
+                        ? submittedAt.plusMillis(index).toString()
+                        : null);
+        changes.put("title", String.format("Projekt testowy %02d", index + 1));
+        changes.put("requestedAmount", example.amount());
+        changes.put("number", Workflow.number("WN", id));
+        changes.put("projectNumber", Workflow.number("PR", id));
+        changes.put("projectCost", example.amount());
+        changes.put("ownContribution", "0.00");
+        changes.put("company", new Company("Firma " + (index + 1),
+                String.format("%010d", 1000000000L + index),
+                example.eligible() ? "MICRO" : "OTHER", "Anna Kowalska",
+                "firma" + index + "@example.org",
+                "ul. Testowa " + (index + 1) + ", 80-001 Gdańsk",
+                String.format("%09d", 100000000 + index), "Anna Kowalska"));
+        changes.put("budget", List.of(new BudgetLine("Migracja i konfiguracja",
+                "Usługi", "1", "projekt", example.amount(), example.amount())));
+        return Records.with(Examples.application(), changes);
+    }
+
+    private Evaluation exampleEvaluation(Competition competition,
+            Application application, Example example) {
+        var points = new ArrayList<Score>();
+        int remaining = example.score();
+        for (var criterion : competition.criteria()) {
+            int score = Math.min(criterion.maximum(), remaining);
+            remaining -= score;
+            points.add(
+                    new Score(criterion.code(), score, "Ocena demonstracyjna"));
+        }
+        String evaluationId = UUID.randomUUID().toString();
+        return new Evaluation(evaluationId, example.finalized() ? 2 : 1,
+                application.id(), example.finalized() ? "FINAL" : "DRAFT",
+                "Jan Nowak", LocalDate.now().toString(), example.eligible(),
+                example.eligible()
+                        ? "Warunki spełnione."
+                        : "Firma nie jest mikro ani małym przedsiębiorstwem.",
+                points, example.score(), Workflow.number("OC", evaluationId));
     }
 
     public void clear() {
