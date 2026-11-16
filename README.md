@@ -19,41 +19,41 @@ Kolejne buildy backendu mogą działać z `--offline`. Nie jest używany Maven.
 1. W `infra/` skopiuj `.env.example` do `.env` i ustaw własne `BASEX_PASSWORD`.
 2. Uruchom bazę:
 
-   ```sh
-   cd infra
-   docker compose pull
-   docker compose up -d --wait
-   cd ..
-   python3 infra/scripts/init-db.py
-   ```
+    ```sh
+    cd infra
+    docker compose pull
+    docker compose up -d --wait
+    cd ..
+    python3 infra/scripts/init-db.py
+    ```
 
-   Inicjalizacja tworzy bazy `cloudmigration` i `cloudmigration_tests` oraz konto
-   aplikacji z uprawnieniami tylko do tych baz. Zapisuje prywatne dane w
-   `backend/.env`. Nie usuwa istniejących dokumentów; można ją powtórzyć.
+    Inicjalizacja tworzy bazy `cloudmigration` i `cloudmigration_tests` oraz konto
+    aplikacji z uprawnieniami tylko do tych baz. Zapisuje prywatne dane w
+    `backend/.env`. Nie usuwa istniejących dokumentów; można ją powtórzyć.
 
 3. Zainstaluj frontend i zbuduj aplikację:
 
-   ```sh
-   cd frontend
-   pnpm install --frozen-lockfile
-   cd ..
-   export JAVA_HOME=$(/usr/libexec/java_home -v 23) # macOS; gdzie indziej ustaw ścieżkę do JDK 23
-   ./scripts/build.sh
-   ```
+    ```sh
+    cd frontend
+    pnpm install --frozen-lockfile
+    cd ..
+    export JAVA_HOME=$(/usr/libexec/java_home -v 23) # macOS; gdzie indziej ustaw ścieżkę do JDK 23
+    ./scripts/build.sh
+    ```
 
-   Przy pierwszym buildzie backendu użyj `cd backend && ./gradlew test bootJar`
-   bez `--offline`, aby pobrać zależności Gradle. Frontend musi być wcześniej
-   zbudowany. Po pobraniu zależności `scripts/build.sh` działa offline dla Gradle.
+    Przy pierwszym buildzie backendu użyj `cd backend && ./gradlew test bootJar`
+    bez `--offline`, aby pobrać zależności Gradle. Frontend musi być wcześniej
+    zbudowany. Po pobraniu zależności `scripts/build.sh` działa offline dla Gradle.
 
 4. Uruchom pakiet z katalogu `backend` (stąd odczytywany jest `.env`):
 
-   ```sh
-   cd backend
-   java -jar build/libs/cloudmigration-backend-0.0.1-SNAPSHOT.jar
-   ```
+    ```sh
+    cd backend
+    java -jar build/libs/cloudmigration-backend-0.0.1-SNAPSHOT.jar
+    ```
 
-   Aplikacja: <http://127.0.0.1:8080/>. Swagger: <http://127.0.0.1:8080/swagger-ui.html>.
-   Node.js nie jest potrzebny do serwowania gotowej aplikacji.
+    Aplikacja: <http://127.0.0.1:8080/>. Swagger: <http://127.0.0.1:8080/swagger-ui.html>.
+    Node.js nie jest potrzebny do serwowania gotowej aplikacji.
 
 5. Konfiguracja jedynego konkursu **CloudMigration** powstaje automatycznie.
    W **Ustawienia** zmień budżet, limit, próg, kryteria i etap. Po dodaniu pierwszego

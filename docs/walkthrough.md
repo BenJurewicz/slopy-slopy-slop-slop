@@ -72,15 +72,15 @@ Zestaw demonstracyjny zawiera:
 - 1 szkic wniosku do edycji i złożenia.
 - Przy domyślnym budżecie 250 000 PLN: 13 pełnych dotacji i 4 odmowy.
 
-| Projekty testowe | Wynik przy domyślnym budżecie |
-|---|---|
-| 01-10, 12, 13, 15 | Dotacja |
-| 11, 14 | Brak środków; kolejne mniejsze projekty otrzymują dotację |
-| 16 | Poniżej progu punktowego |
-| 17 | Niekwalifikowalna firma |
-| 18 | Wypełniony szkic oceny, gotowy do zatwierdzenia |
-| 19 | Złożony, bez oceny |
-| 20 | Szkic wniosku |
+| Projekty testowe  | Wynik przy domyślnym budżecie                             |
+| ----------------- | --------------------------------------------------------- |
+| 01-10, 12, 13, 15 | Dotacja                                                   |
+| 11, 14            | Brak środków; kolejne mniejsze projekty otrzymują dotację |
+| 16                | Poniżej progu punktowego                                  |
+| 17                | Niekwalifikowalna firma                                   |
+| 18                | Wypełniony szkic oceny, gotowy do zatwierdzenia           |
+| 19                | Złożony, bez oceny                                        |
+| 20                | Szkic wniosku                                             |
 
 Projekt 18 wymaga tylko **Zatwierdź ocenę** w widoku **Oceny**.
 Projekt 19 pozostaje bez oceny i można go ocenić przyciskiem **Oceń**.
