@@ -15,6 +15,14 @@
         />
         <setting id="org.eclipse.jdt.core.formatter.lineSplit" value="80" />
         <setting
+            id="org.eclipse.jdt.core.formatter.blank_lines_before_method"
+            value="1"
+        />
+        <setting
+            id="org.eclipse.jdt.core.formatter.blank_lines_before_member_type"
+            value="1"
+        />
+        <setting
             id="org.eclipse.jdt.core.formatter.comment.line_length"
             value="80"
         />

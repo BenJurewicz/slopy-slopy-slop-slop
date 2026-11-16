@@ -20,6 +20,7 @@ public final class Examples {
                         new Criterion("team", "Harmonogram i zespół", 20),
                         new Criterion("budget", "Uzasadnienie budżetu", 10)));
     }
+
     public static Application application() {
         return new Application(APPLICATION, 1, COMPETITION, "DRAFT", null,
                 new Company("Biuro Rachunkowe Żółw", "1234567890", "MICRO",
@@ -41,6 +42,7 @@ public final class Examples {
                 "WN/2026/DEMO01", "PR/2026/DEMO01", "2026-11-01", "2026-12-31",
                 "50000.00", "0.00");
     }
+
     public static Evaluation evaluation() {
         return new Evaluation(EVALUATION, 1, APPLICATION, "DRAFT", "Jan Nowak",
                 "2026-10-12", true, "Spełnia kryteria",
@@ -51,6 +53,7 @@ public final class Examples {
                         new Score("budget", 10, "Uzasadniony")),
                 80, "OC/2026/DEMO01");
     }
+
     public static Decision decision() {
         return new Decision("00000000-0000-0000-0000-000000000004", 1,
                 APPLICATION, EVALUATION, "DRAFT", "2026-10-12", "AWARD",

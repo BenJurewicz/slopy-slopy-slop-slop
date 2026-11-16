@@ -16,6 +16,7 @@ class RulesTest {
                 Rules.total(Examples.application()));
         Rules.application(Examples.application(), Examples.competition());
     }
+
     @Test
     void rejectsPrecisionNegativeValuesAndWrongTotals() {
         assertThrows(AppException.class, () -> Rules.money("1.001"));
@@ -25,6 +26,7 @@ class RulesTest {
                         "h", "10.01", "15.00"))));
         assertThrows(AppException.class, () -> Rules.total(bad));
     }
+
     @Test
     void usesDecimalRounding() {
         Application a = Records.with(Examples.application(),
@@ -32,6 +34,7 @@ class RulesTest {
                         "h", "10.01", "15.02"))));
         assertEquals(new BigDecimal("15.02"), Rules.total(a));
     }
+
     @Test
     void rejectsScheduleAndOverLimit() {
         Application a = Records.with(Examples.application(), Map.of("tasks",
@@ -39,6 +42,7 @@ class RulesTest {
         assertThrows(AppException.class,
                 () -> Rules.application(a, Examples.competition()));
     }
+
     @Test
     void requiresEveryCriterionAndCorrectTotals() {
         Application a = Records.with(Examples.application(), Map.of("state",
@@ -49,6 +53,7 @@ class RulesTest {
         assertThrows(AppException.class,
                 () -> Rules.evaluation(bad, a, Examples.competition()));
     }
+
     @Test
     void rejectsNegativeOverMaximumAndDuplicateScores() {
         var a = Records.with(Examples.application(), Map.of("state",

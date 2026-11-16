@@ -24,6 +24,7 @@ public class EvaluationApi {
     public EvaluationApi(Workflow workflow) {
         this.workflow = workflow;
     }
+
     @Operation(operationId = "listEvaluations")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Operacja wykonana", useReturnTypeSchema = true)
     @GetMapping
@@ -31,12 +32,14 @@ public class EvaluationApi {
         return workflow.repository.list(Type.evaluation).stream()
                 .map(Evaluation.class::cast).toList();
     }
+
     @Operation(operationId = "getEvaluation")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Operacja wykonana", useReturnTypeSchema = true)
     @GetMapping("/{id}")
     public Evaluation get(@PathVariable String id) {
         return workflow.repository.get(Type.evaluation, id, Evaluation.class);
     }
+
     @Operation(operationId = "createEvaluation")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Operacja wykonana", useReturnTypeSchema = true)
     @PostMapping
@@ -44,6 +47,7 @@ public class EvaluationApi {
     public Evaluation create(@RequestBody Evaluation value) {
         return (Evaluation) workflow.create(Type.evaluation, value);
     }
+
     @Operation(operationId = "updateEvaluation")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Operacja wykonana", useReturnTypeSchema = true)
     @PutMapping("/{id}")
@@ -51,6 +55,7 @@ public class EvaluationApi {
             @RequestBody Evaluation value) {
         return (Evaluation) workflow.update(Type.evaluation, id, value);
     }
+
     @Operation(operationId = "deleteEvaluation")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "204", description = "Operacja wykonana")
     @DeleteMapping("/{id}")

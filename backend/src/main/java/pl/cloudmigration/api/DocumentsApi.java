@@ -36,6 +36,7 @@ public class DocumentsApi {
         this.repo = repo;
         this.workflow = workflow;
     }
+
     @Operation(operationId = "downloadTemplate")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Plik do pobrania", content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document", schema = @io.swagger.v3.oas.annotations.media.Schema(type = "string", format = "binary")))
     @GetMapping("/template")
@@ -44,6 +45,7 @@ public class DocumentsApi {
         return download(docx.template(competition), "wniosek-formularz.docx",
                 false);
     }
+
     @Operation(operationId = "downloadApplicationExample")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Wypełniony przykład, nie pusty formularz", content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document", schema = @io.swagger.v3.oas.annotations.media.Schema(type = "string", format = "binary")))
     @GetMapping("/example")
@@ -52,6 +54,7 @@ public class DocumentsApi {
         return download(docx.example(competition), "wniosek-przyklad.docx",
                 false);
     }
+
     @PostMapping(value = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(operationId = "importApplication")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Operacja wykonana", useReturnTypeSchema = true)
@@ -64,6 +67,7 @@ public class DocumentsApi {
         return new ImportPreview(application, List.of(
                 "Dokument odczytany. Zapisz podgląd jako nowy szkic CloudMigration."));
     }
+
     @Operation(operationId = "downloadXml")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Plik do pobrania", content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/xml", schema = @io.swagger.v3.oas.annotations.media.Schema(type = "string", format = "binary")))
     @GetMapping("/{type}/{id}/xml")
@@ -87,6 +91,7 @@ public class DocumentsApi {
         return download(docx.export(kind, document, context(kind, document)),
                 type + "-" + id + ".docx", false);
     }
+
     private DocxDocuments.Context context(Type type, Object document) {
         if (type == Type.competition)
             return new DocxDocuments.Context((Competition) document, null,
@@ -109,6 +114,7 @@ public class DocumentsApi {
                         : null;
         return new DocxDocuments.Context(competition, application, evaluation);
     }
+
     private ResponseEntity<byte[]> download(byte[] value, String name,
             boolean xml) {
         return ResponseEntity.ok()

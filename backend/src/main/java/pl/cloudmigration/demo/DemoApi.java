@@ -19,6 +19,7 @@ public class DemoApi {
     public DemoApi(DemoDataset dataset) {
         this.dataset = dataset;
     }
+
     @Operation(operationId = "loadDemo", summary = "Replace all data with a fresh demo dataset", description = "Deletes current documents and settings, then loads default CloudMigration settings and demo records atomically.")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Dane demonstracyjne wczytane", useReturnTypeSchema = true)
     @PostMapping(value = "/load", consumes = "application/json")
@@ -26,6 +27,7 @@ public class DemoApi {
         requireConfirmation(confirmation);
         return dataset.replace();
     }
+
     @Operation(operationId = "resetData", summary = "Delete applications, evaluations and decisions", description = "Keeps CloudMigration settings. This action cannot be undone.")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "204", description = "Dane usunięte")
     @DeleteMapping(consumes = "application/json")
@@ -34,6 +36,7 @@ public class DemoApi {
         requireConfirmation(confirmation);
         dataset.clear();
     }
+
     private void requireConfirmation(Confirmation confirmation) {
         if (confirmation == null || !confirmation.confirmed())
             throw pl.cloudmigration.api.AppException

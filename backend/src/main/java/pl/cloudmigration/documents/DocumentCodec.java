@@ -25,9 +25,11 @@ public class DocumentCodec {
         Type(Class<?> dto) {
             this.dto = dto;
         }
+
         public String namespace() {
             return "urn:cloudmigration:" + name() + ":v2";
         }
+
         public String path(String id) {
             return name() + "s/" + id + ".xml";
         }
@@ -57,6 +59,7 @@ public class DocumentCodec {
             throw new IllegalStateException("Cannot load document schemas", e);
         }
     }
+
     public static Document parse(byte[] xml) throws Exception {
         var factory = DocumentBuilderFactory.newInstance();
         factory.setNamespaceAware(true);
@@ -74,12 +77,14 @@ public class DocumentCodec {
         return factory.newDocumentBuilder()
                 .parse(new ByteArrayInputStream(xml));
     }
+
     private void validate(Type type, Document document) throws Exception {
         var validator = schemas.get(type).newValidator();
         validator.setProperty(XMLConstants.ACCESS_EXTERNAL_DTD, "");
         validator.setProperty(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
         validator.validate(new DOMSource(document));
     }
+
     public Object readGenerated(Type type, byte[] xml) {
         try {
             var document = parse(xml);
@@ -99,6 +104,7 @@ public class DocumentCodec {
                     "XML nie spełnia schematu: " + rootMessage(e));
         }
     }
+
     public String writeGenerated(Type type, Object model) {
         try {
             var writer = context.createMarshaller();
@@ -115,6 +121,7 @@ public class DocumentCodec {
                     .invalid("Nie można zapisać XML: " + rootMessage(e));
         }
     }
+
     public String encode(Type type, Object dto) {
         try {
             var f = DocumentBuilderFactory.newInstance();
@@ -132,6 +139,7 @@ public class DocumentCodec {
                     .invalid("Nieprawidłowe dane dokumentu: " + rootMessage(e));
         }
     }
+
     public <T> T decode(Type type, String xml, Class<T> target) {
         try {
             var valid = writeGenerated(type, readGenerated(type,
@@ -146,6 +154,7 @@ public class DocumentCodec {
                     .invalid("Nie można odczytać dokumentu: " + rootMessage(e));
         }
     }
+
     private void append(Document doc, Element parent, Object value, String ns,
             boolean root) throws Exception {
         for (var field : value.getClass().getRecordComponents()) {
@@ -171,6 +180,7 @@ public class DocumentCodec {
             }
         }
     }
+
     private Object record(Element element, Class<?> clazz) throws Exception {
         var components = clazz.getRecordComponents();
         var values = new Object[components.length];
@@ -210,6 +220,7 @@ public class DocumentCodec {
         }
         return clazz.getDeclaredConstructor(classes).newInstance(values);
     }
+
     private static String rootMessage(Throwable e) {
         while (e.getCause() != null)
             e = e.getCause();
@@ -220,45 +231,61 @@ public class DocumentCodec {
         SchemaInput(InputStream s) {
             stream = s;
         }
+
         public Reader getCharacterStream() {
             return null;
         }
+
         public void setCharacterStream(Reader r) {
         }
+
         public InputStream getByteStream() {
             return stream;
         }
+
         public void setByteStream(InputStream s) {
             stream = s;
         }
+
         public String getStringData() {
             return null;
         }
+
         public void setStringData(String s) {
         }
+
         public String getSystemId() {
             return "common.xsd";
         }
+
         public void setSystemId(String s) {
         }
+
         public String getPublicId() {
             return null;
         }
+
         public void setPublicId(String s) {
         }
+
         public String getBaseURI() {
             return null;
         }
+
         public void setBaseURI(String s) {
         }
+
         public String getEncoding() {
             return "UTF-8";
         }
+
         public void setEncoding(String s) {
         }
+
         public boolean getCertifiedText() {
             return false;
         }
+
         public void setCertifiedText(boolean b) {
         }
     }

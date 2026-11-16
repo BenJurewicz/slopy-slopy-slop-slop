@@ -17,6 +17,7 @@ class ApiContractTest {
                 .newBuilder(URI.create("http://127.0.0.1:" + port + path)).GET()
                 .build(), HttpResponse.BodyHandlers.ofString());
     }
+
     @Test
     void databaseUnavailableIsSanitized503() throws Exception {
         var response = get("/api/applications");
@@ -24,6 +25,7 @@ class ApiContractTest {
         assertTrue(response.body().contains("DATABASE"));
         assertFalse(response.body().contains("BASEX_PASSWORD"));
     }
+
     @Test
     void unknownApiAndAssetAre404NotSpaOr500() throws Exception {
         for (String path : new String[]{"/api/not-an-endpoint",
@@ -34,6 +36,7 @@ class ApiContractTest {
             assertFalse(response.body().contains("<!doctype"));
         }
     }
+
     @Test
     void competitionCollectionAndCreationAreNotAvailable() throws Exception {
         assertEquals(404, get("/api/competitions").statusCode());
@@ -47,6 +50,7 @@ class ApiContractTest {
         }
         assertEquals(404, get("/competitions").statusCode());
     }
+
     @Test
     void malformedJsonIs400() throws Exception {
         var response = client.send(
@@ -60,6 +64,7 @@ class ApiContractTest {
         assertEquals(400, response.statusCode());
         assertTrue(response.body().contains("REQUEST"));
     }
+
     @Test
     void budgetCalculationUsesDecimalArithmetic() throws Exception {
         var body = "[{\"description\":\"Test\",\"category\":\"Usługi\",\"quantity\":\"1.5\",\"unit\":\"h\",\"unitCost\":\"10.01\",\"total\":\"0.00\"}]";
@@ -72,6 +77,7 @@ class ApiContractTest {
         assertEquals(200, response.statusCode());
         assertTrue(response.body().contains("15.02"));
     }
+
     @Test
     void projectContributionIsCalculatedOnServerAndOverRequestedFundingRejected()
             throws Exception {
@@ -94,6 +100,7 @@ class ApiContractTest {
                 HttpResponse.BodyHandlers.ofString());
         assertEquals(422, invalid.statusCode());
     }
+
     @Test
     void destructiveDemoActionsRequireJsonConfirmationBeforeAccessingDatabase()
             throws Exception {
@@ -118,6 +125,7 @@ class ApiContractTest {
             assertEquals(415, form.statusCode());
         }
     }
+
     @Test
     void reportCatalogueExplainsEveryReportWithoutDatabaseAccess()
             throws Exception {
@@ -137,6 +145,7 @@ class ApiContractTest {
         assertTrue(response.body()
                 .contains("Raport nie tworzy ani nie wydaje decyzji"));
     }
+
     @Test
     void openApiDocumentsSuccessAndErrorResponseSchemas() throws Exception {
         var response = get("/v3/api-docs");
@@ -163,11 +172,13 @@ class ApiContractTest {
                 "/api/documents/competition/00000000-0000-0000-0000-000000000001/docx")
                 .statusCode());
     }
+
     @Test
     void documentDownloadsUseCloudMigrationWithoutASelector() throws Exception {
         assertEquals(503, get("/api/documents/template").statusCode());
         assertEquals(503, get("/api/documents/example").statusCode());
     }
+
     @Test
     void importResolvesCloudMigrationWithoutACompetitionParameter()
             throws Exception {

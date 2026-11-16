@@ -24,6 +24,7 @@ public class BaseXClient {
         this.auth = "Basic " + Base64.getEncoder().encodeToString(
                 (user + ":" + password).getBytes(StandardCharsets.UTF_8));
     }
+
     public String resource(String name) {
         try (var input = getClass()
                 .getResourceAsStream("/xquery/" + name + ".xq")) {
@@ -34,6 +35,7 @@ public class BaseXClient {
             throw new IllegalStateException(e);
         }
     }
+
     public String execute(String source, Map<String, String> values) {
         var body = new StringBuilder(
                 "<query xmlns=\"http://basex.org/rest\"><text>")
@@ -83,6 +85,7 @@ public class BaseXClient {
                     "Nie można połączyć się z bazą danych.");
         }
     }
+
     private static String escape(String value) {
         return value.replace("&", "&amp;").replace("<", "&lt;")
                 .replace("\"", "&quot;").replace("\r", "&#13;")

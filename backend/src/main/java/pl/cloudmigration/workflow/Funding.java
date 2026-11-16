@@ -16,8 +16,10 @@ public class Funding {
             String requestedAmount, String outcome, String reason,
             String existingDecisionId, boolean budgetAllows) {
     }
+
     public record Preview(String available, List<Allocation> rows) {
     }
+
     public record IssueEntry(String id, int revision) {
     }
     private final DocumentRepository repo;
@@ -29,6 +31,7 @@ public class Funding {
         this.client = client;
         this.workflow = workflow;
     }
+
     public Preview preview() {
         var c = workflow.competition();
         var competitionId = c.id();
@@ -85,6 +88,7 @@ public class Funding {
         }
         return new Preview(initial.toPlainString(), List.copyOf(rows));
     }
+
     public List<Decision> prepare() {
         var rows = preview().rows();
         var results = new ArrayList<Decision>();
@@ -105,6 +109,7 @@ public class Funding {
         }
         return results;
     }
+
     public List<Decision> issue(List<IssueEntry> entries) {
         if (entries == null || entries.isEmpty())
             throw AppException.invalid("Wybierz decyzje do wydania.");

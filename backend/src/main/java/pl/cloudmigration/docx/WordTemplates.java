@@ -40,6 +40,7 @@ final class WordTemplates {
             ((Element) textControls.item(i)).setAttributeNS(W, "w:multiLine",
                     "1");
     }
+
     void fill(Map<String, String> values) {
         values.forEach((key, value) -> {
             if (value != null)
@@ -47,6 +48,7 @@ final class WordTemplates {
                     write(control, value);
         });
     }
+
     void repeat(String tag, List<Map<String, String>> items) {
         var groups = controls(root, tag);
         if (groups.size() != 1)
@@ -64,9 +66,11 @@ final class WordTemplates {
         }
         parent.removeChild(original);
     }
+
     private Element el(String name) {
         return xml.createElementNS(W, "w:" + name);
     }
+
     private void write(Element control, String value) {
         var body = child(control, "sdtContent");
         var oldCell = child(body, "tc");
@@ -116,9 +120,11 @@ final class WordTemplates {
         if (placeholder != null)
             properties.removeChild(placeholder);
     }
+
     void replace(String from, String to) {
         replaceIn(root, from, to);
     }
+
     private void replaceIn(Element scope, String from, String to) {
         var paragraphs = new ArrayList<Element>();
         if ("p".equals(scope.getLocalName()))
@@ -154,6 +160,7 @@ final class WordTemplates {
             }
         }
     }
+
     static String scoreTag(String code) {
         return switch (code) {
             case "technical" -> "technical_feasibility_score";
@@ -164,6 +171,7 @@ final class WordTemplates {
             default -> "criterion_" + code + "_score";
         };
     }
+
     private Element ancestor(Element element, String name) {
         Node n = element;
         while (n != null) {
@@ -174,14 +182,17 @@ final class WordTemplates {
         }
         throw new IllegalStateException("Missing " + name);
     }
+
     private void tag(Element control, String tag) {
         child(child(control, "sdtPr"), "tag").setAttributeNS(W, "w:val", tag);
     }
+
     private void plain(Element element, String value) {
         var texts = element.getElementsByTagNameNS(W, "t");
         for (int i = 0; i < texts.getLength(); i++)
             texts.item(i).setTextContent(i == 0 ? value : "");
     }
+
     void scores(List<pl.cloudmigration.documents.Models.Criterion> criteria,
             List<pl.cloudmigration.documents.Models.Score> scores) {
         var points = new HashMap<String, pl.cloudmigration.documents.Models.Score>();
@@ -250,6 +261,7 @@ final class WordTemplates {
             parent.insertBefore(d, end);
         }
     }
+
     void omitFrom(String heading) {
         var body = (Element) root.getElementsByTagNameNS(W, "body").item(0);
         boolean remove = false;
@@ -266,6 +278,7 @@ final class WordTemplates {
             n = next;
         }
     }
+
     void note(String text) {
         var body = (Element) root.getElementsByTagNameNS(W, "body").item(0);
         var p = el("p");
@@ -276,6 +289,7 @@ final class WordTemplates {
         p.appendChild(r);
         body.insertBefore(p, child(body, "sectPr"));
     }
+
     void notice(String value) {
         var body = child(root, "body");
         var p = el("p");
@@ -289,6 +303,7 @@ final class WordTemplates {
         p.appendChild(r);
         body.insertBefore(p, body.getFirstChild());
     }
+
     byte[] save() throws Exception {
         // Word requires unique control identities even after a repeated block
         // is cloned.
@@ -311,6 +326,7 @@ final class WordTemplates {
         pack.save(out);
         return out.toByteArray();
     }
+
     static String serialize(Node node) throws Exception {
         var f = TransformerFactory.newDefaultInstance();
         f.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
@@ -320,11 +336,13 @@ final class WordTemplates {
                 new StreamResult(out));
         return out.toString();
     }
+
     static String text(Element element) {
         var text = new StringBuilder();
         visibleNodes(element, text);
         return text.toString().strip();
     }
+
     static Element child(Element parent, String name) {
         for (var n = parent.getFirstChild(); n != null; n = n.getNextSibling())
             if (n instanceof Element e && W.equals(e.getNamespaceURI())
@@ -332,6 +350,7 @@ final class WordTemplates {
                 return e;
         return null;
     }
+
     static List<Element> controls(Element scope, String key) {
         var found = new ArrayList<Element>();
         var all = scope.getElementsByTagNameNS(W, "sdt");
@@ -344,6 +363,7 @@ final class WordTemplates {
         }
         return found;
     }
+
     static String visible(Element scope) {
         var lines = new ArrayList<String>();
         var paragraphs = scope.getElementsByTagNameNS(W, "p");
@@ -354,6 +374,7 @@ final class WordTemplates {
         }
         return String.join("\n", lines).strip();
     }
+
     private static void visibleNodes(Node node, StringBuilder text) {
         if (node instanceof Element e && W.equals(e.getNamespaceURI())) {
             if (Set.of("del", "moveFrom").contains(e.getLocalName()))
@@ -378,6 +399,7 @@ final class WordTemplates {
                 .getNextSibling())
             visibleNodes(child, text);
     }
+
     static Document upload(byte[] bytes) {
         if (bytes.length > 5 * 1024 * 1024)
             throw new AppException(413, "UPLOAD_SIZE", "Plik przekracza 5 MB.");

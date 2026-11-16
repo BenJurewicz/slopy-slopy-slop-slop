@@ -24,6 +24,7 @@ public class DecisionApi {
     public DecisionApi(Workflow workflow) {
         this.workflow = workflow;
     }
+
     @Operation(operationId = "listDecisions")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Operacja wykonana", useReturnTypeSchema = true)
     @GetMapping
@@ -31,12 +32,14 @@ public class DecisionApi {
         return workflow.repository.list(Type.decision).stream()
                 .map(Decision.class::cast).toList();
     }
+
     @Operation(operationId = "getDecision")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Operacja wykonana", useReturnTypeSchema = true)
     @GetMapping("/{id}")
     public Decision get(@PathVariable String id) {
         return workflow.repository.get(Type.decision, id, Decision.class);
     }
+
     @Operation(operationId = "createDecision")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Operacja wykonana", useReturnTypeSchema = true)
     @PostMapping
@@ -44,6 +47,7 @@ public class DecisionApi {
     public Decision create(@RequestBody Decision value) {
         return (Decision) workflow.create(Type.decision, value);
     }
+
     @Operation(operationId = "updateDecision")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Operacja wykonana", useReturnTypeSchema = true)
     @PutMapping("/{id}")
@@ -51,6 +55,7 @@ public class DecisionApi {
             @RequestBody Decision value) {
         return (Decision) workflow.update(Type.decision, id, value);
     }
+
     @Operation(operationId = "deleteDecision")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "204", description = "Operacja wykonana")
     @DeleteMapping("/{id}")

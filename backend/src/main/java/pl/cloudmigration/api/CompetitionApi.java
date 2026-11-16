@@ -20,12 +20,14 @@ public class CompetitionApi {
     public CompetitionApi(Workflow workflow) {
         this.workflow = workflow;
     }
+
     @Operation(operationId = "getCompetition")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Ustawienia CloudMigration", useReturnTypeSchema = true)
     @GetMapping
     public Competition get() {
         return workflow.competition();
     }
+
     @Operation(operationId = "updateCompetition")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Ustawienia zapisane", useReturnTypeSchema = true)
     @PutMapping

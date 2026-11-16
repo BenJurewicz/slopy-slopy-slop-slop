@@ -24,18 +24,21 @@ public class DocxDocuments {
     public DocxDocuments(DocumentCodec codec) {
         this.codec = codec;
     }
+
     private static Map<String, String> values(Object... pairs) {
         var map = new LinkedHashMap<String, String>();
         for (int i = 0; i < pairs.length; i += 2)
             map.put((String) pairs[i], Objects.toString(pairs[i + 1], ""));
         return map;
     }
+
     private static String money(String value) {
         var f = NumberFormat.getNumberInstance(Locale.forLanguageTag("pl-PL"));
         f.setMinimumFractionDigits(2);
         f.setMaximumFractionDigits(2);
         return f.format(new BigDecimal(value));
     }
+
     private static String size(String size) {
         return switch (size) {
             case "MICRO" -> "Mikroprzedsiębiorstwo";
@@ -43,6 +46,7 @@ public class DocxDocuments {
             default -> "Inna wielkość przedsiębiorstwa";
         };
     }
+
     private static String state(String state) {
         return switch (state) {
             case "DRAFT" -> "Szkic";
@@ -52,12 +56,15 @@ public class DocxDocuments {
             default -> state;
         };
     }
+
     public byte[] template(Competition competition) {
         return application(null, competition);
     }
+
     public byte[] example(Competition competition) {
         return application(Examples.application(), competition);
     }
+
     public byte[] export(Type type, Object value, Context context) {
         try {
             return switch (type) {
@@ -75,6 +82,7 @@ public class DocxDocuments {
                     "Nie można wypełnić dostarczonego dokumentu Word.", e);
         }
     }
+
     private byte[] application(Application a, Competition competition) {
         try {
             var word = new WordTemplates(Type.application);
@@ -130,6 +138,7 @@ public class DocxDocuments {
                     e);
         }
     }
+
     private void infrastructure(WordTemplates word, String key,
             List<Infrastructure> values) {
         word.repeat(key, values.stream()
@@ -137,6 +146,7 @@ public class DocxDocuments {
                         v.provider(), key + "_description", v.description()))
                 .toList());
     }
+
     private byte[] evaluation(Evaluation e, Context context) throws Exception {
         var a = context.application();
         var c = context.competition();
@@ -165,6 +175,7 @@ public class DocxDocuments {
                             : "Ocena końcowa została zatwierdzona. Wniosek nie kwalifikuje się do finansowania.");
         return word.save();
     }
+
     private byte[] decision(Decision d, Context context) throws Exception {
         var a = context.application();
         var e = context.evaluation();
@@ -214,6 +225,7 @@ public class DocxDocuments {
                 : "Status: Szkic. Dokument nie jest wydanym rozstrzygnięciem i nie obciąża budżetu konkursu.");
         return word.save();
     }
+
     public Application importApplication(byte[] bytes, String competitionId) {
         try {
             UUID.fromString(competitionId);
@@ -301,6 +313,7 @@ public class DocxDocuments {
         codec.encode(Type.application, app);
         return app;
     }
+
     private List<Infrastructure> infrastructure(Element root, String key,
             String label) {
         var list = new ArrayList<Infrastructure>();
@@ -312,6 +325,7 @@ public class DocxDocuments {
                             label + ": sposób wykorzystania")));
         return List.copyOf(list);
     }
+
     private List<Element> groups(Element root, String tag, String label) {
         var blocks = controls(root, tag);
         if (blocks.isEmpty())
@@ -332,12 +346,14 @@ public class DocxDocuments {
                     "Uzupełnij co najmniej jedną pozycję: " + label + ".");
         return filled;
     }
+
     private String answer(Element control) {
         String value = text(control).strip();
         return value.isBlank() || value.matches("[.\\s\\u00a0\\u2026]*")
                 ? ""
                 : value;
     }
+
     private String optional(Element root, String key, String label) {
         var fields = controls(root, key);
         if (fields.isEmpty())
@@ -357,12 +373,14 @@ public class DocxDocuments {
             throw AppException.invalid("Powtórzone pole: " + label + ".");
         return result;
     }
+
     private String required(Element root, String key, String label) {
         String value = optional(root, key, label);
         if (value.isBlank())
             throw AppException.invalid("Uzupełnij pole: " + label + ".");
         return value;
     }
+
     private BigDecimal decimal(String value, String label) {
         try {
             var normalized = value.replaceAll("[\\s\\u00a0\\u202f]", "")
@@ -376,6 +394,7 @@ public class DocxDocuments {
                     .invalid("Nieprawidłowa liczba w polu: " + label + ".");
         }
     }
+
     private void checkAmount(Element root, String tag, String label,
             BigDecimal expected) {
         String supplied = optional(root, tag, label);
@@ -384,6 +403,7 @@ public class DocxDocuments {
             throw AppException.invalid(
                     label + " nie zgadza się z przeliczonym budżetem.");
     }
+
     private String businessSize(String value) {
         String normalized = Normalizer.normalize(value, Normalizer.Form.NFD)
                 .replaceAll("\\p{M}", "").toLowerCase(Locale.ROOT).strip();
@@ -395,6 +415,7 @@ public class DocxDocuments {
                     "Wpisz wielkość przedsiębiorstwa: Mikroprzedsiębiorstwo lub Małe przedsiębiorstwo.");
         };
     }
+
     private String inputDate(String value) {
         for (var format : List.of(DateTimeFormatter.ISO_LOCAL_DATE,
                 DateTimeFormatter.ofPattern("dd.MM.uuuu"),

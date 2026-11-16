@@ -25,6 +25,7 @@ class DocumentCodecTest {
             assertEquals(example, codec.decode(type, xml, type.dto));
         }
     }
+
     @Test
     void generatedModelSupportsAccessAndModification() {
         var xml = codec.encode(DocumentCodec.Type.competition,
@@ -39,6 +40,7 @@ class DocumentCodecTest {
                 Models.Competition.class);
         assertEquals("99999.99", result.budget());
     }
+
     @Test
     void generatedModelCreatesNewDocuments() {
         var existing = (pl.cloudmigration.xml.model.Competition) codec
@@ -63,6 +65,7 @@ class DocumentCodecTest {
                         .writeGenerated(DocumentCodec.Type.competition, fresh),
                         Models.Competition.class));
     }
+
     @Test
     void rejectsInvalidAmountAndMissingFields() {
         var xml = codec.encode(DocumentCodec.Type.competition,
@@ -75,6 +78,7 @@ class DocumentCodecTest {
                 () -> codec.readGenerated(DocumentCodec.Type.competition,
                         "<competition/>".getBytes(StandardCharsets.UTF_8)));
     }
+
     @Test
     void rejectsExternalEntitiesAndWrongDocumentType() throws Exception {
         var secret = temp.resolve("secret");
@@ -90,6 +94,7 @@ class DocumentCodecTest {
                                 Examples.competition())
                                 .getBytes(StandardCharsets.UTF_8)));
     }
+
     @Test
     void schemaRejectsDuplicateCriterionCodesAndWhitespaceText() {
         var xml = codec.encode(DocumentCodec.Type.competition,

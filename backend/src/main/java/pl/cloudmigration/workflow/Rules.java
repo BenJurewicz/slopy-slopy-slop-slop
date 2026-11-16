@@ -9,6 +9,7 @@ import pl.cloudmigration.api.AppException;
 public final class Rules {
     private Rules() {
     }
+
     public static BigDecimal money(String value) {
         try {
             if (value == null || value.length() > 64 || value.contains("e")
@@ -23,6 +24,7 @@ public final class Rules {
                     "Kwota musi być nieujemną liczbą z maksymalnie dwoma miejscami po przecinku.");
         }
     }
+
     public static BigDecimal quantity(String value) {
         try {
             if (value == null || value.length() > 64 || value.contains("e")
@@ -37,6 +39,7 @@ public final class Rules {
                     "Ilość musi być dodatnią liczbą z maksymalnie trzema miejscami po przecinku.");
         }
     }
+
     public static BigDecimal total(Application application) {
         require(application.budget() != null && !application.budget().isEmpty(),
                 "Dodaj pozycje budżetu.");
@@ -56,6 +59,7 @@ public final class Rules {
             }
         }).reduce(BigDecimal.ZERO, BigDecimal::add);
     }
+
     public static void competition(Competition c) {
         require(pl.cloudmigration.documents.Models.ELIGIBILITY_RULES
                 .equals(c.eligibilityRules()), "eligibilityRules",
@@ -75,6 +79,7 @@ public final class Rules {
         require(c.threshold() >= 0 && c.threshold() <= maximum,
                 "Nieprawidłowy próg kwalifikacji.");
     }
+
     public static void application(Application a, Competition c) {
         require(a.company().legalId().matches("[0-9]{10}"),
                 "NIP musi zawierać 10 cyfr.");
@@ -114,6 +119,7 @@ public final class Rules {
         if ("SUBMITTED".equals(a.state()))
             require(a.submittedAt() != null, "Brak daty złożenia wniosku.");
     }
+
     public static void evaluation(Evaluation e, Application a, Competition c) {
         require("SUBMITTED".equals(a.state()),
                 "Oceniać można tylko złożony wniosek.");
@@ -139,6 +145,7 @@ public final class Rules {
                 "eligible",
                 "Firma nie spełnia warunku wielkości przedsiębiorstwa.");
     }
+
     public static void decision(Decision d, Application a, Evaluation e,
             Competition c) {
         require(e.applicationId().equals(a.id()) && "FINAL".equals(e.state()),
@@ -155,6 +162,7 @@ public final class Rules {
             require(money(d.amount()).signum() == 0,
                     "Odmowa finansowania musi mieć kwotę zero.");
     }
+
     private static LocalDate date(String value) {
         try {
             return LocalDate.parse(value);
@@ -163,11 +171,13 @@ public final class Rules {
                     "Nieprawidłowa data projektu lub zadania. Użyj RRRR-MM-DD.");
         }
     }
+
     public static void require(boolean condition, String field,
             String message) {
         if (!condition)
             throw AppException.invalid(field, message);
     }
+
     public static void require(boolean condition, String message) {
         if (!condition)
             throw AppException.invalid(message);

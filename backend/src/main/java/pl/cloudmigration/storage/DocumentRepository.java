@@ -15,13 +15,16 @@ public class DocumentRepository {
         this.client = client;
         this.codec = codec;
     }
+
     public Object get(Type type, String id) {
         return codec.decode(type, client.execute(client.resource("get"),
                 Map.of("path", type.path(uuid(id)))), type.dto);
     }
+
     public <T> T get(Type type, String id, Class<T> clazz) {
         return clazz.cast(get(type, id));
     }
+
     public List<Object> list(Type type) {
         try {
             var root = DocumentCodec
@@ -44,16 +47,19 @@ public class DocumentRepository {
             throw new IllegalStateException(e);
         }
     }
+
     public void save(Type type, String id, int expected, Object value) {
         client.execute(client.resource("save"),
                 Map.of("kind", type.name(), "path", type.path(uuid(id)),
                         "expected", Integer.toString(expected), "xml",
                         codec.encode(type, value)));
     }
+
     public void delete(Type type, String id, int revision) {
         client.execute(client.resource("delete"), Map.of("path",
                 type.path(uuid(id)), "expected", Integer.toString(revision)));
     }
+
     private String uuid(String id) {
         try {
             return UUID.fromString(id).toString();

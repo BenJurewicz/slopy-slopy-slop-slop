@@ -22,12 +22,14 @@ public class ReportsApi {
         this.reports = reports;
         this.funding = funding;
     }
+
     @Operation(operationId = "listQueries")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Operacja wykonana", useReturnTypeSchema = true)
     @GetMapping("/queries")
     public List<Reports.Query> queries() {
         return reports.catalogue();
     }
+
     @Operation(operationId = "executeQuery")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Operacja wykonana", useReturnTypeSchema = true)
     @PostMapping("/queries/{id}/execute")
@@ -35,18 +37,21 @@ public class ReportsApi {
             @RequestBody Reports.Parameters parameters) {
         return reports.run(id, parameters);
     }
+
     @Operation(operationId = "previewFunding")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Operacja wykonana", useReturnTypeSchema = true)
     @GetMapping("/funding")
     public Funding.Preview preview() {
         return funding.preview();
     }
+
     @Operation(operationId = "prepareDecisions")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Operacja wykonana", useReturnTypeSchema = true)
     @PostMapping("/funding/prepare")
     public List<Decision> prepare() {
         return funding.prepare();
     }
+
     @Operation(operationId = "issueDecisions")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Operacja wykonana", useReturnTypeSchema = true)
     @PostMapping("/funding/issue")

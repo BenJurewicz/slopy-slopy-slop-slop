@@ -24,6 +24,7 @@ public class ApplicationApi {
     public ApplicationApi(Workflow workflow) {
         this.workflow = workflow;
     }
+
     @Operation(operationId = "listApplications")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Operacja wykonana", useReturnTypeSchema = true)
     @GetMapping
@@ -31,12 +32,14 @@ public class ApplicationApi {
         return workflow.repository.list(Type.application).stream()
                 .map(Application.class::cast).toList();
     }
+
     @Operation(operationId = "getApplication")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Operacja wykonana", useReturnTypeSchema = true)
     @GetMapping("/{id}")
     public Application get(@PathVariable String id) {
         return workflow.repository.get(Type.application, id, Application.class);
     }
+
     @Operation(operationId = "createApplication")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Operacja wykonana", useReturnTypeSchema = true)
     @PostMapping
@@ -44,6 +47,7 @@ public class ApplicationApi {
     public Application create(@RequestBody Application value) {
         return (Application) workflow.create(Type.application, value);
     }
+
     @Operation(operationId = "updateApplication")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Operacja wykonana", useReturnTypeSchema = true)
     @PutMapping("/{id}")
@@ -51,6 +55,7 @@ public class ApplicationApi {
             @RequestBody Application value) {
         return (Application) workflow.update(Type.application, id, value);
     }
+
     @Operation(operationId = "deleteApplication")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "204", description = "Operacja wykonana")
     @DeleteMapping("/{id}")

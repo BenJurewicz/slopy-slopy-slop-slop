@@ -116,9 +116,11 @@ public class DemoDataset {
                 Map.of("batch", batch.toString()));
         return new DemoResult(c.id(), EXAMPLES.size());
     }
+
     public void clear() {
         client.execute(client.resource("reset-data"), Map.of());
     }
+
     private void append(StringBuilder batch, Type type, Object value) {
         String xml = codec.encode(type, value);
         int declaration = xml.indexOf("?>");

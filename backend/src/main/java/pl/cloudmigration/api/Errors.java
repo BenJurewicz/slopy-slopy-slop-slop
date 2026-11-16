@@ -14,11 +14,13 @@ public class Errors {
         return ResponseEntity.status(e.status)
                 .body(new Error(e.code, e.getMessage(), e.details));
     }
+
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     ResponseEntity<Error> upload() {
         return ResponseEntity.status(413).body(new Error("UPLOAD_SIZE",
                 "Plik przekracza dopuszczalny rozmiar.", List.of()));
     }
+
     @ExceptionHandler({
             org.springframework.http.converter.HttpMessageNotReadableException.class,
             org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class})
@@ -26,6 +28,7 @@ public class Errors {
         return ResponseEntity.badRequest().body(new Error("REQUEST",
                 "Nieprawidłowy format danych żądania.", List.of()));
     }
+
     @ExceptionHandler({
             org.springframework.web.servlet.resource.NoResourceFoundException.class,
             org.springframework.web.servlet.NoHandlerFoundException.class})
@@ -33,6 +36,7 @@ public class Errors {
         return ResponseEntity.status(404)
                 .body(new Error("NOT_FOUND", "Zasób nie istnieje.", List.of()));
     }
+
     @ExceptionHandler(org.springframework.web.bind.MissingServletRequestParameterException.class)
     ResponseEntity<Error> missingRequestParameter(
             org.springframework.web.bind.MissingServletRequestParameterException e) {
@@ -40,21 +44,25 @@ public class Errors {
         return ResponseEntity.badRequest()
                 .body(new Error("REQUEST", message, List.of()));
     }
+
     @ExceptionHandler(org.springframework.web.bind.ServletRequestBindingException.class)
     ResponseEntity<Error> missingParameter() {
         return ResponseEntity.badRequest().body(new Error("REQUEST",
                 "Brak wymaganego parametru lub pliku.", List.of()));
     }
+
     @ExceptionHandler(org.springframework.web.HttpRequestMethodNotSupportedException.class)
     ResponseEntity<Error> method() {
         return ResponseEntity.status(405).body(
                 new Error("METHOD", "Metoda nie jest obsługiwana.", List.of()));
     }
+
     @ExceptionHandler(org.springframework.web.HttpMediaTypeNotSupportedException.class)
     ResponseEntity<Error> unsupportedFormat() {
         return ResponseEntity.status(415).body(new Error("FORMAT",
                 "Nieobsługiwany format żądania.", List.of()));
     }
+
     @ExceptionHandler(Exception.class)
     ResponseEntity<Error> internal(Exception e) {
         org.slf4j.LoggerFactory.getLogger(Errors.class)

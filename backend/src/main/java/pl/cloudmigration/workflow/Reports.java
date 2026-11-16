@@ -12,8 +12,10 @@ public class Reports {
     public record Query(String id, String name, String description,
             String source) {
     }
+
     public record Result(int total, List<Map<String, Object>> rows) {
     }
+
     public record Parameters(String threshold, int offset, int limit) {
     }
     private final BaseXClient client;
@@ -53,6 +55,7 @@ public class Reports {
         this.mapper = mapper;
         this.workflow = workflow;
     }
+
     public List<Query> catalogue() {
         return QUERIES.entrySet().stream().sorted(Map.Entry.comparingByKey())
                 .map(e -> new Query(e.getKey(), e.getValue().name(),
@@ -62,6 +65,7 @@ public class Reports {
                                 : "report")))
                 .toList();
     }
+
     public Result run(String id, Parameters p) {
         if (!QUERIES.containsKey(id))
             throw new AppException(404, "NOT_FOUND", "Zapytanie nie istnieje.");

@@ -18,6 +18,7 @@ public class Workflow {
         this.repository = repository;
         this.codec = codec;
     }
+
     /**
      * Preserve the existing XML identity; initialize settings only for an empty
      * database.
@@ -50,6 +51,7 @@ public class Workflow {
             throw conflict;
         }
     }
+
     public Object create(Type type, Object value) {
         if (type == Type.competition
                 && !repository.list(Type.competition).isEmpty())
@@ -81,6 +83,7 @@ public class Workflow {
         repository.save(type, Records.id(document), 0, document);
         return document;
     }
+
     public Object update(Type type, String id, Object value) {
         if (!id.equals(Records.id(value)))
             throw AppException
@@ -107,6 +110,7 @@ public class Workflow {
         }
         return replace(type, id, value);
     }
+
     private Object replace(Type type, String id, Object value) {
         int expected = Records.revision(value);
         var next = normalize(type,
@@ -115,6 +119,7 @@ public class Workflow {
         repository.save(type, id, expected, next);
         return next;
     }
+
     public Application submit(String id, int revision) {
         var current = repository.get(Type.application, id, Application.class);
         requireRevision(current, revision);
@@ -124,6 +129,7 @@ public class Workflow {
                 Records.with(current, Map.of("state", "SUBMITTED",
                         "submittedAt", Instant.now().toString())));
     }
+
     public Evaluation finalizeEvaluation(String id, int revision) {
         var current = repository.get(Type.evaluation, id, Evaluation.class);
         requireRevision(current, revision);
@@ -132,10 +138,12 @@ public class Workflow {
         return (Evaluation) replace(Type.evaluation, id,
                 Records.with(current, Map.of("state", "FINAL")));
     }
+
     public static String number(String prefix, String id) {
         return prefix + "/" + LocalDate.now().getYear() + "/"
                 + id.substring(0, 8).toUpperCase(Locale.ROOT);
     }
+
     private Object normalize(Type type, Object value) {
         if (type != Type.application)
             return value;
@@ -158,6 +166,7 @@ public class Workflow {
             changes.put("projectNumber", number("PR", a.id()));
         return Records.with(a, changes);
     }
+
     public void validate(Type type, Object value) {
         codec.encode(type, value);
         switch (type) {
@@ -182,12 +191,14 @@ public class Workflow {
             }
         }
     }
+
     private Competition configurationFor(Application application) {
         var current = competition();
         Rules.require(current.id().equals(application.competitionId()),
                 "competitionId", "Wniosek musi należeć do CloudMigration.");
         return current;
     }
+
     private void requireRevision(Object value, int revision) {
         if (Records.revision(value) != revision)
             throw AppException.conflict("Dokument zmieniono. Odśwież dane.");

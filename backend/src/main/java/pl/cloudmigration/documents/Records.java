@@ -5,6 +5,7 @@ import java.util.Map;
 public final class Records {
     private Records() {
     }
+
     @SuppressWarnings("unchecked")
     public static <T> T with(T value, Map<String, Object> changes) {
         try {
@@ -23,6 +24,7 @@ public final class Records {
             throw new IllegalStateException(e);
         }
     }
+
     public static String id(Object value) {
         try {
             return (String) value.getClass().getMethod("id").invoke(value);
@@ -30,6 +32,7 @@ public final class Records {
             throw new IllegalStateException(e);
         }
     }
+
     public static int revision(Object value) {
         try {
             return (Integer) value.getClass().getMethod("revision")

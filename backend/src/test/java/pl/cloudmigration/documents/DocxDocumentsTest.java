@@ -26,9 +26,11 @@ class DocxDocumentsTest {
         return documents.export(DocumentCodec.Type.application,
                 Examples.application(), context);
     }
+
     Models.Application read(byte[] bytes) {
         return documents.importApplication(bytes, competitionId);
     }
+
     Map<String, byte[]> entries(byte[] bytes) throws Exception {
         var entries = new LinkedHashMap<String, byte[]>();
         try (var zip = new ZipInputStream(new ByteArrayInputStream(bytes))) {
@@ -38,6 +40,7 @@ class DocxDocumentsTest {
         }
         return entries;
     }
+
     byte[] zip(Map<String, byte[]> entries) throws Exception {
         var out = new ByteArrayOutputStream();
         try (var zip = new ZipOutputStream(out)) {
@@ -49,6 +52,7 @@ class DocxDocumentsTest {
         }
         return out.toByteArray();
     }
+
     byte[] changed(byte[] bytes, java.util.function.Consumer<Document> edit)
             throws Exception {
         var parts = entries(bytes);
@@ -60,6 +64,7 @@ class DocxDocumentsTest {
         parts.put("word/document.xml", out.toByteArray());
         return zip(parts);
     }
+
     Element field(Document xml, String key) {
         var tags = xml.getElementsByTagNameNS(W, "tag");
         for (int i = 0; i < tags.getLength(); i++)
@@ -67,6 +72,7 @@ class DocxDocumentsTest {
                 return (Element) tags.item(i).getParentNode().getParentNode();
         throw new AssertionError("Missing control: " + key);
     }
+
     void set(Document xml, String key, String value) {
         var tags = xml.getElementsByTagNameNS(W, "tag");
         for (int k = 0; k < tags.getLength(); k++)
@@ -79,6 +85,7 @@ class DocxDocumentsTest {
                 texts.item(0).setTextContent(value);
             }
     }
+
     String visible(byte[] bytes) throws Exception {
         var xml = DocumentCodec.parse(entries(bytes).get("word/document.xml"));
         var text = new StringBuilder();
@@ -87,6 +94,7 @@ class DocxDocumentsTest {
             text.append(texts.item(i).getTextContent()).append('\n');
         return text.toString();
     }
+
     @Test
     void rejectsInconsistentMirroredTitleAndFinancialSummaries()
             throws Exception {
@@ -102,6 +110,7 @@ class DocxDocumentsTest {
                     .getMessage().contains("budżetem"));
         }
     }
+
     @Test
     void generatesMissingProjectNumberAndReadsExtraBeneficiaryInformation()
             throws Exception {
@@ -111,6 +120,7 @@ class DocxDocumentsTest {
         assertEquals(Examples.application().company(), app.company());
         assertEquals("0.00", app.ownContribution());
     }
+
     @Test
     void wordResavedBlankFormStillRetainsAllRequiredControls()
             throws Exception {
@@ -121,6 +131,7 @@ class DocxDocumentsTest {
         assertTrue(assertThrows(AppException.class, () -> read(bytes))
                 .getMessage().contains("Beneficjent"));
     }
+
     @Test
     void evaluationUsesActualCustomCriteriaAndRejectDecisionBudgetSnapshot()
             throws Exception {
@@ -148,6 +159,7 @@ class DocxDocumentsTest {
         assertEquals("50\u00A0000,00",
                 field(xml, "down_pay").getTextContent().strip());
     }
+
     @Test
     void rejectsUnboundedNumbersBeforeBudgetArithmetic() throws Exception {
         for (var key : List.of("budget_quantity", "budget_unit_cost",
@@ -158,6 +170,7 @@ class DocxDocumentsTest {
                     .getMessage().contains("liczba"));
         }
     }
+
     void assertData(Models.Application expected, Models.Application actual) {
         assertEquals(expected.company(), actual.company());
         assertEquals(expected.title(), actual.title());
@@ -183,10 +196,12 @@ class DocxDocumentsTest {
         assertEquals(1, actual.revision());
         assertNull(actual.submittedAt());
     }
+
     @Test
     void applicationRoundTripPreservesAllVisibleAnswers() {
         assertData(Examples.application(), read(application()));
     }
+
     @Test
     void importedApplicationUsesSelectedCompetitionNotFileContext() {
         var selected = UUID.randomUUID().toString();
@@ -195,6 +210,7 @@ class DocxDocumentsTest {
         assertNotEquals(Examples.application().competitionId(),
                 actual.competitionId());
     }
+
     @Test
     void blankTemplateHasGuidanceNotSampleDataAndNamesMissingField()
             throws Exception {
@@ -213,6 +229,7 @@ class DocxDocumentsTest {
         assertEquals("11906", page.getAttributeNS(W, "w"));
         assertEquals("16838", page.getAttributeNS(W, "h"));
     }
+
     @Test
     void fillingBlankTemplateImportsAnswersWithoutRemovingPlaceholderFlags()
             throws Exception {
@@ -241,6 +258,7 @@ class DocxDocumentsTest {
                 });
         assertData(Examples.application(), read(filled));
     }
+
     @Test
     void exportsUsePolishLabelsWithoutVisibleTechnicalIdentifiers()
             throws Exception {
@@ -293,6 +311,7 @@ class DocxDocumentsTest {
         assertTrue(decision.contains("Powiązana ocena"));
         assertTrue(decision.contains("Status: Szkic"));
     }
+
     @Test
     void rejectionAndIssuedDecisionWordingReflectActualState()
             throws Exception {
@@ -310,6 +329,7 @@ class DocxDocumentsTest {
         assertTrue(text.contains("przyznaniu"));
         assertFalse(text.contains("Status: Szkic"));
     }
+
     @Test
     void preservesCopiedRowsSplitRunsAndPolishNumbers() throws Exception {
         var original = Records.with(Examples.application(),
@@ -337,6 +357,7 @@ class DocxDocumentsTest {
         });
         assertEquals(2, read(copied).tasks().size());
     }
+
     @Test
     void readsVisibleEditsNotCachedMetadataAndAcceptsMultilineText()
             throws Exception {
@@ -359,6 +380,7 @@ class DocxDocumentsTest {
         assertEquals(Examples.application().requestedAmount(),
                 actual.requestedAmount());
     }
+
     @Test
     void rejectsBudgetMismatchMissingDuplicateControlsAndInvalidDates()
             throws Exception {
@@ -383,6 +405,7 @@ class DocxDocumentsTest {
         assertTrue(assertThrows(AppException.class, () -> read(date))
                 .getMessage().contains("Nieprawidłowa data"));
     }
+
     @Test
     void noLegacyMarkerParserRemains() throws Exception {
         var old = changed(application(), xml -> {
@@ -393,6 +416,7 @@ class DocxDocumentsTest {
         assertTrue(assertThrows(AppException.class, () -> read(old))
                 .getMessage().contains("wcześniejsze formaty"));
     }
+
     @Test
     void rejectsInvalidFilesAndMissingCompetition() {
         assertThrows(AppException.class, () -> read("not a docx".getBytes()));
@@ -401,6 +425,7 @@ class DocxDocumentsTest {
         assertThrows(AppException.class,
                 () -> documents.importApplication(application(), ""));
     }
+
     @Test
     void rejectsExpansionExternalRelationshipsDtdMacrosAndUnsupportedContentType()
             throws Exception {
@@ -425,6 +450,7 @@ class DocxDocumentsTest {
                 .getBytes(StandardCharsets.UTF_8));
         assertThrows(AppException.class, () -> read(zip(parts)));
     }
+
     @Test
     void rejectsAmbiguousZipPathsAndExcessivelyNestedXml() throws Exception {
         var parts = entries(application());
@@ -436,6 +462,7 @@ class DocxDocumentsTest {
         assertThrows(AppException.class,
                 () -> read(zip(Map.of("word/document.xml", deep))));
     }
+
     @Test
     void importsFilledSuppliedFormResavedInMicrosoftWord() throws Exception {
         assertData(Examples.application(),
@@ -444,6 +471,7 @@ class DocxDocumentsTest {
                                 "/docx/word-filled-application.docx")
                         .readAllBytes()));
     }
+
     @Test
     void importsReadableFormEditedAndSavedByMicrosoftWord() throws Exception {
         var actual = read(getClass()

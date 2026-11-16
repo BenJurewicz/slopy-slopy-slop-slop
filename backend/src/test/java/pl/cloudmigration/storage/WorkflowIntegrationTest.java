@@ -42,19 +42,23 @@ class WorkflowIntegrationTest {
         admin.execute("declare variable $db external; db:create($db)",
                 Map.of());
     }
+
     Competition competition() {
         return (Competition) workflow.create(Type.competition,
                 Examples.competition());
     }
+
     Application application(Competition c) {
         return (Application) workflow.create(Type.application, Records
                 .with(Examples.application(), Map.of("competitionId", c.id())));
     }
+
     Evaluation evaluate(Application a) {
         var e = (Evaluation) workflow.create(Type.evaluation, Records
                 .with(Examples.evaluation(), Map.of("applicationId", a.id())));
         return workflow.finalizeEvaluation(e.id(), e.revision());
     }
+
     @Test
     void singletonSettingsPreserveIdentityAndRejectOtherCompetitions() {
         var c = workflow.competition();
@@ -89,6 +93,7 @@ class WorkflowIntegrationTest {
         assertEquals("CLOSED", closed.stage());
         assertEquals(a, workflow.repository.get(Type.application, a.id()));
     }
+
     @Test
     void demoReplacesExistingRecordsAndSettingsWithoutAccumulatingDuplicates() {
         var c = competition();
@@ -119,6 +124,7 @@ class WorkflowIntegrationTest {
                 .noneMatch(app -> firstIds.contains(Records.id(app))));
         assertEquals(1, workflow.repository.list(Type.competition).size());
     }
+
     @Test
     void resetRemovesAllDocumentStatesButKeepsSettings() {
         demo.load(new DemoApi.Confirmation(true));
@@ -135,6 +141,7 @@ class WorkflowIntegrationTest {
         demo.reset(new DemoApi.Confirmation(true));
         assertEquals(c, workflow.competition());
     }
+
     @Test
     void destructiveActionsRejectUnconfirmedRequestsWithoutChangingRecords() {
         demo.load(new DemoApi.Confirmation(true));
@@ -147,6 +154,7 @@ class WorkflowIntegrationTest {
         assertEquals(c, workflow.competition());
         assertEquals(apps, workflow.repository.list(Type.application));
     }
+
     @Test
     void invalidDemoReplacementDoesNotClearExistingRecords() {
         demo.load(new DemoApi.Confirmation(true));
@@ -158,6 +166,7 @@ class WorkflowIntegrationTest {
         assertEquals(c, workflow.competition());
         assertEquals(apps, workflow.repository.list(Type.application));
     }
+
     @Test
     void legacyMultipleCompetitionsAreRejectedWithoutDeletingData() {
         var c = competition();
@@ -172,6 +181,7 @@ class WorkflowIntegrationTest {
         assertEquals(2, workflow.repository.list(Type.competition).size());
         assertEquals(c, workflow.repository.get(Type.competition, c.id()));
     }
+
     @Test
     void concurrentInitializationCreatesExactlyOneConfiguration()
             throws Exception {
@@ -216,6 +226,7 @@ class WorkflowIntegrationTest {
         assertThrows(AppException.class,
                 () -> workflow.repository.get(Type.application, a.id()));
     }
+
     @Test
     void fullWorkflowAndAtomicBudget() {
         var c = competition();
@@ -239,6 +250,7 @@ class WorkflowIntegrationTest {
                 new Reports.Parameters("0", 0, 100));
         assertEquals("50000", summary.rows().getFirst().get("awarded"));
     }
+
     @Test
     void crossDocumentReportsAndAllocationDataset() {
         var result = demo.load(new DemoApi.Confirmation(true));
@@ -294,6 +306,7 @@ class WorkflowIntegrationTest {
         assertEquals("245000", summary.get("awarded"));
         assertEquals("5000", summary.get("remaining"));
     }
+
     @Test
     void demoHasOneEvaluationReadyForApprovalAndOneProjectWithoutAnEvaluation() {
         demo.load(new DemoApi.Confirmation(true));
@@ -386,6 +399,7 @@ class WorkflowIntegrationTest {
         assertEquals("DRAFT", workflow.repository
                 .get(Type.decision, second.id(), Decision.class).state());
     }
+
     @Test
     void staleEntryRollsBackMultiDecisionBatchAndAllocationAgreesWithXQuery() {
         var demoResult = demo.load(new DemoApi.Confirmation(true));
@@ -408,6 +422,7 @@ class WorkflowIntegrationTest {
         drafts.forEach(d -> assertEquals("DRAFT", workflow.repository
                 .get(Type.decision, d.id(), Decision.class).state()));
     }
+
     @Test
     void preventsDuplicateEvaluationsAndFrozenEdits() {
         var c = competition();
