@@ -2,9 +2,14 @@
 
 ## Wyniki
 
-- Backend: **46 testów jednostkowych/HTTP** i **15 testów integracyjnych z BaseX**, bez błędów.
-- Frontend: **9 testów**, sprawdzanie Svelte/TypeScript bez błędów i ostrzeżeń.
-- Przeglądarka: **9 testów** na pakiecie JAR, bez błędów.
+- Backend: **47 testów jednostkowych/HTTP** i **18 testów integracyjnych z BaseX**, bez błędów.
+- Frontend: **10 testów**, sprawdzanie Svelte/TypeScript bez błędów i ostrzeżeń.
+- Przeglądarka: **10 testów** na pakiecie JAR, bez błędów.
+- Dane testowe: obie operacje wymagają potwierdzenia. Anulowanie nie wysyła
+  żądania zmiany danych. Wczytanie dwukrotnie zastępuje dokumenty zamiast je
+  dopisywać, przywraca domyślne ustawienia i usuwa poprzednie decyzje.
+  Reset usuwa również dokumenty końcowe, zachowując ustawienia. Niepoprawny
+  zestaw zastępczy i brak potwierdzenia nie usuwają istniejących danych.
 - `pnpm peers check`: brak konfliktów; TypeScript 6.0.3, Hey API 0.99.0.
 - Czysty build przez `scripts/build.sh`: frontend i wykonywalny JAR z zasobami.
 - Ponowna inicjalizacja bazy: dwa udane wywołania bez utraty dokumentów.

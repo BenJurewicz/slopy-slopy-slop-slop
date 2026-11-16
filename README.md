@@ -58,7 +58,8 @@ Kolejne buildy backendu mogą działać z `--offline`. Nie jest używany Maven.
 5. Konfiguracja jedynego konkursu **CloudMigration** powstaje automatycznie.
    W **Ustawienia** zmień budżet, limit, próg, kryteria i etap. Po dodaniu pierwszego
    wniosku można zmieniać tylko etap. Nie ma wyboru, tworzenia ani usuwania konkursów.
-   Jeśli nie ma jeszcze wniosków, **Przegląd: Wczytaj przykład** dodaje dane demonstracyjne.
+   **Ustawienia > Dane testowe > Wczytaj dane demonstracyjne** po potwierdzeniu
+   usuwa obecne dane i ustawienia, a następnie odtwarza domyślny konkurs oraz dane demo.
 
 ## Rozwój i testy
 

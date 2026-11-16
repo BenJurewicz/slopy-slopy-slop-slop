@@ -49,10 +49,23 @@ aktualizującym XQuery. Błąd dowolnej decyzji wycofuje całą transakcję.
 
 ## Zestaw demonstracyjny
 
-**Przegląd: Wczytaj przykład** działa, gdy nie ma wniosków, ocen ani decyzji.
-Korzysta z istniejących ustawień, bez tworzenia kolejnego konkursu. Wymaga
-otwartego naboru, limitu dotacji co najmniej 60 000 PLN, sumy kryteriów 100
-punktów i progu 60. Tworzy 20 prostych projektów testowych:
+Na dole **Ustawienia**, w sekcji **Dane testowe**, dostępne są dwie operacje.
+Obie wymagają potwierdzenia; anulowanie nie zmienia danych.
+
+**Wczytaj dane demonstracyjne** działa również na niepustej bazie. Pyta:
+"Czy napewno chcesz usunąć obecne dane i wczytać dane demonstracyjne?".
+Po potwierdzeniu zastępuje wszystkie dokumenty i ustawienia świeżym zestawem:
+CloudMigration z domyślnym budżetem 250 000 PLN, limitem 150 000 PLN, progiem 60
+oraz 20 prostymi projektami testowymi. Dokumenty są walidowane przed zapisem,
+a usunięcie starych i zapis nowych odbywają się w jednej transakcji XQuery.
+Błąd nie pozostawia częściowo wyczyszczonej bazy. Ponowne wczytanie nie dodaje
+duplikatów. Nie powstaje kopia zapasowa.
+
+**Usuń wszystkie wnioski, oceny i decyzje** usuwa także złożone wnioski,
+zatwierdzone oceny i wydane decyzje. Zachowuje ustawienia CloudMigration,
+które po usunięciu wniosków można ponownie edytować. Operacji nie można cofnąć.
+
+Zestaw demonstracyjny zawiera:
 
 - 19 złożonych wniosków: 17 z oceną końcową, jeden z oceną do zatwierdzenia
   i jeden bez oceny.
@@ -76,7 +89,8 @@ zaimportuj DOCX, zapisz szkic, złóż wniosek i oceń. Nie jest on częścią 2
 ładowanych automatycznie.
 
 Projekty 02 i 03 mają po 96 punktów, aby sprawdzić rozstrzyganie remisów.
-Loader nie tworzy decyzji. Po ich przygotowaniu i wydaniu przyznane jest
+Loader nie tworzy decyzji. Bez zatwierdzania dodatkowych ocen, po przygotowaniu
+i wydaniu decyzji przyznane jest
 **245 000 PLN**, a pozostałe środki to **5 000 PLN**.
 
 ## Błędy do pokazania
