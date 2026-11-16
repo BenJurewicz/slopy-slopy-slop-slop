@@ -17,6 +17,8 @@
         busy?: boolean;
         settingsLocked?: boolean;
     } = $props();
+    // Live score totals mutate the deep draft; a plain derived clone is not reactive.
+    // eslint-disable-next-line svelte/prefer-writable-derived
     let draft = $state<Data>({});
     $effect(() => {
         draft = structuredClone($state.snapshot(value));
