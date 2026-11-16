@@ -1,13 +1,22 @@
 package pl.cloudmigration.workflow;
 
 import java.math.BigDecimal;
-import java.util.*;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.springframework.stereotype.Service;
-import pl.cloudmigration.documents.*;
-import pl.cloudmigration.documents.Models.*;
-import pl.cloudmigration.documents.DocumentCodec.Type;
-import pl.cloudmigration.storage.*;
 import pl.cloudmigration.api.AppException;
+import pl.cloudmigration.documents.DocumentCodec.Type;
+import pl.cloudmigration.documents.Models.Application;
+import pl.cloudmigration.documents.Models.Competition;
+import pl.cloudmigration.documents.Models.Decision;
+import pl.cloudmigration.documents.Models.Evaluation;
+import pl.cloudmigration.storage.BaseXClient;
+import pl.cloudmigration.storage.DocumentRepository;
 
 @Service
 public class Funding {
@@ -22,109 +31,155 @@ public class Funding {
 
     public record IssueEntry(String id, int revision) {
     }
-    private final DocumentRepository repo;
+
+    private final DocumentRepository repository;
     private final BaseXClient client;
     private final Workflow workflow;
-    public Funding(DocumentRepository repo, BaseXClient client,
+
+    public Funding(DocumentRepository repository, BaseXClient client,
             Workflow workflow) {
-        this.repo = repo;
+        this.repository = repository;
         this.client = client;
         this.workflow = workflow;
     }
 
     public Preview preview() {
-        var c = workflow.competition();
-        var competitionId = c.id();
-        var applications = repo.list(Type.application).stream()
-                .map(Application.class::cast)
-                .filter(a -> a.competitionId().equals(competitionId)).toList();
-        var appById = new HashMap<String, Application>();
-        applications.forEach(a -> appById.put(a.id(), a));
-        var evaluations = repo.list(Type.evaluation).stream()
-                .map(Evaluation.class::cast)
-                .filter(e -> "FINAL".equals(e.state())
-                        && appById.containsKey(e.applicationId()))
-                .sorted(Comparator.comparingInt(Evaluation::total).reversed()
-                        .thenComparing(e -> java.time.Instant.parse(
-                                appById.get(e.applicationId()).submittedAt()))
-                        .thenComparing(Evaluation::applicationId))
-                .toList();
-        var decisions = repo.list(Type.decision).stream()
-                .map(Decision.class::cast)
-                .filter(d -> appById.containsKey(d.applicationId())).toList();
-        var remaining = Rules.money(c.budget())
-                .subtract(decisions.stream()
-                        .filter(d -> "ISSUED".equals(d.state())
-                                && "AWARD".equals(d.outcome()))
-                        .map(d -> Rules.money(d.amount()))
-                        .reduce(BigDecimal.ZERO, BigDecimal::add));
-        var initial = remaining;
+        var competition = workflow.competition();
+        var applications = applicationsById(competition.id());
+        var evaluations = rankedEvaluations(applications);
+        var decisions = competitionDecisions(applications);
+        var available = availableBudget(competition, decisions);
+        var remaining = available;
         var rows = new ArrayList<Allocation>();
-        for (var e : evaluations) {
-            var a = appById.get(e.applicationId());
-            var existing = decisions.stream()
-                    .filter(d -> d.applicationId().equals(a.id())).findFirst()
+
+        for (var evaluation : evaluations) {
+            var application = applications.get(evaluation.applicationId());
+            var existing = decisions.stream().filter(decision -> decision
+                    .applicationId().equals(application.id())).findFirst()
                     .orElse(null);
             if (existing != null && "ISSUED".equals(existing.state()))
                 continue;
-            boolean qualified = e.eligible() && e.total() >= c.threshold();
-            boolean budgetAllows = Rules.money(a.requestedAmount())
+
+            boolean qualified = evaluation.eligible()
+                    && evaluation.total() >= competition.threshold();
+            boolean budgetAllows = Rules.money(application.requestedAmount())
                     .compareTo(remaining) <= 0;
             boolean award = qualified && budgetAllows;
-            String reason = !e.eligible()
-                    ? "Wniosek nie spełnia warunków kwalifikacji."
-                    : !qualified
-                            ? "Wynik poniżej progu kwalifikacji."
-                            : !award
-                                    ? "Brak wystarczających środków."
-                                    : "Projekt zakwalifikowany w kolejności rankingu.";
+            String reason = allocationReason(evaluation.eligible(), qualified,
+                    award);
+
             if (award)
                 remaining = remaining
-                        .subtract(Rules.money(a.requestedAmount()));
-            rows.add(new Allocation(a.id(), e.id(), a.title(), e.total(),
-                    e.eligible(), qualified, a.requestedAmount(),
-                    award ? "AWARD" : "REJECT", reason,
-                    existing == null ? null : existing.id(), budgetAllows));
+                        .subtract(Rules.money(application.requestedAmount()));
+
+            rows.add(new Allocation(application.id(), evaluation.id(),
+                    application.title(), evaluation.total(),
+                    evaluation.eligible(), qualified,
+                    application.requestedAmount(), award ? "AWARD" : "REJECT",
+                    reason, existing == null ? null : existing.id(),
+                    budgetAllows));
         }
-        return new Preview(initial.toPlainString(), List.copyOf(rows));
+
+        return new Preview(available.toPlainString(), List.copyOf(rows));
+    }
+
+    private Map<String, Application> applicationsById(String competitionId) {
+        var applications = repository.list(Type.application).stream()
+                .map(Application.class::cast).filter(application -> application
+                        .competitionId().equals(competitionId))
+                .toList();
+        var byId = new HashMap<String, Application>();
+        applications.forEach(
+                application -> byId.put(application.id(), application));
+        return byId;
+    }
+
+    private List<Evaluation> rankedEvaluations(
+            Map<String, Application> applications) {
+        var ranking = Comparator.comparingInt(Evaluation::total).reversed()
+                .thenComparing(evaluation -> Instant.parse(applications
+                        .get(evaluation.applicationId()).submittedAt()))
+                .thenComparing(Evaluation::applicationId);
+
+        return repository.list(Type.evaluation).stream()
+                .map(Evaluation.class::cast)
+                .filter(evaluation -> "FINAL".equals(evaluation.state())
+                        && applications.containsKey(evaluation.applicationId()))
+                .sorted(ranking).toList();
+    }
+
+    private List<Decision> competitionDecisions(
+            Map<String, Application> applications) {
+        return repository.list(Type.decision).stream().map(Decision.class::cast)
+                .filter(decision -> applications
+                        .containsKey(decision.applicationId()))
+                .toList();
+    }
+
+    private BigDecimal availableBudget(Competition competition,
+            List<Decision> decisions) {
+        var budget = Rules.money(competition.budget());
+        var awarded = decisions.stream()
+                .filter(decision -> "ISSUED".equals(decision.state())
+                        && "AWARD".equals(decision.outcome()))
+                .map(decision -> Rules.money(decision.amount()))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        return budget.subtract(awarded);
+    }
+
+    private String allocationReason(boolean eligible, boolean qualified,
+            boolean award) {
+        if (!eligible)
+            return "Wniosek nie spełnia warunków kwalifikacji.";
+        if (!qualified)
+            return "Wynik poniżej progu kwalifikacji.";
+        if (!award)
+            return "Brak wystarczających środków.";
+        return "Projekt zakwalifikowany w kolejności rankingu.";
     }
 
     public List<Decision> prepare() {
-        var rows = preview().rows();
         var results = new ArrayList<Decision>();
-        for (var row : rows) {
-            if (row.existingDecisionId() != null) {
-                results.add(repo.get(Type.decision, row.existingDecisionId(),
-                        Decision.class));
-                continue;
-            }
-            results.add((Decision) workflow.create(Type.decision,
-                    new Decision(null, 0, row.applicationId(),
-                            row.evaluationId(), "DRAFT",
-                            java.time.LocalDate.now().toString(), row.outcome(),
-                            "AWARD".equals(row.outcome())
-                                    ? row.requestedAmount()
-                                    : "0.00",
-                            "PLN", row.reason(), null, row.budgetAllows())));
-        }
+        for (var allocation : preview().rows())
+            results.add(prepareDecision(allocation));
         return results;
+    }
+
+    private Decision prepareDecision(Allocation allocation) {
+        if (allocation.existingDecisionId() != null)
+            return repository.get(Type.decision,
+                    allocation.existingDecisionId(), Decision.class);
+
+        var draft = new Decision(null, 0, allocation.applicationId(),
+                allocation.evaluationId(), "DRAFT", LocalDate.now().toString(),
+                allocation.outcome(),
+                "AWARD".equals(allocation.outcome())
+                        ? allocation.requestedAmount()
+                        : "0.00",
+                "PLN", allocation.reason(), null, allocation.budgetAllows());
+        return (Decision) workflow.create(Type.decision, draft);
     }
 
     public List<Decision> issue(List<IssueEntry> entries) {
         if (entries == null || entries.isEmpty())
             throw AppException.invalid("Wybierz decyzje do wydania.");
+
+        var batch = issuanceBatch(entries);
+        client.execute(client.resource("issue"), Map.of("batch", batch));
+        return entries.stream().map(entry -> repository.get(Type.decision,
+                entry.id(), Decision.class)).toList();
+    }
+
+    private String issuanceBatch(List<IssueEntry> entries) {
         var xml = new StringBuilder("<batch>");
         for (var entry : entries) {
-            var d = repo.get(Type.decision, entry.id(), Decision.class);
-            workflow.validate(Type.decision, d);
-            xml.append("<entry id=\"").append(d.id()).append("\" revision=\"")
-                    .append(entry.revision()).append("\"/>");
+            var decision = repository.get(Type.decision, entry.id(),
+                    Decision.class);
+            workflow.validate(Type.decision, decision);
+            xml.append("<entry id=\"").append(decision.id())
+                    .append("\" revision=\"").append(entry.revision())
+                    .append("\"/>");
         }
-        xml.append("</batch>");
-        client.execute(client.resource("issue"),
-                Map.of("batch", xml.toString()));
-        return entries.stream()
-                .map(e -> repo.get(Type.decision, e.id(), Decision.class))
-                .toList();
+        return xml.append("</batch>").toString();
     }
 }
