@@ -11,7 +11,8 @@ import pl.cloudmigration.api.AppException;
 
 @Component
 public class BaseXClient {
-    private final String url, auth;
+    private final String url;
+    private final String auth;
     private final HttpClient http = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(3)).build();
     public final String database;
@@ -37,6 +38,29 @@ public class BaseXClient {
     }
 
     public String execute(String source, Map<String, String> values) {
+        var body = queryBody(source, values);
+        try {
+            var request = HttpRequest.newBuilder(URI.create(url))
+                    .timeout(Duration.ofSeconds(15))
+                    .header("Authorization", auth)
+                    .header("Content-Type", "application/xml")
+                    .POST(HttpRequest.BodyPublishers.ofString(body)).build();
+            var response = http.send(request,
+                    HttpResponse.BodyHandlers.ofString());
+            return responseBody(response);
+        } catch (AppException e) {
+            throw e;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new AppException(503, "DATABASE",
+                    "Przerwano połączenie z bazą.");
+        } catch (Exception e) {
+            throw new AppException(503, "DATABASE",
+                    "Nie można połączyć się z bazą danych.");
+        }
+    }
+
+    private String queryBody(String source, Map<String, String> values) {
         var body = new StringBuilder(
                 "<query xmlns=\"http://basex.org/rest\"><text>")
                 .append(escape(source)).append("</text>");
@@ -52,38 +76,22 @@ public class BaseXClient {
         bindings.forEach((key, value) -> body.append("<variable name=\"")
                 .append(escape(key)).append("\" value=\"").append(escape(value))
                 .append("\"/>"));
-        body.append("</query>");
-        try {
-            var req = HttpRequest.newBuilder(URI.create(url))
-                    .timeout(Duration.ofSeconds(15))
-                    .header("Authorization", auth)
-                    .header("Content-Type", "application/xml")
-                    .POST(HttpRequest.BodyPublishers.ofString(body.toString()))
-                    .build();
-            var res = http.send(req, HttpResponse.BodyHandlers.ofString());
-            if (res.statusCode() == 200)
-                return res.body();
-            if (res.body().contains("CM_NOT_FOUND"))
-                throw new AppException(404, "NOT_FOUND",
-                        "Dokument nie istnieje.");
-            if (res.body().contains("CM_CONFLICT"))
-                throw AppException.conflict(
-                        "Dokument zmieniono, jest zablokowany lub narusza powiązania procesu. Odśwież dane.");
-            if (res.body().contains("CM_RULE"))
-                throw AppException.invalid(
-                        "Operacja narusza zasady konkursu lub limit finansowania.");
-            throw new AppException(503, "DATABASE",
-                    "Baza danych jest niedostępna lub nie została skonfigurowana.");
-        } catch (AppException e) {
-            throw e;
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new AppException(503, "DATABASE",
-                    "Przerwano połączenie z bazą.");
-        } catch (Exception e) {
-            throw new AppException(503, "DATABASE",
-                    "Nie można połączyć się z bazą danych.");
-        }
+        return body.append("</query>").toString();
+    }
+
+    private String responseBody(HttpResponse<String> response) {
+        if (response.statusCode() == 200)
+            return response.body();
+        if (response.body().contains("CM_NOT_FOUND"))
+            throw new AppException(404, "NOT_FOUND", "Dokument nie istnieje.");
+        if (response.body().contains("CM_CONFLICT"))
+            throw AppException.conflict(
+                    "Dokument zmieniono, jest zablokowany lub narusza powiązania procesu. Odśwież dane.");
+        if (response.body().contains("CM_RULE"))
+            throw AppException.invalid(
+                    "Operacja narusza zasady konkursu lub limit finansowania.");
+        throw new AppException(503, "DATABASE",
+                "Baza danych jest niedostępna lub nie została skonfigurowana.");
     }
 
     private static String escape(String value) {
