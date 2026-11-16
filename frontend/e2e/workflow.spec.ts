@@ -173,3 +173,52 @@ test('reports explain their purpose and only show the amount filter when relevan
     await expect(page.getByRole('heading',{name:'Wyniki: 1',exact:true})).toBeVisible();
     expect(await(await request.get('/api/applications')).json()).toEqual(before);
 });
+
+
+test('settings data actions confirm replacement and reset without changing data on cancellation', async ({ page, request }) => {
+    const data = async () => ({
+        competition: await (await request.get('/api/competition')).json(),
+        applications: await (await request.get('/api/applications')).json(),
+        evaluations: await (await request.get('/api/evaluations')).json(),
+        decisions: await (await request.get('/api/decisions')).json()
+    });
+    let mutations = 0;
+    page.on('request', req => { if (new URL(req.url()).pathname.startsWith('/api/demo')) mutations++; });
+    await page.goto('/settings');
+    const load = page.getByRole('button', { name: 'Wczytaj dane demonstracyjne', exact: true });
+    const reset = page.getByRole('button', { name: 'Usuń wszystkie wnioski, oceny i decyzje', exact: true });
+    const initial = await data();
+    const cancelLoadDialog = page.waitForEvent('dialog');
+    const cancelLoad = load.click();
+    const cancelled = await cancelLoadDialog;
+    expect(cancelled.message()).toBe('Czy napewno chcesz usunąć obecne dane i wczytać dane demonstracyjne?');
+    await cancelled.dismiss(); await cancelLoad;
+    expect(mutations).toBe(0); expect(await data()).toEqual(initial);
+    for (let i = 0; i < 2; i++) {
+        const previous = await data();
+        const dialogPromise = page.waitForEvent('dialog');
+        const click = load.click(); const dialog = await dialogPromise;
+        await dialog.accept(); await click;
+        await expect(page.getByRole('status')).toContainText('Wczytano dane demonstracyjne.');
+        const loaded = await data();
+        expect(loaded.applications).toHaveLength(20); expect(loaded.evaluations).toHaveLength(18); expect(loaded.decisions).toHaveLength(0);
+        expect(loaded.competition.name).toBe('CloudMigration'); expect(loaded.competition.budget).toBe('250000.00');
+        expect(loaded.applications.every((app: {id: string}) => !previous.applications.some((old: {id: string}) => old.id === app.id))).toBe(true);
+        const ready = loaded.applications.find((app: {title: string}) => app.title === 'Projekt testowy 18');
+        expect(loaded.evaluations.find((evaluation: {applicationId: string}) => evaluation.applicationId === ready.id).state).toBe('DRAFT');
+    }
+    const loaded = await data();
+    const cancelResetDialog = page.waitForEvent('dialog');
+    const cancelReset = reset.click(); const cancelledReset = await cancelResetDialog;
+    expect(cancelledReset.message()).toContain('Ustawienia CloudMigration zostaną zachowane.');
+    await cancelledReset.dismiss(); await cancelReset;
+    expect(mutations).toBe(2); expect(await data()).toEqual(loaded);
+    const resetDialog = page.waitForEvent('dialog');
+    const confirmReset = reset.click(); const confirmed = await resetDialog;
+    await confirmed.accept(); await confirmReset;
+    await expect(page.getByRole('status')).toContainText('Usunięto wszystkie wnioski, oceny i decyzje.');
+    const empty = await data();
+    expect(empty.applications).toHaveLength(0); expect(empty.evaluations).toHaveLength(0); expect(empty.decisions).toHaveLength(0);
+    expect(empty.competition).toEqual(loaded.competition); expect(mutations).toBe(3);
+    await expect(page.getByLabel('Budżet konkursu (PLN)', { exact: true })).toBeEnabled();
+});

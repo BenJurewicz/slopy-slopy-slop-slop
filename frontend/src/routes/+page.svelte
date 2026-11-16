@@ -40,6 +40,14 @@
 	async function run(action:()=>Promise<unknown>,success:string){
 		busy=true;error='';message='';try{await action();await refresh();message=success;}catch(e){error=(e as Error).message;}finally{busy=false;}
 	}
+	async function loadDemo(){
+		if(!window.confirm('Czy napewno chcesz usunąć obecne dane i wczytać dane demonstracyjne?'))return;
+		await run(()=>api.loadDemo(),'Wczytano dane demonstracyjne.');
+	}
+	async function resetData(){
+		if(!window.confirm('Usunąć wszystkie wnioski, oceny i decyzje? Tej operacji nie można cofnąć. Ustawienia CloudMigration zostaną zachowane.'))return;
+		await run(()=>api.resetData(),'Usunięto wszystkie wnioski, oceny i decyzje.');
+	}
 	function open(kind:Kind,value:object){editor={kind,value:structuredClone($state.snapshot(value)) as Data};message='';error='';window.scrollTo({top:0,behavior:'smooth'});}
 	async function save(value:Data){
 		if(!editor)return;busy=true;message='';
@@ -96,11 +104,17 @@
 				<dt>Oceny końcowe</dt><dd>{evals.filter(e=>e.state==='FINAL').length}</dd>
 				<dt>Wydane decyzje</dt><dd>{decs.filter(d=>d.state==='ISSUED').length}</dd>
 			</dl>
-			{#if !apps.length}<button disabled={busy} onclick={()=>run(()=>api.loadDemo(),'Wczytano dane demonstracyjne.')}>Wczytaj przykład</button>{/if}
 		{:else if view==='settings' && competition}
 			{#if !apps.length}<p class="notice">Ustawienia można zmieniać do utworzenia pierwszego wniosku.</p>{/if}
 			{#key competition.revision}<Editor kind="competition" settingsLocked={apps.length>0} value={{...competition}} save={saveSettings} close={()=>navigate('overview')} {busy}/>{/key}
 			<a href={`/api/documents/competition/${competition.id}/xml`}>Pobierz ustawienia XML</a>
+			<section>
+				<h2>Dane testowe</h2>
+				<div class="actions">
+					<button disabled={busy||loading} onclick={loadDemo}>Wczytaj dane demonstracyjne</button>
+					<button class="danger" disabled={busy||loading} onclick={resetData}>Usuń wszystkie wnioski, oceny i decyzje</button>
+				</div>
+			</section>
 		{:else if view==='applications'}
 			<div class="toolbar"><div class="actions"><a class="secondary" href="/api/documents/template">Pobierz pusty formularz DOCX</a><a class="secondary" href="/api/documents/example">Zobacz wypełniony przykład</a><label class="secondary file-picker"><span>Importuj DOCX</span><input aria-label="Importuj DOCX" type="file" accept=".docx" disabled={busy||!competition} onchange={upload}/></label></div><button class="primary" disabled={!competition} onclick={()=>open('application',newApplication())}>Nowy wniosek</button></div>
 
