@@ -49,13 +49,13 @@ public class DocumentsApi {
     }
     private final DocumentCodec codec;
     private final DocxDocuments docx;
-    private final DocumentRepository repo;
+    private final DocumentRepository repository;
     private final Workflow workflow;
     public DocumentsApi(DocumentCodec codec, DocxDocuments docx,
-            DocumentRepository repo, Workflow workflow) {
+            DocumentRepository repository, Workflow workflow) {
         this.codec = codec;
         this.docx = docx;
-        this.repo = repo;
+        this.repository = repository;
         this.workflow = workflow;
     }
 
@@ -107,7 +107,7 @@ public class DocumentsApi {
     public ResponseEntity<byte[]> xml(@PathVariable Type type,
             @PathVariable String id) {
         return download(
-                codec.encode(type, repo.get(type, id))
+                codec.encode(type, repository.get(type, id))
                         .getBytes(java.nio.charset.StandardCharsets.UTF_8),
                 type + "-" + id + ".xml", true);
     }
@@ -123,7 +123,7 @@ public class DocumentsApi {
     public ResponseEntity<byte[]> word(@PathVariable WordType type,
             @PathVariable String id) {
         var kind = Type.valueOf(type.name());
-        var document = repo.get(kind, id);
+        var document = repository.get(kind, id);
         return download(docx.export(kind, document, context(kind, document)),
                 type + "-" + id + ".docx", false);
     }
@@ -132,23 +132,30 @@ public class DocumentsApi {
         if (type == Type.competition)
             return new DocxDocuments.Context((Competition) document, null,
                     null);
-        var application = type == Type.application
-                ? (Application) document
-                : repo.get(Type.application,
-                        type == Type.evaluation
-                                ? ((Evaluation) document).applicationId()
-                                : ((Decision) document).applicationId(),
-                        Application.class);
-        var competition = repo.get(Type.competition,
+        var application = applicationFor(type, document);
+        var competition = repository.get(Type.competition,
                 application.competitionId(), Competition.class);
-        var evaluation = type == Type.evaluation
-                ? (Evaluation) document
-                : type == Type.decision
-                        ? repo.get(Type.evaluation,
-                                ((Decision) document).evaluationId(),
-                                Evaluation.class)
-                        : null;
+        var evaluation = evaluationFor(type, document);
         return new DocxDocuments.Context(competition, application, evaluation);
+    }
+
+    private Application applicationFor(Type type, Object document) {
+        if (type == Type.application)
+            return (Application) document;
+        var applicationId = type == Type.evaluation
+                ? ((Evaluation) document).applicationId()
+                : ((Decision) document).applicationId();
+        return repository.get(Type.application, applicationId,
+                Application.class);
+    }
+
+    private Evaluation evaluationFor(Type type, Object document) {
+        if (type == Type.evaluation)
+            return (Evaluation) document;
+        if (type == Type.decision)
+            return repository.get(Type.evaluation,
+                    ((Decision) document).evaluationId(), Evaluation.class);
+        return null;
     }
 
     private ResponseEntity<byte[]> download(byte[] value, String name,
