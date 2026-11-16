@@ -13,51 +13,111 @@ import pl.cloudmigration.storage.DocumentRepository;
 import pl.cloudmigration.workflow.Workflow;
 
 @io.swagger.v3.oas.annotations.responses.ApiResponses({
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode="400",description="Nieprawidłowe żądanie",content=@io.swagger.v3.oas.annotations.media.Content(mediaType="application/json",schema=@io.swagger.v3.oas.annotations.media.Schema(implementation=pl.cloudmigration.api.Errors.Error.class))),
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode="404",description="Brak zasobu",content=@io.swagger.v3.oas.annotations.media.Content(mediaType="application/json",schema=@io.swagger.v3.oas.annotations.media.Schema(implementation=pl.cloudmigration.api.Errors.Error.class))),
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode="409",description="Konflikt rewizji lub procesu",content=@io.swagger.v3.oas.annotations.media.Content(mediaType="application/json",schema=@io.swagger.v3.oas.annotations.media.Schema(implementation=pl.cloudmigration.api.Errors.Error.class))),
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode="413",description="Za duży plik",content=@io.swagger.v3.oas.annotations.media.Content(mediaType="application/json",schema=@io.swagger.v3.oas.annotations.media.Schema(implementation=pl.cloudmigration.api.Errors.Error.class))),
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode="422",description="Błąd walidacji",content=@io.swagger.v3.oas.annotations.media.Content(mediaType="application/json",schema=@io.swagger.v3.oas.annotations.media.Schema(implementation=pl.cloudmigration.api.Errors.Error.class))),
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode="503",description="Baza niedostępna",content=@io.swagger.v3.oas.annotations.media.Content(mediaType="application/json",schema=@io.swagger.v3.oas.annotations.media.Schema(implementation=pl.cloudmigration.api.Errors.Error.class)))
-})
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Nieprawidłowe żądanie", content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = pl.cloudmigration.api.Errors.Error.class))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Brak zasobu", content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = pl.cloudmigration.api.Errors.Error.class))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "Konflikt rewizji lub procesu", content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = pl.cloudmigration.api.Errors.Error.class))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "413", description = "Za duży plik", content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = pl.cloudmigration.api.Errors.Error.class))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "422", description = "Błąd walidacji", content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = pl.cloudmigration.api.Errors.Error.class))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "503", description = "Baza niedostępna", content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = pl.cloudmigration.api.Errors.Error.class)))})
 @RestController
 @RequestMapping("/api/documents")
 public class DocumentsApi {
-    public record ImportPreview(Application application,List<String> diagnostics) {}
-    private final DocumentCodec codec;private final DocxDocuments docx;private final DocumentRepository repo;private final Workflow workflow;
-    public DocumentsApi(DocumentCodec codec,DocxDocuments docx,DocumentRepository repo,Workflow workflow){this.codec=codec;this.docx=docx;this.repo=repo;this.workflow=workflow;}
-    @Operation(operationId="downloadTemplate")
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode="200",description="Plik do pobrania",content=@io.swagger.v3.oas.annotations.media.Content(mediaType="application/vnd.openxmlformats-officedocument.wordprocessingml.document",schema=@io.swagger.v3.oas.annotations.media.Schema(type="string",format="binary")))
-    @GetMapping("/template") public ResponseEntity<byte[]> template(){
-        var competition=workflow.competition();
-        return download(docx.template(competition),"wniosek-formularz.docx",false);
+    public record ImportPreview(Application application,
+            List<String> diagnostics) {
     }
-    @Operation(operationId="downloadApplicationExample")
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode="200",description="Wypełniony przykład, nie pusty formularz",content=@io.swagger.v3.oas.annotations.media.Content(mediaType="application/vnd.openxmlformats-officedocument.wordprocessingml.document",schema=@io.swagger.v3.oas.annotations.media.Schema(type="string",format="binary")))
-    @GetMapping("/example") public ResponseEntity<byte[]> example(){
-        var competition=workflow.competition();
-        return download(docx.example(competition),"wniosek-przyklad.docx",false);
+    private final DocumentCodec codec;
+    private final DocxDocuments docx;
+    private final DocumentRepository repo;
+    private final Workflow workflow;
+    public DocumentsApi(DocumentCodec codec, DocxDocuments docx,
+            DocumentRepository repo, Workflow workflow) {
+        this.codec = codec;
+        this.docx = docx;
+        this.repo = repo;
+        this.workflow = workflow;
     }
-    @PostMapping(value="/import",consumes=MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(operationId="importApplication")
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode="200",description="Operacja wykonana",useReturnTypeSchema=true)
-    public ImportPreview preview(@RequestPart("file") MultipartFile file) throws java.io.IOException{
-        var competition=workflow.competition();
-        var application=docx.importApplication(file.getBytes(),competition.id());workflow.validate(Type.application,application);return new ImportPreview(application,List.of("Dokument odczytany. Zapisz podgląd jako nowy szkic CloudMigration."));
+    @Operation(operationId = "downloadTemplate")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Plik do pobrania", content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document", schema = @io.swagger.v3.oas.annotations.media.Schema(type = "string", format = "binary")))
+    @GetMapping("/template")
+    public ResponseEntity<byte[]> template() {
+        var competition = workflow.competition();
+        return download(docx.template(competition), "wniosek-formularz.docx",
+                false);
     }
-    @Operation(operationId="downloadXml")
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode="200",description="Plik do pobrania",content=@io.swagger.v3.oas.annotations.media.Content(mediaType="application/xml",schema=@io.swagger.v3.oas.annotations.media.Schema(type="string",format="binary")))
-    @GetMapping("/{type}/{id}/xml") public ResponseEntity<byte[]> xml(@PathVariable Type type,@PathVariable String id){return download(codec.encode(type,repo.get(type,id)).getBytes(java.nio.charset.StandardCharsets.UTF_8),type+"-"+id+".xml",true);}
-    public enum WordType { application, evaluation, decision }
-    @Operation(operationId="downloadDocx")
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode="200",description="Plik do pobrania",content=@io.swagger.v3.oas.annotations.media.Content(mediaType="application/vnd.openxmlformats-officedocument.wordprocessingml.document",schema=@io.swagger.v3.oas.annotations.media.Schema(type="string",format="binary")))
-    @GetMapping("/{type}/{id}/docx") public ResponseEntity<byte[]> word(@PathVariable WordType type,@PathVariable String id){var kind=Type.valueOf(type.name());var document=repo.get(kind,id);return download(docx.export(kind,document,context(kind,document)),type+"-"+id+".docx",false);}
-    private DocxDocuments.Context context(Type type,Object document){
-        if(type==Type.competition)return new DocxDocuments.Context((Competition)document,null,null);
-        var application=type==Type.application?(Application)document:repo.get(Type.application,type==Type.evaluation?((Evaluation)document).applicationId():((Decision)document).applicationId(),Application.class);
-        var competition=repo.get(Type.competition,application.competitionId(),Competition.class);
-        var evaluation=type==Type.evaluation?(Evaluation)document:type==Type.decision?repo.get(Type.evaluation,((Decision)document).evaluationId(),Evaluation.class):null;
-        return new DocxDocuments.Context(competition,application,evaluation);
+    @Operation(operationId = "downloadApplicationExample")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Wypełniony przykład, nie pusty formularz", content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document", schema = @io.swagger.v3.oas.annotations.media.Schema(type = "string", format = "binary")))
+    @GetMapping("/example")
+    public ResponseEntity<byte[]> example() {
+        var competition = workflow.competition();
+        return download(docx.example(competition), "wniosek-przyklad.docx",
+                false);
     }
-    private ResponseEntity<byte[]> download(byte[] value,String name,boolean xml){return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION,ContentDisposition.attachment().filename(name).build().toString()).contentType(MediaType.parseMediaType(xml?"application/xml":"application/vnd.openxmlformats-officedocument.wordprocessingml.document")).body(value);}
+    @PostMapping(value = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(operationId = "importApplication")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Operacja wykonana", useReturnTypeSchema = true)
+    public ImportPreview preview(@RequestPart("file") MultipartFile file)
+            throws java.io.IOException {
+        var competition = workflow.competition();
+        var application = docx.importApplication(file.getBytes(),
+                competition.id());
+        workflow.validate(Type.application, application);
+        return new ImportPreview(application, List.of(
+                "Dokument odczytany. Zapisz podgląd jako nowy szkic CloudMigration."));
+    }
+    @Operation(operationId = "downloadXml")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Plik do pobrania", content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/xml", schema = @io.swagger.v3.oas.annotations.media.Schema(type = "string", format = "binary")))
+    @GetMapping("/{type}/{id}/xml")
+    public ResponseEntity<byte[]> xml(@PathVariable Type type,
+            @PathVariable String id) {
+        return download(
+                codec.encode(type, repo.get(type, id))
+                        .getBytes(java.nio.charset.StandardCharsets.UTF_8),
+                type + "-" + id + ".xml", true);
+    }
+    public enum WordType {
+        application, evaluation, decision
+    }
+    @Operation(operationId = "downloadDocx")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Plik do pobrania", content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document", schema = @io.swagger.v3.oas.annotations.media.Schema(type = "string", format = "binary")))
+    @GetMapping("/{type}/{id}/docx")
+    public ResponseEntity<byte[]> word(@PathVariable WordType type,
+            @PathVariable String id) {
+        var kind = Type.valueOf(type.name());
+        var document = repo.get(kind, id);
+        return download(docx.export(kind, document, context(kind, document)),
+                type + "-" + id + ".docx", false);
+    }
+    private DocxDocuments.Context context(Type type, Object document) {
+        if (type == Type.competition)
+            return new DocxDocuments.Context((Competition) document, null,
+                    null);
+        var application = type == Type.application
+                ? (Application) document
+                : repo.get(Type.application,
+                        type == Type.evaluation
+                                ? ((Evaluation) document).applicationId()
+                                : ((Decision) document).applicationId(),
+                        Application.class);
+        var competition = repo.get(Type.competition,
+                application.competitionId(), Competition.class);
+        var evaluation = type == Type.evaluation
+                ? (Evaluation) document
+                : type == Type.decision
+                        ? repo.get(Type.evaluation,
+                                ((Decision) document).evaluationId(),
+                                Evaluation.class)
+                        : null;
+        return new DocxDocuments.Context(competition, application, evaluation);
+    }
+    private ResponseEntity<byte[]> download(byte[] value, String name,
+            boolean xml) {
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        ContentDisposition.attachment().filename(name).build()
+                                .toString())
+                .contentType(MediaType.parseMediaType(xml
+                        ? "application/xml"
+                        : "application/vnd.openxmlformats-officedocument.wordprocessingml.document"))
+                .body(value);
+    }
 }
