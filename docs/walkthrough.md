@@ -41,9 +41,11 @@ aktualizującym XQuery. Błąd dowolnej decyzji wycofuje całą transakcję.
    Sprawdź kwalifikację, kwoty i uzasadnienia. W **Decyzje** szkice można zmieniać
    lub usuwać. **Wydaj decyzje** zatwierdza cały widoczny zestaw szkiców konkursu.
 7. Pobierz decyzje do XML i DOCX. Powiązana ocena i decyzja są dostępne z wniosku.
-8. W **Raporty XQuery** wykonaj ranking, podsumowanie i propozycję finansowania.
-   Rozwiń kod zapytania; zmień parametry. Kwoty i sumy finansowe liczy backend
-   lub XQuery, nie JavaScript.
+8. W **Raporty XQuery** wybierz raport i przeczytaj krótki opis, następnie kliknij
+   **Pokaż wyniki**. Pole **Dotacja większa niż (PLN)** pojawia się tylko dla
+   wniosków powyżej podanej kwoty (porównanie ścisłe, bez równej kwoty).
+   Raporty nie zmieniają danych; kod jest dostępny pod **Pokaż kod XQuery**.
+   Kwoty i sumy finansowe liczy backend lub XQuery, nie JavaScript.
 
 ## Zestaw demonstracyjny
 
