@@ -16,3 +16,6 @@ __pycache__/
 /backend/.project
 /backend/.settings/
 /backend/bin/
+
+# Repository-wide Gradle formatting tasks
+/.gradle/
