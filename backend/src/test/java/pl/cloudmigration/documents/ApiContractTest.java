@@ -43,6 +43,17 @@ class ApiContractTest {
         assertEquals(200,response.statusCode());assertTrue(response.body().contains("\"ownContribution\":\"5.02\""));
         var invalid=client.send(HttpRequest.newBuilder(URI.create("http://127.0.0.1:"+port+"/api/budget/calculate?requestedAmount=20.00")).header("Content-Type","application/json").POST(HttpRequest.BodyPublishers.ofString(body)).build(),HttpResponse.BodyHandlers.ofString());assertEquals(422,invalid.statusCode());
     }
+    @Test void reportCatalogueExplainsEveryReportWithoutDatabaseAccess() throws Exception {
+        var response=get("/api/queries");assertEquals(200,response.statusCode());
+        var queries=new tools.jackson.databind.ObjectMapper().readTree(response.body());assertEquals(9,queries.size());
+        for(var query:queries){
+            assertFalse(query.get("description").asString().isBlank());
+            assertFalse(query.get("description").asString().startsWith("Parametry:"));
+            assertFalse(query.get("source").asString().isBlank());
+        }
+        assertTrue(response.body().contains("Wnioski o dokładnie tę kwotę są pomijane"));
+        assertTrue(response.body().contains("Raport nie tworzy ani nie wydaje decyzji"));
+    }
     @Test void openApiDocumentsSuccessAndErrorResponseSchemas() throws Exception {
         var response=get("/v3/api-docs");assertEquals(200,response.statusCode());
         assertTrue(response.body().contains("downloadApplicationExample"));assertTrue(response.body().contains("getCompetition"));assertTrue(response.body().contains("#/components/schemas/Competition"));
