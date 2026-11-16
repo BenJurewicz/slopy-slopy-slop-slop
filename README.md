@@ -10,6 +10,8 @@ Nie wykonuje migracji i nie wymaga logowania. Jest przeznaczona do pracy lokalne
 - Node.js i pnpm 12.11.2; frontend korzysta z TypeScript 6.
 - Docker z Compose; baza BaseX 12.4 jest przypięta do digestu obrazu.
 - Python 3 do inicjalizacji bazy i pomocniczych poleceń.
+- Do kontroli źródeł: Ruff 0.15.8, shfmt 3.13.0 i StyLua 2.3.1,
+  dostępne w `PATH` lub istniejącej instalacji Mason Neovim.
 
 Pierwsza instalacja zależności i pobranie obrazu wymagają dostępu do Internetu.
 Kolejne buildy backendu mogą działać z `--offline`. Nie jest używany Maven.
@@ -36,14 +38,19 @@ Kolejne buildy backendu mogą działać z `--offline`. Nie jest używany Maven.
     ```sh
     cd frontend
     pnpm install --frozen-lockfile
+    pnpm build
     cd ..
     export JAVA_HOME=$(/usr/libexec/java_home -v 23) # macOS; gdzie indziej ustaw ścieżkę do JDK 23
+    (cd backend && ./gradlew test bootJar --console=plain)
+    ./backend/gradlew spotlessCheck --console=plain
     ./scripts/build.sh
     ```
 
-    Przy pierwszym buildzie backendu użyj `cd backend && ./gradlew test bootJar`
-    bez `--offline`, aby pobrać zależności Gradle. Frontend musi być wcześniej
-    zbudowany. Po pobraniu zależności `scripts/build.sh` działa offline dla Gradle.
+    Pierwsze dwa wywołania Wrappera pobierają Gradle, zależności backendu oraz
+    osobnego projektu formatowania w katalogu głównym. Kolejne wywołania
+    `scripts/build.sh` sprawdzają formatowanie i lint oraz używają wyłącznie
+    zapisanej dystrybucji Gradle i zależności offline. Brak narzędzia powoduje
+    błąd, nie automatyczną instalację. Przed pakowaniem zatrzymaj uruchomiony JAR.
 
 4. Uruchom pakiet z katalogu `backend` (stąd odczytywany jest `.env`):
 
@@ -111,6 +118,20 @@ JAR i czyszczą tylko bazę testową. Używają istniejącego Chrome na macOS; n
 systemie ustaw `BROWSER_EXECUTABLE` lub użyj wcześniej zainstalowanego Chromium
 Playwright. Polecenie nie pobiera przeglądarki. Ślady nieudanych testów i zrzuty
 są w ignorowanym `frontend/test-results/`.
+
+## Formatowanie i lint
+
+```sh
+make format          # zapis obsługiwanych źródeł
+make format-check    # bez zmiany plików
+make lint            # ESLint: TypeScript i Svelte
+make check           # format, lint, typy i testy jednostkowe
+make editor-check    # lokalna integracja z istniejącym Neovim/LazyVim
+```
+
+Wspólne ustawienia: cztery spacje, LF, UTF-8 i docelowo 80 kolumn; Makefile używa
+Tab. Generowane SDK/JAXB, fixtures, DOCX i dane bazy nie są formatowane. XQuery
+pozostaje bez zmian. [Profile, narzędzia i uruchamianie Neovim](docs/formatting.md).
 
 ## Dokumenty i architektura
 

@@ -4,7 +4,9 @@
 
 - Backend: **47 testów jednostkowych/HTTP** i **18 testów integracyjnych z BaseX**, bez błędów.
 - Frontend: **10 testów**, sprawdzanie Svelte/TypeScript bez błędów i ostrzeżeń.
-- Przeglądarka: **10 testów** na pakiecie JAR, bez błędów.
+- Przeglądarka: **11 testów** na pakiecie JAR, bez błędów. Dodatkowy test
+  sprawdza zachowanie fokusu i wartości podczas edycji oraz usuwania
+  powtarzalnych wierszy formularza.
 - Dane testowe: obie operacje wymagają potwierdzenia. Anulowanie nie wysyła
   żądania zmiany danych. Wczytanie dwukrotnie zastępuje dokumenty zamiast je
   dopisywać, przywraca domyślne ustawienia i usuwa poprzednie decyzje.
@@ -15,6 +17,21 @@
   startu bazy i zajęte porty. Procesy potomne nie pozostają uruchomione.
   Sprawdzony także rzeczywisty start frontendu i backendu oraz zatrzymanie
   obu serwerów i BaseX przez Ctrl+C; skróty danych pozostały identyczne.
+- Formatowanie: `make format`, następnie `make format-check` bez dalszych
+  zmian. Generowane SDK/JAXB, fixtures, DOCX i XQuery pozostały nietknięte.
+  Niepoprawne tymczasowe pliki Python/Bash/Lua w katalogu fixtures zostały
+  prawidłowo pominięte również przez pomocnicze formattery.
+- `make check`, `pnpm format:check` i ESLint przechodzą bez błędów.
+  Konfiguracja ESLint nie zawiera reguł kolidujących z Prettier.
+- `make editor-check`: rzeczywiste formatowanie w buforach Neovim przez
+  Prettier, ktlint, Ruff, shfmt i StyLua; diagnostyka ESLint, zakres projektu,
+  ochrona plików prywatnych/generowanych/XQuery i powiadomienie z profilem Java.
+  Globalny `init.lua` nie jest ładowany, bufory nie są zapisywane.
+  Porównanie 41 klas JDT 3.45.0 potwierdza identyczny kod formatowania
+  w zainstalowanym JDTLS oraz Eclipse 4.39 używanym przez Spotless.
+- Po pełnym buildzie, integracji i E2E wszystkie **57 dokumentów bazy użytkowej**
+  zachowały identyczny zbiorczy SHA-256. Porównanie wykonano w pamięci,
+  bez tworzenia kopii bazy i bez resetowania danych użytkownika.
 - `pnpm peers check`: brak konfliktów; TypeScript 6.0.3, Hey API 0.99.0.
 - Czysty build przez `scripts/build.sh`: frontend i wykonywalny JAR z zasobami.
 - Ponowna inicjalizacja bazy: dwa udane wywołania bez utraty dokumentów.

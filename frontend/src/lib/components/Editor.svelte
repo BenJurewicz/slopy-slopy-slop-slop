@@ -17,7 +17,7 @@
         busy?: boolean;
         settingsLocked?: boolean;
     } = $props();
-    // Live score totals mutate the deep draft; a plain derived clone is not reactive.
+    // Live score totals need a deep draft that tracks nested mutations.
     // eslint-disable-next-line svelte/prefer-writable-derived
     let draft = $state<Data>({});
     $effect(() => {

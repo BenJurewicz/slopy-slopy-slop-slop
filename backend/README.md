@@ -31,7 +31,13 @@ The executable JAR includes its static assets. Start it from `backend/` so that
 
 `./gradlew --offline integrationTest` exercises real BaseX and resets only
 `cloudmigration_tests`. `generateExamples` writes XML/DOCX fixtures to `../examples`.
-Use `../scripts/build.sh` for a clean combined build with frontend checks.
+Use `../scripts/build.sh` for a clean combined build with formatting, lint and
+frontend checks. Stop any running JAR before replacing it.
+
+Java formatting lives in the separate root Gradle project. Run `make format`
+or `make format-check` from `Project/`, not a backend Spotless task.
+The Eclipse profile is shared with Neovim; see
+[formatting.md](../docs/formatting.md).
 
 ## CloudMigration settings
 

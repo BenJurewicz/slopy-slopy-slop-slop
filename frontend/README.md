@@ -12,9 +12,15 @@ pnpm dev
 ## Checks
 
 ```sh
+pnpm format:check
+pnpm lint
 pnpm check
 pnpm test
 ```
+
+Use `pnpm format` to apply Prettier. Formatting and ESLint use project-local
+packages, excluding generated files. Shared profiles and Neovim integration
+are documented in [formatting.md](../docs/formatting.md).
 
 ## Build
 
