@@ -87,7 +87,7 @@ def main():
             index = int(identity[:8],16) % 999
             add(company,'address',f'ul. Przykładowa {index+1}, 80-001 Gdańsk','urn:cloudmigration:common:v2')
             add(company,'regon',f'{100000000+index:09d}','urn:cloudmigration:common:v2')
-            add(company,'representative',text(company,'contact')+' – osoba upoważniona do reprezentacji','urn:cloudmigration:common:v2')
+            add(company,'representative',text(company,'contact')+' - osoba upoważniona do reprezentacji','urn:cloudmigration:common:v2')
             tasks = [task for task in document if local(task)=='tasks']
             start, end = min(text(t,'start') for t in tasks), max(text(t,'end') for t in tasks)
             cost = sum((Decimal(text(b,'total')) for b in document if local(b)=='budget'),Decimal('0.00'))

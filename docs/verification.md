@@ -51,7 +51,7 @@
 | Cztery XML/XSD i powiązania | `schemas/`, `examples/xml/`, `DocumentCodecTest` |
 | Automatycznie wygenerowane klasy | Gradle `generateXmlModels`, test odczytu/edycji/utworzenia JAXB |
 | Walidacja struktury, kwot i unikalnych kodów | XSD oraz testy negatywne i `RulesTest` |
-| DOCX ↔ XML | `DocxDocumentsTest`, fixture Word, pełny test przeglądarkowy |
+| DOCX <-> XML | `DocxDocumentsTest`, fixture Word, pełny test przeglądarkowy |
 | CRUD, rewizje i odwołania w BaseX | `WorkflowIntegrationTest` |
 | Złożenie i ocena końcowa | Test przeglądarkowy i zablokowane edycje w integracji |
 | Ranking i remisy | Test rzeczywistego porównania dat, następnie ID |
@@ -60,7 +60,7 @@
 | Spójność Java/XQuery finansowania | Porównanie propozycji na zestawie demonstracyjnym |
 | Kontrakty i awarie HTTP | `ApiContractTest`, błędny import, HTTP 404/503, stare rewizje |
 | Pełny proces w pakiecie | `frontend/e2e/workflow.spec.ts` |
-| Responsywność i klawiatura | 1280×720, 390×844, kontrola przepełnienia, Tab/Enter w formularzu |
+| Responsywność i klawiatura | 1280x720, 390x844, kontrola przepełnienia, Tab/Enter w formularzu |
 | Trwałość | Porównanie danych przed i po restarcie BaseX |
 
 Testy nie używają zastępczej bazy w pamięci. Testy HTTP awarii celowo wskazują

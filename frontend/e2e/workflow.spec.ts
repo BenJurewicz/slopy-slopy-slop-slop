@@ -16,7 +16,7 @@ test('CloudMigration is initialized automatically and its initial settings are e
     await expect.poll(async()=>(await(await request.get('/api/competition')).json()).budget).toBe('250000.00');
 });
 
-test('DOCX upload → edit → submit → evaluate → issue → export', async ({ page, request }, info) => {
+test('DOCX upload -> edit -> submit -> evaluate -> issue -> export', async ({ page, request }, info) => {
     const initial=await (await request.get('/api/competition')).json();
     const c=await request.put('/api/competition',{data:{...initial,criteria:[{code:'technical',name:'Wykonalność',maximum:100}]}});
     expect(c.status()).toBe(200);
@@ -30,7 +30,7 @@ test('DOCX upload → edit → submit → evaluate → issue → export', async 
     await expect(page.getByLabel('REGON',{exact:true})).toHaveValue('123456785');
     await expect(page.getByLabel('Początek realizacji projektu')).toHaveValue('2026-11-01');
     await expect(page.getByLabel('Całkowity koszt projektu (PLN)',{exact:true})).toHaveValue('50000.00');
-    await page.getByLabel('Reprezentowany przez').fill('Anna Kowalska – prezeska');
+    await page.getByLabel('Reprezentowany przez').fill('Anna Kowalska - prezeska');
     await page.getByLabel('Numer projektu',{exact:true}).fill('PR/2026/BROWSER');
     await page.getByLabel('Wnioskowana dotacja (PLN)').fill('45000.00');
     await page.getByRole('button',{name:'Przelicz budżet'}).click();
@@ -40,7 +40,7 @@ test('DOCX upload → edit → submit → evaluate → issue → export', async 
     await expect(page.getByRole('status').filter({hasText:'Dokument zapisany'})).toBeVisible();
     await page.getByRole('button',{name:'Otwórz',exact:true}).click();
     await expect(page.getByLabel('Numer projektu',{exact:true})).toHaveValue('PR/2026/BROWSER');
-    await expect(page.getByLabel('Reprezentowany przez')).toHaveValue('Anna Kowalska – prezeska');
+    await expect(page.getByLabel('Reprezentowany przez')).toHaveValue('Anna Kowalska - prezeska');
     const xmlDownload=page.waitForEvent('download');await page.getByRole('link',{name:'Pobierz XML',exact:true}).click();expect((await xmlDownload).suggestedFilename()).toMatch(/\.xml$/);
     await page.getByRole('button',{name:'Złóż wniosek'}).click();
     await expect(page.getByRole('status').filter({hasText:'Wniosek złożony'})).toBeVisible();

@@ -101,9 +101,9 @@ class DocxDocumentsTest {
         var copied=changed(application(),xml->{var block=field(xml,"tasks");block.getParentNode().insertBefore(block.cloneNode(true),block.getNextSibling());});assertEquals(2,read(copied).tasks().size());
     }
     @Test void readsVisibleEditsNotCachedMetadataAndAcceptsMultilineText() throws Exception {
-        var edited=changed(application(),xml->{set(xml,"project_title","Nowy tytuł z Worda");set(xml,"description","Pierwszy akapit\nDrugi akapit — Łódź");set(xml,"budget_total","");set(xml,"tasks_start","01.11.2026");});
+        var edited=changed(application(),xml->{set(xml,"project_title","Nowy tytuł z Worda");set(xml,"description","Pierwszy akapit\nDrugi akapit - Łódź");set(xml,"budget_total","");set(xml,"tasks_start","01.11.2026");});
         var parts=entries(edited);parts.put("customXml/cached.xml","<application><title>Stary tytuł</title><requestedAmount>1.00</requestedAmount></application>".getBytes(StandardCharsets.UTF_8));var actual=read(zip(parts));
-        assertEquals("Nowy tytuł z Worda",actual.title());assertEquals("Pierwszy akapit\nDrugi akapit — Łódź",actual.description());assertEquals("2026-11-01",actual.tasks().getFirst().start());assertEquals(Examples.application().budget(),actual.budget());assertEquals(Examples.application().requestedAmount(),actual.requestedAmount());
+        assertEquals("Nowy tytuł z Worda",actual.title());assertEquals("Pierwszy akapit\nDrugi akapit - Łódź",actual.description());assertEquals("2026-11-01",actual.tasks().getFirst().start());assertEquals(Examples.application().budget(),actual.budget());assertEquals(Examples.application().requestedAmount(),actual.requestedAmount());
     }
     @Test void rejectsBudgetMismatchMissingDuplicateControlsAndInvalidDates() throws Exception {
         var bad=changed(application(),xml->set(xml,"budget_total","1,00"));assertTrue(assertThrows(AppException.class,()->read(bad)).getMessage().contains("nie zgadza się"));

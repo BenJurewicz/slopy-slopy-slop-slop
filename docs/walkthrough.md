@@ -26,7 +26,7 @@ aktualizującym XQuery. Błąd dowolnej decyzji wycofuje całą transakcję.
    realizacji projektu. Oba pola tytułu powinny zawierać ten sam tekst.
    Wielkość firmy: `Mikroprzedsiębiorstwo` lub `Małe przedsiębiorstwo`. Kwoty netto
    można zapisywać jako `1 000,00`, daty jako `2026-11-01` lub `01.11.2026`.
-   Wartości wydatków można zostawić puste — aplikacja je wyliczy. Nie usuwaj
+   Wartości wydatków można zostawić puste - aplikacja je wyliczy. Nie usuwaj
    kontrolek odpowiedzi, nie wstawiaj makr ani zewnętrznych odwołań.
 3. Zaimportuj DOCX. Wniosek zawsze należy do CloudMigration;
    nie trzeba wybierać konkursu ani wpisywać identyfikatorów w Wordzie.

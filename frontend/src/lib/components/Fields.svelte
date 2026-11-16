@@ -13,11 +13,11 @@
 	{:else if f.type === 'list'}
 		<fieldset><legend>{f.label}</legend>
 			{#each list(f.key) as item, index}
-				<div class="repeat"><div class="repeat-title"><strong>Pozycja {index+1}</strong>{#if !disabled && f.key !== 'scores'}<button type="button" class="quiet" aria-label={`Usuń pozycję ${index+1} — ${f.label}`} onclick={()=>set(f.key,list(f.key).filter((_,i)=>i!==index))}>Usuń</button>{/if}</div>
+				<div class="repeat"><div class="repeat-title"><strong>Pozycja {index+1}</strong>{#if !disabled && f.key !== 'scores'}<button type="button" class="quiet" aria-label={`Usuń pozycję ${index+1} - ${f.label}`} onclick={()=>set(f.key,list(f.key).filter((_,i)=>i!==index))}>Usuń</button>{/if}</div>
 					<Fields spec={f.children!} {disabled} bind:value={()=>list(f.key)[index],(v)=>nested(f.key,index,v)} />
 				</div>
 			{/each}
-			{#if !disabled && f.key !== 'scores'}<button type="button" class="secondary" onclick={()=>set(f.key,[...list(f.key),empty(f.children!)])}>Dodaj pozycję — {f.label}</button>{/if}
+			{#if !disabled && f.key !== 'scores'}<button type="button" class="secondary" onclick={()=>set(f.key,[...list(f.key),empty(f.children!)])}>Dodaj pozycję - {f.label}</button>{/if}
 		</fieldset>
 	{:else}
 		<label class:check={f.type === 'boolean'}><span>{f.label}</span>

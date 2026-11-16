@@ -1,4 +1,4 @@
-# CloudMigration — Chmura dla Lokalnych Biznesów
+# CloudMigration - Chmura dla Lokalnych Biznesów
 
 Jednoosobowa aplikacja do obsługi konkursu finansującego migracje mikro- i małych
 przedsiębiorstw do chmury. Obsługuje wnioski, oceny, ranking oraz decyzje o dotacji.

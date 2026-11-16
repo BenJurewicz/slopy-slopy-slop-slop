@@ -17,7 +17,7 @@ Formularze mają etykiety i natywne kontrolki; nawigacja i akcje działają klaw
 Tabele przewijają się we własnym kontenerze na małych ekranach.
 
 Test `frontend/e2e/workflow.spec.ts` przechodzi pełną ścieżkę w zbudowanym JAR,
-pobiera XML/DOCX, wykonuje raport i zapisuje obrazy 1280×720 oraz 390×844.
+pobiera XML/DOCX, wykonuje raport i zapisuje obrazy 1280x720 oraz 390x844.
 Brak poziomego przepełnienia całej strony jest sprawdzany automatycznie.
 
 ## Formularze Word
