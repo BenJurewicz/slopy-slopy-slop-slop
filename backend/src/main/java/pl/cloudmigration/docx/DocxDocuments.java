@@ -33,10 +33,11 @@ public class DocxDocuments {
     }
 
     private static String money(String value) {
-        var f = NumberFormat.getNumberInstance(Locale.forLanguageTag("pl-PL"));
-        f.setMinimumFractionDigits(2);
-        f.setMaximumFractionDigits(2);
-        return f.format(new BigDecimal(value));
+        var formatter = NumberFormat
+                .getNumberInstance(Locale.forLanguageTag("pl-PL"));
+        formatter.setMinimumFractionDigits(2);
+        formatter.setMaximumFractionDigits(2);
+        return formatter.format(new BigDecimal(value));
     }
 
     private static String size(String size) {
@@ -83,59 +84,69 @@ public class DocxDocuments {
         }
     }
 
-    private byte[] application(Application a, Competition competition) {
+    private byte[] application(Application application,
+            Competition competition) {
         try {
             var word = new WordTemplates(Type.application);
             word.replace("Konkurs: CloudMigration 2026",
                     competition == null
                             ? "Konkurs: wybierz w aplikacji podczas importu"
                             : "Konkurs: " + competition.name());
-            if (a == null) {
+            if (application == null) {
                 word.note(
                         "Wypełnij wykropkowane pola. Numer nowego wniosku nadaje aplikacja podczas zapisu; numer z importowanego dokumentu nie jest zachowywany. Numer projektu może pozostać pusty - wtedy również nada go aplikacja. Powielaj całe bloki oznaczonej infrastruktury, zadań, wydatków i zespołu. Kwoty netto w PLN; daty RRRR-MM-DD lub DD.MM.RRRR. Koszt projektu, wartości wydatków i wkład własny można pozostawić puste do przeliczenia przy imporcie. Wniosek zostanie przypisany do konkursu wybranego w aplikacji.");
                 return word.save();
             }
-            word.notice("Status wniosku: " + state(a.state())
-                    + (a.submittedAt() == null
+            word.notice("Status wniosku: " + state(application.state())
+                    + (application.submittedAt() == null
                             ? ""
-                            : ". Złożono: " + a.submittedAt()));
-            word.fill(values("application_id", a.number(), "project_title",
-                    a.title(), "project_id", a.projectNumber(), "beneficiary",
-                    a.company().name(), "ben_address", a.company().address(),
-                    "ben_nip", a.company().legalId(), "ben_regon",
-                    a.company().regon(), "ben_rep",
-                    a.company().representative(), "company_size",
-                    size(a.company().size()), "company_contact",
-                    a.company().contact(), "company_email", a.company().email(),
-                    "description", a.description(), "project_goal",
-                    a.objectives(), "benefits", a.benefits(), "impl_start",
-                    a.implementationStart(), "impl_end", a.implementationEnd(),
-                    "project_cost", money(a.projectCost()), "req_fund",
-                    money(a.requestedAmount()), "down_pay",
-                    money(a.ownContribution())));
+                            : ". Złożono: " + application.submittedAt()));
+            word.fill(values("application_id", application.number(),
+                    "project_title", application.title(), "project_id",
+                    application.projectNumber(), "beneficiary",
+                    application.company().name(), "ben_address",
+                    application.company().address(), "ben_nip",
+                    application.company().legalId(), "ben_regon",
+                    application.company().regon(), "ben_rep",
+                    application.company().representative(), "company_size",
+                    size(application.company().size()), "company_contact",
+                    application.company().contact(), "company_email",
+                    application.company().email(), "description",
+                    application.description(), "project_goal",
+                    application.objectives(), "benefits",
+                    application.benefits(), "impl_start",
+                    application.implementationStart(), "impl_end",
+                    application.implementationEnd(), "project_cost",
+                    money(application.projectCost()), "req_fund",
+                    money(application.requestedAmount()), "down_pay",
+                    money(application.ownContribution())));
             infrastructure(word, "current_infrastructure",
-                    a.currentInfrastructure());
+                    application.currentInfrastructure());
             infrastructure(word, "target_infrastructure",
-                    a.targetInfrastructure());
-            word.repeat("tasks", a.tasks().stream()
-                    .map(t -> values("tasks_name", t.name(), "tasks_start",
-                            t.start(), "tasks_end", t.end(), "tasks_milestone",
-                            t.milestone()))
+                    application.targetInfrastructure());
+            word.repeat("tasks", application.tasks().stream()
+                    .map(task -> values("tasks_name", task.name(),
+                            "tasks_start", task.start(), "tasks_end",
+                            task.end(), "tasks_milestone", task.milestone()))
                     .toList());
-            word.repeat("budget", a.budget().stream()
-                    .map(b -> values("budget_description", b.description(),
-                            "budget_category", b.category(), "budget_quantity",
-                            b.quantity().replace('.', ','), "budget_unit",
-                            b.unit(), "budget_unit_cost", money(b.unitCost()),
-                            "budget_total", money(b.total())))
+            word.repeat("budget", application.budget().stream()
+                    .map(line -> values("budget_description",
+                            line.description(), "budget_category",
+                            line.category(), "budget_quantity",
+                            line.quantity().replace('.', ','), "budget_unit",
+                            line.unit(), "budget_unit_cost",
+                            money(line.unitCost()), "budget_total",
+                            money(line.total())))
                     .toList());
-            word.repeat("team", a.team().stream().map(
-                    m -> values("team_name", m.name(), "team_role", m.role()))
-                    .toList());
+            word.repeat("team",
+                    application
+                            .team().stream().map(member -> values("team_name",
+                                    member.name(), "team_role", member.role()))
+                            .toList());
             return word.save();
-        } catch (Exception e) {
+        } catch (Exception exception) {
             throw new IllegalStateException("Nie można utworzyć wniosku Word.",
-                    e);
+                    exception);
         }
     }
 
@@ -147,27 +158,33 @@ public class DocxDocuments {
                 .toList());
     }
 
-    private byte[] evaluation(Evaluation e, Context context) throws Exception {
-        var a = context.application();
-        var c = context.competition();
+    private byte[] evaluation(Evaluation evaluation, Context context)
+            throws Exception {
+        var application = context.application();
+        var competition = context.competition();
         var word = new WordTemplates(Type.evaluation);
-        boolean qualified = e.eligible() && e.total() >= c.threshold();
-        word.scores(c.criteria(), e.scores());
-        word.fill(values("evaluation_number", e.number(), "project_title",
-                a.title(), "project_number", a.projectNumber(),
-                "applicant_name", a.company().name(), "applicant_tax_id",
-                a.company().legalId(), "applicant_regon", a.company().regon(),
-                "requested_funding", money(a.requestedAmount()),
-                "evaluator_name", e.reviewer(), "evaluation_date", e.date(),
-                "evaluation_status", state(e.state()), "eligibility_status",
-                e.eligible()
+        boolean qualified = evaluation.eligible()
+                && evaluation.total() >= competition.threshold();
+        word.scores(competition.criteria(), evaluation.scores());
+        word.fill(values("evaluation_number", evaluation.number(),
+                "project_title", application.title(), "project_number",
+                application.projectNumber(), "applicant_name",
+                application.company().name(), "applicant_tax_id",
+                application.company().legalId(), "applicant_regon",
+                application.company().regon(), "requested_funding",
+                money(application.requestedAmount()), "evaluator_name",
+                evaluation.reviewer(), "evaluation_date", evaluation.date(),
+                "evaluation_status", state(evaluation.state()),
+                "eligibility_status",
+                evaluation.eligible()
                         ? "Wniosek spełnia warunki udziału."
                         : "Wniosek nie spełnia warunków udziału.",
-                "eligibility_justification", e.reason(), "total_score",
-                e.total(), "qualification_status", e.eligible() ? "Tak" : "Nie",
-                "qualification_treshold", c.threshold(), "final_status",
+                "eligibility_justification", evaluation.reason(), "total_score",
+                evaluation.total(), "qualification_status",
+                evaluation.eligible() ? "Tak" : "Nie", "qualification_treshold",
+                competition.threshold(), "final_status",
                 qualified ? "Spełnione" : "Niespełnione"));
-        if ("FINAL".equals(e.state()))
+        if ("FINAL".equals(evaluation.state()))
             word.replace(
                     "To szkic oceny. Wniosek może uczestniczyć w oficjalnym rankingu dopiero po zatwierdzeniu oceny.",
                     qualified
@@ -176,31 +193,37 @@ public class DocxDocuments {
         return word.save();
     }
 
-    private byte[] decision(Decision d, Context context) throws Exception {
-        var a = context.application();
-        var e = context.evaluation();
-        var c = context.competition();
-        boolean award = "AWARD".equals(d.outcome()),
-                issued = "ISSUED".equals(d.state());
+    private byte[] decision(Decision decision, Context context)
+            throws Exception {
+        var application = context.application();
+        var evaluation = context.evaluation();
+        var competition = context.competition();
+        boolean award = "AWARD".equals(decision.outcome()),
+                issued = "ISSUED".equals(decision.state());
         var word = new WordTemplates(Type.decision);
-        word.fill(values("decision_id", d.number(), "project_title", a.title(),
-                "project_id", a.projectNumber(), "decision_date", d.date(),
-                "beneficiary", a.company().name(), "ben_address",
-                a.company().address(), "ben_nip", a.company().legalId(),
-                "ben_regon", a.company().regon(), "ben_rep",
-                a.company().representative(), "app_id", a.number(),
-                "project_goal", a.objectives(), "status",
-                award ? "przyznaniu" : "odmowie", "project_cost",
-                money(a.projectCost()), "req_fund", money(a.requestedAmount()),
-                "accept_fund", money(d.amount()), "down_pay",
-                money(Rules.money(a.projectCost())
-                        .subtract(Rules.money(d.amount())).toPlainString()),
-                "impl_start", a.implementationStart(), "impl_end",
-                a.implementationEnd(), "app_points", e.total(),
-                "points_threshold", c.threshold(), "points_amount",
-                e.total() >= c.threshold() ? "Tak" : "Nie", "budget_allows",
-                d.budgetAllows() ? "Tak" : "Nie", "criteria",
-                e.eligible() ? "Tak" : "Nie"));
+        word.fill(values("decision_id", decision.number(), "project_title",
+                application.title(), "project_id", application.projectNumber(),
+                "decision_date", decision.date(), "beneficiary",
+                application.company().name(), "ben_address",
+                application.company().address(), "ben_nip",
+                application.company().legalId(), "ben_regon",
+                application.company().regon(), "ben_rep",
+                application.company().representative(), "app_id",
+                application.number(), "project_goal", application.objectives(),
+                "status", award ? "przyznaniu" : "odmowie", "project_cost",
+                money(application.projectCost()), "req_fund",
+                money(application.requestedAmount()), "accept_fund",
+                money(decision.amount()), "down_pay",
+                money(Rules.money(application.projectCost())
+                        .subtract(Rules.money(decision.amount()))
+                        .toPlainString()),
+                "impl_start", application.implementationStart(), "impl_end",
+                application.implementationEnd(), "app_points",
+                evaluation.total(), "points_threshold", competition.threshold(),
+                "points_amount",
+                evaluation.total() >= competition.threshold() ? "Tak" : "Nie",
+                "budget_allows", decision.budgetAllows() ? "Tak" : "Nie",
+                "criteria", evaluation.eligible() ? "Tak" : "Nie"));
         word.replace(
                 "Kwota stanowi część kwoty / pełną kwotę wnioskowanego dofinansowania.",
                 award
@@ -217,9 +240,9 @@ public class DocxDocuments {
             word.note(
                     "Odmowa nie przyznaje środków ani nie nakłada obowiązków związanych z wypłatą dotacji.");
         }
-        word.note("Uzasadnienie: " + d.reason());
-        word.note("Powiązana ocena: " + e.number() + ", " + e.reviewer() + ", "
-                + e.date() + ".");
+        word.note("Uzasadnienie: " + decision.reason());
+        word.note("Powiązana ocena: " + evaluation.number() + ", "
+                + evaluation.reviewer() + ", " + evaluation.date() + ".");
         word.notice(issued
                 ? "Status: Wydana. Decyzja nie podlega dalszej edycji."
                 : "Status: Szkic. Dokument nie jest wydanym rozstrzygnięciem i nie obciąża budżetu konkursu.");
@@ -229,7 +252,7 @@ public class DocxDocuments {
     public Application importApplication(byte[] bytes, String competitionId) {
         try {
             UUID.fromString(competitionId);
-        } catch (Exception e) {
+        } catch (Exception exception) {
             throw AppException.invalid("Wybierz konkurs przed importem.");
         }
         var root = WordTemplates.upload(bytes).getDocumentElement();
@@ -238,7 +261,49 @@ public class DocxDocuments {
                 || controls(root, "beneficiary").isEmpty())
             throw AppException.invalid(
                     "Nieobsługiwany formularz DOCX. Użyj aktualnego Wniosek_o_dofinansowanie.docx; wcześniejsze formaty zostały usunięte.");
-        var company = new Company(required(root, "beneficiary", "Beneficjent"),
+        var company = readCompany(root);
+        var current = infrastructure(root, "current_infrastructure",
+                "Obecna infrastruktura");
+        var target = infrastructure(root, "target_infrastructure",
+                "Docelowa infrastruktura");
+        var tasks = readTasks(root);
+        var budget = readBudgetLines(root);
+        var team = readTeam(root);
+        var total = budget.stream().map(line -> new BigDecimal(line.total()))
+                .reduce(BigDecimal.ZERO, BigDecimal::add).setScale(2);
+        var requested = Rules.money(decimal(
+                required(root, "req_fund", "Wnioskowane dofinansowanie"),
+                "Wnioskowane dofinansowanie").toPlainString());
+        Rules.require(requested.compareTo(total) <= 0,
+                "Dotacja przekracza koszt projektu.");
+        checkAmount(root, "project_cost", "Całkowity koszt projektu", total);
+        checkAmount(root, "down_pay", "Wkład własny Beneficjenta",
+                total.subtract(requested));
+        String id = UUID.randomUUID().toString(),
+                number = Workflow.number("WN", id),
+                projectNumber = optional(root, "project_id", "Numer projektu");
+        if (projectNumber.isBlank())
+            projectNumber = Workflow.number("PR", id);
+        var application = new Application(id, 1, competitionId, "DRAFT", null,
+                company, required(root, "project_title", "Tytuł projektu"),
+                required(root, "description", "Opis projektu"),
+                required(root, "project_goal", "Cel projektu"),
+                required(root, "benefits", "Oczekiwane korzyści"), current,
+                target, List.copyOf(tasks), List.copyOf(budget),
+                List.copyOf(team), requested.toPlainString(), number,
+                projectNumber,
+                inputDate(required(root, "impl_start",
+                        "Początek realizacji projektu")),
+                inputDate(required(root, "impl_end",
+                        "Koniec realizacji projektu")),
+                total.toPlainString(),
+                total.subtract(requested).toPlainString());
+        codec.encode(Type.application, application);
+        return application;
+    }
+
+    private Company readCompany(Element root) {
+        return new Company(required(root, "beneficiary", "Beneficjent"),
                 required(root, "ben_nip", "NIP"),
                 businessSize(required(root, "company_size",
                         "Wielkość przedsiębiorstwa")),
@@ -247,10 +312,9 @@ public class DocxDocuments {
                 required(root, "ben_address", "Adres beneficjenta"),
                 required(root, "ben_regon", "REGON"),
                 required(root, "ben_rep", "Reprezentowany przez"));
-        var current = infrastructure(root, "current_infrastructure",
-                "Obecna infrastruktura");
-        var target = infrastructure(root, "target_infrastructure",
-                "Docelowa infrastruktura");
+    }
+
+    private List<Task> readTasks(Element root) {
         var tasks = new ArrayList<Task>();
         for (var block : groups(root, "tasks", "Harmonogram"))
             tasks.add(new Task(required(block, "tasks_name", "Zadanie"),
@@ -259,6 +323,10 @@ public class DocxDocuments {
                     inputDate(required(block, "tasks_end",
                             "Zakończenie zadania")),
                     required(block, "tasks_milestone", "Rezultat zadania")));
+        return tasks;
+    }
+
+    private List<BudgetLine> readBudgetLines(Element root) {
         var budget = new ArrayList<BudgetLine>();
         for (var block : groups(root, "budget", "Budżet")) {
             var description = required(block, "budget_description", "Wydatek");
@@ -277,53 +345,28 @@ public class DocxDocuments {
                     required(block, "budget_unit", "Jednostka"),
                     cost.toPlainString(), total.toPlainString()));
         }
+        return budget;
+    }
+
+    private List<Member> readTeam(Element root) {
         var team = new ArrayList<Member>();
         for (var block : groups(root, "team", "Zespół"))
             team.add(new Member(required(block, "team_name", "Imię i nazwisko"),
                     required(block, "team_role", "Rola w projekcie")));
-        var total = budget.stream().map(b -> new BigDecimal(b.total()))
-                .reduce(BigDecimal.ZERO, BigDecimal::add).setScale(2);
-        var requested = Rules.money(decimal(
-                required(root, "req_fund", "Wnioskowane dofinansowanie"),
-                "Wnioskowane dofinansowanie").toPlainString());
-        Rules.require(requested.compareTo(total) <= 0,
-                "Dotacja przekracza koszt projektu.");
-        checkAmount(root, "project_cost", "Całkowity koszt projektu", total);
-        checkAmount(root, "down_pay", "Wkład własny Beneficjenta",
-                total.subtract(requested));
-        String id = UUID.randomUUID().toString(),
-                number = Workflow.number("WN", id),
-                projectNumber = optional(root, "project_id", "Numer projektu");
-        if (projectNumber.isBlank())
-            projectNumber = Workflow.number("PR", id);
-        var app = new Application(id, 1, competitionId, "DRAFT", null, company,
-                required(root, "project_title", "Tytuł projektu"),
-                required(root, "description", "Opis projektu"),
-                required(root, "project_goal", "Cel projektu"),
-                required(root, "benefits", "Oczekiwane korzyści"), current,
-                target, List.copyOf(tasks), List.copyOf(budget),
-                List.copyOf(team), requested.toPlainString(), number,
-                projectNumber,
-                inputDate(required(root, "impl_start",
-                        "Początek realizacji projektu")),
-                inputDate(required(root, "impl_end",
-                        "Koniec realizacji projektu")),
-                total.toPlainString(),
-                total.subtract(requested).toPlainString());
-        codec.encode(Type.application, app);
-        return app;
+        return team;
     }
 
     private List<Infrastructure> infrastructure(Element root, String key,
             String label) {
-        var list = new ArrayList<Infrastructure>();
-        for (var b : groups(root, key, label))
-            list.add(new Infrastructure(
-                    required(b, key + "_name", label + ": system lub usługa"),
-                    required(b, key + "_provider", label + ": dostawca"),
-                    required(b, key + "_description",
+        var infrastructure = new ArrayList<Infrastructure>();
+        for (var block : groups(root, key, label))
+            infrastructure.add(new Infrastructure(
+                    required(block, key + "_name",
+                            label + ": system lub usługa"),
+                    required(block, key + "_provider", label + ": dostawca"),
+                    required(block, key + "_description",
                             label + ": sposób wykorzystania")));
-        return List.copyOf(list);
+        return List.copyOf(infrastructure);
     }
 
     private List<Element> groups(Element root, String tag, String label) {
