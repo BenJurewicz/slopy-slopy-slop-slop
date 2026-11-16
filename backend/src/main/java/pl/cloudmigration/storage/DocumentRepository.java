@@ -1,6 +1,10 @@
 package pl.cloudmigration.storage;
 
+import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 import java.util.*;
 import org.springframework.stereotype.Component;
 import org.w3c.dom.Element;
@@ -34,11 +38,16 @@ public class DocumentRepository {
                             .getBytes(StandardCharsets.UTF_8))
                     .getDocumentElement();
             var result = new ArrayList<Object>();
+            var transformer = TransformerFactory.newDefaultInstance()
+                    .newTransformer();
             for (var node = root.getFirstChild(); node != null; node = node
                     .getNextSibling())
                 if (node instanceof Element e) {
-                    var id = e.getAttribute("id");
-                    result.add(get(type, id));
+                    uuid(e.getAttribute("id"));
+                    var xml = new StringWriter();
+                    transformer.transform(new DOMSource(e),
+                            new StreamResult(xml));
+                    result.add(codec.decode(type, xml.toString(), type.dto));
                 }
             return result;
         } catch (pl.cloudmigration.api.AppException e) {
