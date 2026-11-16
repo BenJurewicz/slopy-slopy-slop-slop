@@ -349,7 +349,9 @@
                     onclick={() => navigate(item.id)}>{item.label}</button
                 >{/each}
         </nav>
-        <a href="/swagger-ui.html" target="_blank" rel="noreferrer">API</a>
+        <a href="/swagger-ui.html" target="_blank" rel="external noreferrer"
+            >API</a
+        >
     </header>
     <main class="main">
         <header class="topbar">
@@ -368,9 +370,11 @@
                     <span class="badge">{appState(selectedApp)}</span>
                     <div class="actions">
                         <a
+                            rel="external"
                             href={`/api/documents/application/${selectedApp.id}/xml`}
                             >Pobierz XML</a
                         ><a
+                            rel="external"
                             href={`/api/documents/application/${selectedApp.id}/docx`}
                             >Pobierz DOCX</a
                         >{#if selectedApp.state === 'DRAFT'}<button
@@ -437,7 +441,9 @@
                     close={() => navigate('overview')}
                     {busy}
                 />{/key}
-            <a href={`/api/documents/competition/${competition.id}/xml`}
+            <a
+                rel="external"
+                href={`/api/documents/competition/${competition.id}/xml`}
                 >Pobierz ustawienia XML</a
             >
             <section>
@@ -457,9 +463,15 @@
         {:else if view === 'applications'}
             <div class="toolbar">
                 <div class="actions">
-                    <a class="secondary" href="/api/documents/template"
+                    <a
+                        rel="external"
+                        class="secondary"
+                        href="/api/documents/template"
                         >Pobierz pusty formularz DOCX</a
-                    ><a class="secondary" href="/api/documents/example"
+                    ><a
+                        rel="external"
+                        class="secondary"
+                        href="/api/documents/example"
                         >Zobacz wypełniony przykład</a
                     ><label class="secondary file-picker"
                         ><span>Importuj DOCX</span><input
@@ -608,9 +620,11 @@
                                                         remove('evaluation', e)}
                                                     >Usuń</button
                                                 >{/if}<a
+                                                rel="external"
                                                 href={`/api/documents/evaluation/${e.id}/docx`}
                                                 >DOCX</a
                                             ><a
+                                                rel="external"
                                                 href={`/api/documents/evaluation/${e.id}/xml`}
                                                 >XML</a
                                             >
@@ -728,9 +742,11 @@
                                                         remove('decision', d)}
                                                     >Usuń</button
                                                 >{/if}<a
+                                                rel="external"
                                                 href={`/api/documents/decision/${d.id}/docx`}
                                                 >DOCX</a
                                             ><a
+                                                rel="external"
                                                 href={`/api/documents/decision/${d.id}/xml`}
                                                 >XML</a
                                             >
