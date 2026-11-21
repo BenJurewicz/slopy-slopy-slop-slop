@@ -147,9 +147,7 @@ nie jest zmieniane przez te polecenia. [Profile, narzędzia i uruchamianie Neovi
 - Hey API generuje typy i klienta Fetch z OpenAPI do `frontend/src/lib/generated/api/`.
 - Przykłady XML, błędne dane i DOCX: `examples/`.
 - [Instrukcja demonstracji i reguły](docs/walkthrough.md).
-- [Plan](docs/plan.md).
 - [Weryfikacja](docs/verification.md).
-- [Znane błędy i ich naprawy](docs/known-issues.md).
 
 Baza i aplikacja są związane z adresem loopback. Hasła nie trafiają do frontendu.
 Brak uwierzytelniania jest świadomym ograniczeniem demonstracji, nie rozwiązaniem

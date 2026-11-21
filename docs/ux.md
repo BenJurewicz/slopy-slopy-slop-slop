@@ -16,7 +16,7 @@ import, walidacja, konflikt rewizji, baza niedostępna, tylko odczyt po zatwierd
 Formularze mają etykiety i natywne kontrolki; nawigacja i akcje działają klawiaturą.
 Tabele przewijają się we własnym kontenerze na małych ekranach.
 
-Test `frontend/e2e/workflow.spec.ts` przechodzi pełną ścieżkę w zbudowanym JAR,
+Test `frontend/e2e/workflow.spec.ts` obejmuje pełną ścieżkę w zbudowanym JAR,
 pobiera XML/DOCX, wykonuje raport i zapisuje obrazy 1280x720 oraz 390x844.
 Brak poziomego przepełnienia całej strony jest sprawdzany automatycznie.
 
@@ -27,5 +27,4 @@ znajduje się osobny wypełniony wzór. Dokumenty mają polskie etykiety, czytel
 tabele i format A4; identyfikatory XML nie są częścią treści do wypełnienia.
 Import zawsze przypisuje wniosek do CloudMigration. Brak odpowiedzi wskazuje konkretne polskie pole.
 Oceny i decyzje prezentują dane rzeczywiście powiązanych dokumentów oraz
-rozróżniają szkic, ocenę końcową i wydaną decyzję. Podgląd wydruku sprawdzono
-w Microsoft Word, razem z wypełnieniem pustego formularza i ponownym importem.
+rozróżniają szkic, ocenę końcową i wydaną decyzję.

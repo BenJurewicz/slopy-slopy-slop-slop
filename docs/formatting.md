@@ -48,7 +48,7 @@ formatowania i lint przed budowaniem zasobów oraz JAR.
 
 Z `frontend/` można użyć `pnpm format`, `pnpm format:check`, `pnpm lint` oraz
 świadomie `pnpm lint:fix`. Automatyczne zapisy edytora nie uruchamiają ESLint
-z `--fix`. Zmiany stylu i naprawy lint należy rozdzielać w commitach.
+z `--fix`.
 
 Skrypty nie instalują zależności ani nie pobierają Gradle. `scripts/gradle.sh`
 wybiera JDK 23 na macOS, jeśli `JAVA_HOME` nie jest ustawione, i uruchamia
@@ -67,15 +67,14 @@ Wyłączenia fixtures obowiązują również pomocnicze formattery Python/Bash/L
 XQuery nie ma w tym zestawie uzgodnionego formattera; powyższe polecenia go nie
 zmieniają.
 
-Polskie litery są zwykłą treścią. Kosmetyczne cudzysłowy i myślniki zastąpiono
-ASCII. Znaki wymagane przez rzeczywiste fixtures Word i testy regresyjne
-pozostają jako jawne sekwencje Java `\u00A0`, `\u2013`, `\u2014`.
+Polskie litery są zwykłą treścią. Stosuj cudzysłowy i myślniki ASCII.
+Znaki wymagane przez fixtures Word i testy regresyjne zapisuj jako jawne
+sekwencje Java `\u00A0`, `\u2013`, `\u2014`.
 
 ## Neovim
 
-Globalna konfiguracja i lista pluginów pozostają bez zmian. Plik `.nvim.lua`
-działa tylko w bieżącej sesji i dla plików tego projektu. Korzysta z już
-zainstalowanych Conform, nvim-lint, formatterów oraz Java LSP `jdtls`.
+Plik `.nvim.lua` działa tylko w bieżącej sesji i dla plików tego projektu.
+Wymaga Conform, nvim-lint, formatterów oraz Java LSP `jdtls`.
 Dla skryptów Gradle potrzebny jest istniejący ktlint 1.8.0 w `PATH`/Mason.
 
 Z katalogu `Project/`:
@@ -92,8 +91,8 @@ Conform wybiera lokalny Prettier oraz wspólne konfiguracje pozostałych
 formatterów zamiast formatowania TypeScript przez LSP. ESLint korzysta
 z lokalnego pliku wykonywalnego i publikuje diagnostykę po wejściu do bufora
 oraz zapisie pliku frontendu. `jdtls` dostaje profil `CloudMigration`
-z tego samego XML co Spotless. Obecna instalacja JDTLS i Eclipse 4.39 używają
-JDT 3.45.0; po aktualizacji JDTLS należy ponownie sprawdzić zgodność silnika.
+z tego samego XML co Spotless. Po aktualizacji JDTLS sprawdź zgodność silnika
+formatowania z wersją Eclipse używaną przez Spotless.
 Automatyczne formatowanie wygenerowanych plików, fixtures, prywatnych plików
 `.env` i nieobsługiwanego XQuery jest wyłączone.
 Pliki spoza projektu zachowują dotychczasowe ustawienia.

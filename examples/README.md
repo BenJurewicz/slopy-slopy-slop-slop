@@ -14,7 +14,7 @@ Nie ma osobnego formularza DOCX konkursu; konkurs eksportuje się do XML.
 
 ## Wypełnianie i import
 
-Wybierz konkurs w aplikacji i pobierz **pusty formularz DOCX**. W Wordzie zastąp
+Pobierz z aplikacji **pusty formularz DOCX**. W Wordzie zastąp
 wykropkowane pola odpowiedziami, nie usuwając kontrolek. Uzupełnij oba wystąpienia
 tytułu projektu jednakowo. Wpisz adres, dziesięciocyfrowy NIP, dziewięcio- lub
 czternastocyfrowy REGON oraz osobę reprezentującą beneficjenta. Wielkość firmy:
@@ -34,8 +34,6 @@ Po imporcie sprawdź podgląd i wybierz **Zapisz szkic**.
 
 ## Microsoft Word
 
-W `backend/src/test/resources/docx/` są aktualne formularze otwarte i zapisane
-w Microsoft Word 16.92: pusty, wypełniony oraz wypełniony z tytułem zmienionym
-w Wordzie. Testy sprawdzają zachowanie kontrolek, odpowiedzi, polskich znaków,
-opisu wielowierszowego, budżetu, harmonogramu i danych beneficjenta. Metadane
-autora usunięto. Pages nie jest częścią weryfikacji.
+W `backend/src/test/resources/docx/` są fixtures zapisane w Microsoft Word 16.92:
+pusty, wypełniony oraz wypełniony z tytułem zmienionym w Wordzie. Testy sprawdzają zachowanie kontrolek, odpowiedzi, polskich znaków,
+opisu wielowierszowego, budżetu, harmonogramu i danych beneficjenta.
