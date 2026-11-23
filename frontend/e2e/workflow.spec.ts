@@ -162,6 +162,13 @@ test('DOCX upload -> edit -> submit -> evaluate -> issue -> export', async ({
     await expect(
         page.getByRole('status').filter({ hasText: 'Przygotowano' }),
     ).toBeVisible();
+    await expect(prepare).toBeDisabled();
+    await page.getByRole('button', { name: 'Przegląd', exact: true }).click();
+    await page
+        .getByRole('button', { name: 'Ranking i dotacje', exact: true })
+        .click();
+    await expect(awarded).toBeVisible();
+    await expect(prepare).toBeDisabled();
     await page.getByRole('button', { name: 'Decyzje', exact: true }).click();
     const issue = page.getByRole('button', {
         name: 'Wydaj decyzje',

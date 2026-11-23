@@ -12,7 +12,9 @@
         disabled={workspace.busy ||
             workspace.loading ||
             workspace.fundingLoading ||
-            !workspace.fundingPreview?.rows.length}
+            !workspace.fundingPreview?.rows.some(
+                (row) => !row.existingDecisionId,
+            )}
         onclick={() =>
             workspace.runAction(
                 () => api.prepareDecisions(),
