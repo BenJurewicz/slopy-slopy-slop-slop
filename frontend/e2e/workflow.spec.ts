@@ -140,9 +140,25 @@ test('DOCX upload -> edit -> submit -> evaluate -> issue -> export', async ({
     await page
         .getByRole('button', { name: 'Ranking i dotacje', exact: true })
         .click();
-    await page.getByRole('button', { name: 'Przelicz ranking' }).click();
-    await expect(page.getByText('Przyznano', { exact: true })).toBeVisible();
-    await page.getByRole('button', { name: 'Przygotuj decyzje' }).click();
+    const awarded = page.getByRole('cell', { name: 'Przyznano', exact: true });
+    await expect(awarded).toBeVisible();
+    await page.getByRole('button', { name: 'Przegląd', exact: true }).click();
+    await page
+        .getByRole('button', { name: 'Ranking i dotacje', exact: true })
+        .click();
+    await expect(awarded).toBeVisible();
+    await page.goto('/funding');
+    await expect(awarded).toBeVisible();
+    await expect(
+        page.getByRole('button', { name: 'Przelicz ranking' }),
+    ).toHaveCount(0);
+    const prepare = page.getByRole('button', { name: 'Przygotuj decyzje' });
+    const prepareBounds = await prepare.boundingBox();
+    const resultsBounds = await page.getByRole('table').boundingBox();
+    expect(prepareBounds!.y + prepareBounds!.height).toBeLessThan(
+        resultsBounds!.y,
+    );
+    await prepare.click();
     await expect(
         page.getByRole('status').filter({ hasText: 'Przygotowano' }),
     ).toBeVisible();

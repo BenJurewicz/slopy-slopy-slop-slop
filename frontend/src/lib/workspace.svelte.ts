@@ -36,6 +36,7 @@ export class Workspace {
         value: Data;
     } | null>(null);
     fundingPreview = $state<Preview | null>(null);
+    fundingLoading = $state(false);
     financialSummary = $state<Record<string, unknown>>({});
     selectedQueryId = $state('summary');
     reportThreshold = $state('0');
@@ -123,7 +124,7 @@ export class Workspace {
                         limit: 1,
                     })
                 ).rows[0] ?? {};
-            return true;
+            return this.view !== 'funding' || (await this.loadFundingPreview());
         } catch (cause) {
             this.error = (cause as Error).message;
             return false;
@@ -140,6 +141,7 @@ export class Workspace {
         this.fundingPreview = null;
         this.report = null;
         this.pageIndex = 0;
+        if (next === 'funding' && !this.loading) void this.loadFundingPreview();
     };
 
     runAction = async (action: () => Promise<unknown>, success: string) => {
@@ -289,17 +291,20 @@ export class Workspace {
         }
     };
 
-    loadFundingPreview = async () => {
-        this.busy = true;
-        this.error = '';
+    private async loadFundingPreview() {
+        if (this.fundingLoading) return true;
+        this.fundingLoading = true;
         try {
-            this.fundingPreview = await api.previewFunding();
+            const preview = await api.previewFunding();
+            if (this.view === 'funding') this.fundingPreview = preview;
+            return true;
         } catch (cause) {
-            this.error = (cause as Error).message;
+            if (this.view === 'funding') this.error = (cause as Error).message;
+            return false;
         } finally {
-            this.busy = false;
+            this.fundingLoading = false;
         }
-    };
+    }
 
     issueDecisions = async () => {
         const draft = this.linkedDecisions.filter(

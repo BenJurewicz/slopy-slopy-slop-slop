@@ -9,31 +9,22 @@
     <p class="muted">Tylko pełne dotacje; projekty ponad budżet są pomijane.</p>
     <button
         class="primary"
-        disabled={workspace.busy || !workspace.competition}
-        onclick={workspace.loadFundingPreview}
+        disabled={workspace.busy ||
+            workspace.loading ||
+            workspace.fundingLoading ||
+            !workspace.fundingPreview?.rows.length}
+        onclick={() =>
+            workspace.runAction(
+                () => api.prepareDecisions(),
+                'Przygotowano szkice decyzji.',
+            )}
     >
-        Przelicz ranking
+        Przygotuj decyzje
     </button>
 </div>
 {#if workspace.fundingPreview}
     <section class="panel">
-        <header class="section-heading">
-            <h2>
-                Dostępne: {money(workspace.fundingPreview.available)}
-            </h2>
-            <button
-                class="primary"
-                disabled={workspace.busy ||
-                    !workspace.fundingPreview.rows.length}
-                onclick={() =>
-                    workspace.runAction(
-                        () => api.prepareDecisions(),
-                        'Przygotowano szkice decyzji.',
-                    )}
-            >
-                Przygotuj decyzje
-            </button>
-        </header>
+        <h2>Dostępne: {money(workspace.fundingPreview.available)}</h2>
         <div class="table-scroll">
             <table>
                 <thead>
@@ -66,8 +57,6 @@
             </table>
         </div>
     </section>
-{:else}
-    <div class="empty">
-        <p>Kliknij "Przelicz ranking", aby zobaczyć propozycje.</p>
-    </div>
+{:else if workspace.fundingLoading && !workspace.loading}
+    <p class="notice" role="status">Wczytywanie rankingu...</p>
 {/if}

@@ -37,8 +37,9 @@ aktualizującym XQuery. Błąd dowolnej decyzji wycofuje całą transakcję.
 5. Kliknij **Złóż wniosek** i potwierdź nieodwracalność. Wniosek staje się tylko
    do odczytu. Wybierz **Oceń**, wypełnij nazwisko, uzasadnienie i wszystkie
    kryteria. Zapisz, następnie **Zatwierdź ocenę**.
-6. W **Ranking i dotacje** kliknij **Przelicz ranking** i **Przygotuj decyzje**.
-   Sprawdź kwalifikację, kwoty i uzasadnienia. W **Decyzje** szkice można zmieniać
+6. Otwórz **Ranking i dotacje**. Ranking wczytuje się automatycznie. Sprawdź
+   kwalifikację, kwoty i uzasadnienia, a następnie kliknij **Przygotuj decyzje**.
+   W **Decyzje** szkice można zmieniać
    lub usuwać. **Wydaj decyzje** zatwierdza cały widoczny zestaw szkiców konkursu.
 7. Pobierz decyzje do XML i DOCX. Powiązana ocena i decyzja są dostępne z wniosku.
 8. W **Raporty XQuery** wybierz raport i przeczytaj krótki opis, następnie kliknij
