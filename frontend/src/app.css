@@ -1,8 +1,23 @@
 :root {
-    font-family: system-ui, sans-serif;
-    font-size: 14px;
-    color: #111;
-    background: white;
+    font:
+        87.5%/1.5 system-ui,
+        sans-serif;
+    color-scheme: light;
+    --canvas: #f5f5f7;
+    --surface: #fff;
+    --text: #1d1d1f;
+    --muted: #56565f;
+    --line: #dcdce2;
+    --control-line: #94949e;
+    --accent: #0062cc;
+    --accent-tint: #e6f0ff;
+    --danger: #a62626;
+    --danger-tint: #fdf0f0;
+    --success: #216342;
+    --success-tint: #e8f6ed;
+    --radius: 0.5rem;
+    color: var(--text);
+    background: var(--canvas);
 }
 * {
     box-sizing: border-box;
@@ -20,18 +35,66 @@ button,
 a {
     touch-action: manipulation;
 }
-button {
+button,
+a.secondary,
+input::file-selector-button {
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--text);
+    padding: 0.3rem 0.65rem;
+    font: inherit;
+    font-weight: 500;
     cursor: pointer;
-    padding: 0.3rem 0.6rem;
-}
-button:disabled {
-    cursor: default;
 }
 a {
-    color: #0645ad;
+    color: var(--accent);
+    text-underline-offset: 0.18em;
+}
+a.secondary {
+    text-decoration: none;
+}
+button.primary {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: white;
+    font-weight: 600;
+}
+button.quiet,
+nav button {
+    border-color: transparent;
+    background: transparent;
+}
+button.danger {
+    color: var(--danger);
+}
+@media (hover: hover) {
+    button:not(:disabled):hover,
+    a.secondary:hover,
+    input:not(:disabled)::file-selector-button:hover {
+        background: var(--accent-tint);
+    }
+    button.primary:not(:disabled):hover {
+        background: #0054b0;
+    }
+    button.danger:not(:disabled):hover {
+        background: var(--danger-tint);
+    }
+}
+button:not(:disabled):active,
+a.secondary:active,
+input:not(:disabled)::file-selector-button:active {
+    filter: brightness(0.88);
+}
+button:disabled,
+input:disabled::file-selector-button {
+    border-color: var(--line);
+    background: #ebebef;
+    color: var(--muted);
+    cursor: default;
 }
 :focus-visible {
-    outline: 2px solid #111;
+    outline: 2px solid var(--accent);
     outline-offset: 2px;
 }
 .workspace {
@@ -53,15 +116,18 @@ nav,
     flex-wrap: wrap;
 }
 .sidebar {
-    border-bottom: 1px solid #aaa;
-    padding-bottom: 0.75rem;
+    border: 1px solid var(--line);
+    border-radius: 0.85rem;
+    background: var(--surface);
+    padding: 0.55rem 0.75rem;
 }
 .sidebar nav {
     flex: 1;
 }
 nav button.active {
-    font-weight: bold;
-    text-decoration: underline;
+    background: var(--accent-tint);
+    color: var(--accent);
+    font-weight: 600;
 }
 .main {
     min-width: 0;
@@ -71,15 +137,18 @@ nav button.active {
     margin: 1rem 0;
 }
 h1 {
-    font-size: 1.5rem;
+    font-size: 1.85rem;
+    font-weight: 650;
+    line-height: 1.15;
+    letter-spacing: -0.025em;
     margin: 0;
 }
 h2 {
-    font-size: 1.15rem;
+    font-size: 1.2rem;
+    font-weight: 650;
+    line-height: 1.25;
+    letter-spacing: -0.015em;
     margin: 0.5rem 0;
-}
-p {
-    line-height: 1.4;
 }
 .topbar label {
     margin: 0;
@@ -98,6 +167,17 @@ p {
 .panel,
 .empty {
     margin: 1rem 0;
+}
+.panel,
+.summary {
+    border: 1px solid var(--line);
+    border-radius: 0.85rem;
+    background: var(--surface);
+    box-shadow: 0 1px 2px rgb(29 29 31 / 5%);
+    padding: 1rem;
+}
+.panel:has(table) {
+    padding: 0.75rem;
 }
 .summary {
     display: grid;
@@ -120,19 +200,41 @@ table {
 th,
 td {
     text-align: left;
-    border: 1px solid #bbb;
+    border-bottom: 1px solid var(--line);
     padding: 0.5rem;
     vertical-align: top;
 }
 th {
-    background: #f3f3f3;
+    background: #f0f0f4;
+    color: var(--muted);
+    font-size: 0.9rem;
+    font-weight: 650;
+    letter-spacing: 0.015em;
+}
+tbody tr:last-child td {
+    border-bottom: 0;
+}
+td small,
+.muted {
+    color: var(--muted);
 }
 td small {
     display: block;
     margin-top: 0.25rem;
 }
 .badge {
+    display: inline-block;
+    border-radius: 1rem;
+    background: #eeeef2;
+    color: var(--muted);
+    padding: 0.1rem 0.55rem;
+    font-size: 0.9rem;
+    font-weight: 600;
     white-space: nowrap;
+}
+.badge.good {
+    background: var(--success-tint);
+    color: var(--success);
 }
 label {
     display: grid;
@@ -142,9 +244,23 @@ label {
 input,
 textarea,
 select {
-    padding: 0.35rem;
+    padding: 0.35rem 0.5rem;
     min-width: 0;
     max-width: 100%;
+}
+input:not([type='checkbox'], [type='file']),
+textarea,
+select {
+    border: 1px solid var(--control-line);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--text);
+}
+input[type='checkbox'] {
+    accent-color: var(--accent);
+}
+input[type='file'] {
+    padding: 0;
 }
 .editor {
     max-width: 720px;
@@ -154,12 +270,11 @@ select {
 .editor select {
     width: 100%;
 }
-input:disabled,
+input:not([type='checkbox'], [type='file']):is(:disabled, [readonly]),
 textarea:disabled,
-select:disabled,
-input:read-only {
-    color: #444;
-    background: #f5f5f5;
+select:disabled {
+    color: var(--muted);
+    background: var(--canvas);
 }
 label.check {
     display: flex;
@@ -170,7 +285,8 @@ label.check {
 }
 fieldset {
     min-width: 0;
-    border: 1px solid #aaa;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
     padding: 0.75rem;
     margin: 1rem 0;
 }
@@ -178,7 +294,7 @@ legend {
     font-weight: bold;
 }
 .repeat {
-    border-bottom: 1px solid #ccc;
+    border-bottom: 1px solid var(--line);
     padding: 0.5rem 0;
     margin-bottom: 0.5rem;
 }
@@ -188,13 +304,19 @@ legend {
 .repeat-title {
     margin-bottom: 0.5rem;
 }
+.error,
+.success {
+    border-radius: var(--radius);
+    padding: 0.45rem 0.75rem;
+}
 .error {
-    color: #a00;
-    border-left: 3px solid #a00;
-    padding-left: 0.5rem;
+    color: var(--danger);
+    background: var(--danger-tint);
 }
 .success {
-    font-weight: bold;
+    color: var(--success);
+    background: var(--success-tint);
+    font-weight: 600;
 }
 .notice,
 .footer-note {
@@ -208,7 +330,9 @@ legend {
     max-height: 360px;
     white-space: pre-wrap;
     font-size: 12px;
-    border: 1px solid #aaa;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--canvas);
     padding: 0.5rem;
 }
 .search {
