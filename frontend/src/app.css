@@ -37,7 +37,7 @@ a {
 }
 button,
 a.secondary,
-input::file-selector-button {
+.file-picker {
     border: 1px solid var(--line);
     border-radius: var(--radius);
     background: var(--surface);
@@ -71,7 +71,7 @@ button.danger {
 @media (hover: hover) {
     button:not(:disabled):hover,
     a.secondary:hover,
-    input:not(:disabled)::file-selector-button:hover {
+    .file-picker:not(:has(input:disabled)):hover {
         background: var(--accent-tint);
     }
     button.primary:not(:disabled):hover {
@@ -83,17 +83,18 @@ button.danger {
 }
 button:not(:disabled):active,
 a.secondary:active,
-input:not(:disabled)::file-selector-button:active {
+.file-picker:not(:has(input:disabled)):active {
     filter: brightness(0.88);
 }
 button:disabled,
-input:disabled::file-selector-button {
+.file-picker:has(input:disabled) {
     border-color: var(--line);
     background: #ebebef;
     color: var(--muted);
     cursor: default;
 }
-:focus-visible {
+:focus-visible,
+.file-picker:has(input:focus-visible) {
     outline: 2px solid var(--accent);
     outline-offset: 2px;
 }
@@ -259,9 +260,6 @@ select {
 input[type='checkbox'] {
     accent-color: var(--accent);
 }
-input[type='file'] {
-    padding: 0;
-}
 .editor {
     max-width: 720px;
 }
@@ -346,10 +344,19 @@ legend {
     margin-top: 0.75rem;
 }
 .file-picker {
+    position: relative;
+    display: inline-block;
     margin: 0;
 }
 .file-picker input {
-    width: 260px;
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    opacity: 0;
+    cursor: inherit;
 }
 @media (max-width: 600px) {
     .workspace {

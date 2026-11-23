@@ -14,10 +14,9 @@
         <a rel="external" class="secondary" href="/api/documents/example">
             Zobacz wypełniony przykład
         </a>
-        <label class="secondary file-picker">
-            <span>Importuj DOCX</span>
+        <label class="file-picker">
+            Importuj DOCX
             <input
-                aria-label="Importuj DOCX"
                 type="file"
                 accept=".docx"
                 disabled={workspace.busy || !workspace.competition}

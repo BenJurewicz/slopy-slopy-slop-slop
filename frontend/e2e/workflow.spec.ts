@@ -59,7 +59,22 @@ test('DOCX upload -> edit -> submit -> evaluate -> issue -> export', async ({
     page.on('dialog', (dialog) => dialog.accept());
     await page.goto('/');
     await page.getByRole('button', { name: 'Wnioski', exact: true }).click();
-    await page.getByLabel('Importuj DOCX').setInputFiles(input);
+    const importControl = page.getByLabel('Importuj DOCX', { exact: true });
+    await expect(importControl).toBeEnabled();
+    const bounds = await importControl.locator('..').boundingBox();
+    for (const name of [
+        'Pobierz pusty formularz DOCX',
+        'Zobacz wypełniony przykład',
+    ]) {
+        const link = await page
+            .getByRole('link', { name, exact: true })
+            .boundingBox();
+        expect(bounds?.y).toBe(link?.y);
+        expect(bounds?.height).toBe(link?.height);
+    }
+    const fileChooser = page.waitForEvent('filechooser');
+    await importControl.click();
+    await (await fileChooser).setFiles(input);
     await expect(page.getByLabel('Nazwa firmy')).toHaveValue(
         'Biuro Rachunkowe Żółw',
     );
