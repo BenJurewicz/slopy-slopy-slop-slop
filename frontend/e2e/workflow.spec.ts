@@ -147,10 +147,27 @@ test('DOCX upload -> edit -> submit -> evaluate -> issue -> export', async ({
         page.getByRole('status').filter({ hasText: 'Przygotowano' }),
     ).toBeVisible();
     await page.getByRole('button', { name: 'Decyzje', exact: true }).click();
-    await page.getByRole('button', { name: 'Wydaj decyzje' }).click();
+    const issue = page.getByRole('button', {
+        name: 'Wydaj decyzje',
+        exact: true,
+    });
+    await expect(issue).toBeEnabled();
+    const originalButton = await issue.elementHandle();
+    const issueBounds = await issue.boundingBox();
+    const table = page.getByRole('table');
+    const tableTop = (await table.boundingBox())?.y;
+
+    await issue.click();
     await expect(
         page.getByRole('status').filter({ hasText: 'Decyzje wydane' }),
     ).toBeVisible();
+    await expect(issue).toHaveCount(1);
+    await expect(issue).toBeDisabled();
+    expect(await originalButton.evaluate((button) => button.isConnected)).toBe(
+        true,
+    );
+    expect(await issue.boundingBox()).toEqual(issueBounds);
+    expect((await table.boundingBox())?.y).toBe(tableTop);
     await expect(
         page.getByRole('cell', { name: 'Wydana', exact: true }),
     ).toBeVisible();

@@ -15,6 +15,25 @@
     onMount(workspace.initialize);
 </script>
 
+{#snippet feedback()}
+    {#if workspace.error}
+        <div class="error" role="alert">
+            {workspace.error}
+            <button class="quiet" onclick={workspace.refresh}>
+                Odśwież dane
+            </button>
+        </div>
+    {/if}
+    {#if workspace.message}
+        <p class="success" role="status">
+            {workspace.message}
+        </p>
+    {/if}
+    {#if workspace.loading}
+        <p class="notice" role="status">Wczytywanie dokumentów...</p>
+    {/if}
+{/snippet}
+
 <svelte:head>
     <title>CloudMigration</title>
     <meta
@@ -49,21 +68,8 @@
                     ?.label}
             </h1>
         </header>
-        {#if workspace.error}
-            <div class="error" role="alert">
-                {workspace.error}
-                <button class="quiet" onclick={workspace.refresh}>
-                    Odśwież dane
-                </button>
-            </div>
-        {/if}
-        {#if workspace.message}
-            <p class="success" role="status">
-                {workspace.message}
-            </p>
-        {/if}
-        {#if workspace.loading}
-            <p class="notice" role="status">Wczytywanie dokumentów...</p>
+        {#if workspace.editor || workspace.view !== 'decisions'}
+            {@render feedback()}
         {/if}
         {#if workspace.editor}
             <DocumentView {workspace} editor={workspace.editor} />
@@ -78,7 +84,7 @@
         {:else if workspace.view === 'funding'}
             <Funding {workspace} />
         {:else if workspace.view === 'decisions'}
-            <Decisions {workspace} />
+            <Decisions {workspace} {feedback} />
         {:else if workspace.view === 'reports'}
             <Reports {workspace} />
         {/if}

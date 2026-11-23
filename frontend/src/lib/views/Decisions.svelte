@@ -1,8 +1,10 @@
 <script lang="ts">
+    import type { Snippet } from 'svelte';
     import type { Workspace } from '../workspace.svelte';
     import { money, status } from '../api';
 
-    let { workspace }: { workspace: Workspace } = $props();
+    let { workspace, feedback }: { workspace: Workspace; feedback: Snippet } =
+        $props();
 </script>
 
 <div class="toolbar">
@@ -19,6 +21,9 @@
     >
         Wydaj decyzje
     </button>
+</div>
+<div class="feedback">
+    {@render feedback()}
 </div>
 {#if !workspace.linkedDecisions.length}
     <div class="empty">
@@ -104,3 +109,12 @@
         </table>
     </section>
 {/if}
+
+<style>
+    .feedback {
+        min-block-size: 2.4rem;
+    }
+    .feedback :global(p) {
+        margin: 0;
+    }
+</style>
